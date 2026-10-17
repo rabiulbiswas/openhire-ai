@@ -1,0 +1,49 @@
+{
+  "realm": "openhire-candidate",
+  "enabled": true,
+  "displayName": "OpenHire Candidate",
+  "registrationAllowed": true,
+  "verifyEmail": true,
+  "resetPasswordAllowed": true,
+  "passwordPolicy": "length(12) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1)",
+  "actionTokenGeneratedByUserLifespan": 1800,
+  "bruteForceProtected": true,
+  "failureFactor": 5,
+  "waitIncrementSeconds": 60,
+  "maxFailureWaitSeconds": 900,
+  "otpPolicyType": "totp",
+  "otpPolicyAlgorithm": "HmacSHA1",
+  "otpPolicyDigits": 6,
+  "otpPolicyPeriod": 30,
+  "roles": {"realm": [{"name": "CANDIDATE"}]},
+  "users": [
+    {
+      "username": "candidate@openhire.local",
+      "email": "candidate@openhire.local",
+      "firstName": "Sample",
+      "lastName": "Candidate",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{"type": "password", "value": "OpenHire-Candidate-2026!", "temporary": false}],
+      "realmRoles": ["CANDIDATE"]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "openhire-candidate-web",
+      "name": "OpenHire candidate BFF",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "replace-before-use",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["http://localhost:8080/login/oauth2/code/openhire-candidate"],
+      "webOrigins": ["http://localhost:5173"],
+      "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5176/*##http://localhost:3000/*"
+      }
+    }
+  ]
+}

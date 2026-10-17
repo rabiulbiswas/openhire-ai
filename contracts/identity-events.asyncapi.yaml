@@ -1,0 +1,33 @@
+asyncapi: 3.0.0
+info:
+  title: OpenHire Identity Events
+  version: 1.0.0
+channels:
+  identityEvents:
+    address: openhire.identity.events
+    messages:
+      identityEvent:
+        $ref: "#/components/messages/IdentityEvent"
+operations:
+  publishIdentityEvent:
+    action: send
+    channel: {$ref: "#/channels/identityEvents"}
+components:
+  messages:
+    IdentityEvent:
+      name: IdentityEvent
+      payload:
+        type: object
+        required: [eventId, eventType, eventVersion, occurredAt, tenantId, aggregateType, aggregateId, payload]
+        properties:
+          eventId: {type: string, format: uuid}
+          eventType:
+            type: string
+            examples: [identity.org.created.v1, identity.user.invited.v1, identity.tenant.permissions-changed.v1]
+          eventVersion: {type: integer, minimum: 1}
+          occurredAt: {type: string, format: date-time}
+          tenantId: {type: string}
+          aggregateType: {type: string}
+          aggregateId: {type: string}
+          correlationId: {type: [string, "null"]}
+          payload: {type: object, additionalProperties: true}

@@ -1,0 +1,49 @@
+asyncapi: 3.0.0
+info: { title: OpenHire Phase 3 Events, version: 1.0.0 }
+channels:
+  applications:
+    address: application.events.v1
+    messages:
+      event: { $ref: '#/components/messages/Envelope' }
+  candidates:
+    address: candidate.events.v1
+    messages:
+      event: { $ref: '#/components/messages/Envelope' }
+  resumes:
+    address: resume.events.v1
+    messages:
+      event: { $ref: '#/components/messages/Envelope' }
+operations:
+  publishApplications:
+    action: send
+    channel: { $ref: '#/channels/applications' }
+  publishCandidates:
+    action: send
+    channel: { $ref: '#/channels/candidates' }
+  publishResumes:
+    action: send
+    channel: { $ref: '#/channels/resumes' }
+components:
+  messages:
+    Envelope:
+      description: >-
+        At-least-once publication, keyed by aggregateId. eventId is an opaque dedupe key
+        (UUID or deterministic merge ID), not necessarily a UUID. CandidateMerged carries
+        sourceCandidateId and survivorCandidateId. Resume outcomes carry applicationId,
+        status and code. No raw resume text, email or name is published.
+      payload:
+        type: object
+        required: [eventId, eventType, eventVersion, occurredAt, tenantId, aggregateType, aggregateId, correlationId, payload]
+        properties:
+          eventId: { type: string }
+          producer: { type: string, const: phase3-workflow }
+          eventType:
+            type: string
+            enum: [ApplicationSubmitted, ApplicationStageChanged, ApplicationDecisionUndone, ApplicationScreened, ApplicationNeedsAttention, AssessmentOverridden, ApplicationEligibilityReviewed, CandidateCreated, CandidateApplicationUpdated, CandidateMerged, ResumeProcessed, ResumeProcessingFailed]
+          eventVersion: { type: integer, const: 1 }
+          occurredAt: { type: string, format: date-time }
+          tenantId: { type: string }
+          aggregateType: { type: string, enum: [Application, Candidate, Resume] }
+          aggregateId: { type: string }
+          correlationId: { type: string }
+          payload: { type: object }

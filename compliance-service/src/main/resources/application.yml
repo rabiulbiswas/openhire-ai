@@ -1,0 +1,75 @@
+server:
+  port: ${COMPLIANCE_SERVICE_PORT:8095}
+  shutdown: graceful
+
+spring:
+  application:
+    name: compliance-service
+  threads:
+    virtual:
+      enabled: true
+  mongodb:
+    representation:
+      uuid: standard
+    uri: ${MONGODB_URI:mongodb://localhost:27017/oh_compliance}
+  data:
+    mongodb:
+      auto-index-creation: true
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2s
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+        delivery.timeout.ms: 10000
+        request.timeout.ms: 5000
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${OIDC_ISSUER_URI:http://localhost:8180/realms/openhire-staff}
+          jwk-set-uri: ${OIDC_JWK_SET_URI:http://localhost:8180/realms/openhire-staff/protocol/openid-connect/certs}
+
+openhire:
+  internal-secret: ${INTERNAL_SERVICE_SECRET:local-development-secret}
+  application-url: ${APPLICATION_SERVICE_URL:http://localhost:8084}
+  job-url: ${JOB_SERVICE_URL:http://localhost:8082}
+  security:
+    mode: ${SECURITY_MODE:oidc}
+  tenant:
+    default-id: ${DEFAULT_TENANT_ID:demo-org}
+  compliance:
+    application-url: ${APPLICATION_SERVICE_URL:http://localhost:8084}
+    data-key: ${COMPLIANCE_DATA_KEY:local-development-compliance-key-change-me}
+    participants: ${COMPLIANCE_PARTICIPANTS:application-service,candidate-service,resume-processor,communication-service,notification-dispatcher,interview-service,offer-service,employee-service,talent-service,ai-workers}
+    min-group-size: ${COMPLIANCE_MIN_GROUP_SIZE:5}
+    adverse-impact-threshold: ${COMPLIANCE_ADVERSE_IMPACT_THRESHOLD:0.8}
+    erasure-sla-days: ${COMPLIANCE_ERASURE_SLA_DAYS:30}
+    stuck-after-hours: ${COMPLIANCE_STUCK_AFTER_HOURS:24}
+    export-ttl-days: ${COMPLIANCE_EXPORT_TTL_DAYS:7}
+    retention-batch: ${COMPLIANCE_RETENTION_BATCH:50}
+    sweep-delay: ${COMPLIANCE_SWEEP_DELAY_MS:30000}
+  outbox:
+    collection: compliance_events
+    topic: compliance.events.v1
+    relay-enabled: ${OPENHIRE_OUTBOX_RELAY_ENABLED:true}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true

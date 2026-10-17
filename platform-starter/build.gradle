@@ -1,0 +1,31 @@
+plugins {
+    id 'java-library'
+    id 'io.spring.dependency-management'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom 'org.springframework.boot:spring-boot-dependencies:4.1.1'
+    }
+}
+
+dependencies {
+    api 'org.springframework:spring-webmvc'
+    api 'org.springframework:spring-tx'
+    api 'jakarta.servlet:jakarta.servlet-api'
+    api 'jakarta.validation:jakarta.validation-api'
+    api 'tools.jackson.core:jackson-databind'
+    implementation 'org.slf4j:slf4j-api'
+    // Optional at runtime: the audit recorder adapts to whatever store and transport the service has.
+    compileOnly 'org.springframework.data:spring-data-mongodb'
+    compileOnly 'org.mongodb:mongodb-driver-sync'
+    compileOnly 'org.springframework.kafka:spring-kafka'
+
+    testImplementation libs.testcontainers.junit
+    testImplementation libs.testcontainers.mongodb
+    testImplementation libs.testcontainers.kafka
+    testImplementation 'org.mongodb:mongodb-driver-sync'
+    testImplementation 'org.apache.kafka:kafka-clients'
+    testImplementation 'org.assertj:assertj-core'
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}

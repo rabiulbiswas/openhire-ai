@@ -1,0 +1,1800 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OpenHire Phase 4 UI API",
+    "version": "1.0.0",
+    "description": "Interviews, communication and dispatch. Staff routes use BFF session plus CSRF header, or service JWT. Public routes authenticate with an application receipt or a scheduling token, never an ambient session. Errors are RFC 9457 problem details."
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "security": [
+    {
+      "BearerAuth": []
+    },
+    {
+      "BffSession": [],
+      "CsrfHeader": []
+    }
+  ],
+  "paths": {
+    "/applications/{applicationId}/interview-loop": {
+      "post": {
+        "operationId": "createInterviewLoop",
+        "summary": "Create the loop from the job interview plan (also created automatically on INTERVIEWING)",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "getInterviewLoop",
+        "summary": "Loop with rounds; scorecards filtered by the blind-feedback policy",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/interviews": {
+      "get": {
+        "operationId": "listInterviews",
+        "summary": "Scheduled rounds in a date range (from, to)",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        }
+      }
+    },
+    "/interviews/unscheduled": {
+      "get": {
+        "operationId": "listUnscheduledRounds",
+        "summary": "Rounds that still need a time",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        }
+      }
+    },
+    "/me/interviews": {
+      "get": {
+        "operationId": "listMyInterviews",
+        "summary": "Rounds where the caller is on the panel",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        }
+      }
+    },
+    "/rounds/{roundId}/schedule": {
+      "post": {
+        "operationId": "scheduleRound",
+        "summary": "Book an agreed slot; 409 when any panel member is already booked",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "roundId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rounds/{roundId}/panel": {
+      "put": {
+        "operationId": "assignPanel",
+        "summary": "Replace the interviewer panel before scheduling",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "roundId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rounds/{roundId}/reschedule": {
+      "post": {
+        "operationId": "rescheduleRound",
+        "summary": "Move a scheduled round (limit per round)",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "roundId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rounds/{roundId}/cancel": {
+      "post": {
+        "operationId": "cancelRound",
+        "summary": "Cancel and free the booked blocks",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "roundId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rounds/{roundId}/no-show": {
+      "post": {
+        "operationId": "markNoShow",
+        "summary": "Mark the candidate as a no-show",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "roundId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rounds/{roundId}/complete": {
+      "post": {
+        "operationId": "completeRound",
+        "summary": "Mark a started round completed",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "roundId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rounds/{roundId}/scheduling-link": {
+      "post": {
+        "operationId": "issueSchedulingLink",
+        "summary": "Hold candidate slots and email a self-scheduling link",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "roundId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rounds/{roundId}/scorecard": {
+      "get": {
+        "operationId": "getScorecardForm",
+        "summary": "Competencies for the caller's scorecard",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "roundId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/rounds/{roundId}/scorecards": {
+      "post": {
+        "operationId": "submitScorecard",
+        "summary": "Submit the caller's scorecard (panel members only)",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "roundId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listScorecards",
+        "summary": "Scorecards visible to the caller (blind until own submission)",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "roundId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/applications/{applicationId}/debrief": {
+      "get": {
+        "operationId": "getDebrief",
+        "summary": "Rule-based debrief from submitted scorecards; advice only",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/applications/{applicationId}/decision": {
+      "get": {
+        "operationId": "getHireDecision",
+        "summary": "Recorded hire decision, if any",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "post": {
+        "operationId": "recordHireDecision",
+        "summary": "HIRE moves to OFFER, NO_HIRE to REJECTED; reason required",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/scheduling": {
+      "get": {
+        "operationId": "getSchedulingOptions",
+        "summary": "Held slots for the candidate",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Scheduling-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "HMAC token taken from the #token= fragment of the emailed link"
+          }
+        ],
+        "security": []
+      }
+    },
+    "/public/scheduling/book": {
+      "post": {
+        "operationId": "bookSchedulingSlot",
+        "summary": "Book one of the held slots; 409 when the hold expired",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Scheduling-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "HMAC token taken from the #token= fragment of the emailed link"
+          }
+        ],
+        "security": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversations": {
+      "get": {
+        "operationId": "listConversations",
+        "summary": "Candidate conversations for the tenant",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        }
+      },
+      "post": {
+        "operationId": "startConversation",
+        "summary": "Open (or reuse) the conversation for an application",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversations/{id}": {
+      "get": {
+        "operationId": "getConversation",
+        "summary": "Messages with delivery status",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/conversations/{id}/messages": {
+      "post": {
+        "operationId": "sendMessage",
+        "summary": "Queue an outbound message on EMAIL, WHATSAPP or SMS",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversations/{id}/ai-draft": {
+      "post": {
+        "operationId": "draftReply",
+        "summary": "AI reply suggestion; 409 until the AI gateway ships (Phase 6)",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/message-templates": {
+      "get": {
+        "operationId": "listMessageTemplates",
+        "summary": "Versioned templates with allowed variables",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        }
+      }
+    },
+    "/message-templates/{key}": {
+      "put": {
+        "operationId": "updateMessageTemplate",
+        "summary": "Save a new template version; unknown variables are rejected",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/message-templates/{key}/preview": {
+      "post": {
+        "operationId": "previewMessageTemplate",
+        "summary": "Render a template with sample values",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications": {
+      "get": {
+        "operationId": "listNotifications",
+        "summary": "Caller's in-app notifications",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        }
+      }
+    },
+    "/notifications/unread-count": {
+      "get": {
+        "operationId": "countUnreadNotifications",
+        "summary": "Unread badge count",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        }
+      }
+    },
+    "/notifications/{id}": {
+      "patch": {
+        "operationId": "updateNotification",
+        "summary": "Mark one read or unread",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/read-all": {
+      "post": {
+        "operationId": "markAllNotificationsRead",
+        "summary": "Mark everything read",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/notification-preferences": {
+      "get": {
+        "operationId": "getNotificationPreferences",
+        "summary": "Event x channel matrix, quiet hours, digest",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateNotificationPreferences",
+        "summary": "Replace preferences",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/applications/{applicationId}/messages": {
+      "get": {
+        "operationId": "getCandidateThread",
+        "summary": "Candidate view of their conversation",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Application-Receipt",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tenantId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": []
+      },
+      "post": {
+        "operationId": "postCandidateReply",
+        "summary": "Candidate reply; alerts the owning recruiter",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Application-Receipt",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tenantId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/applications/{applicationId}/communication-preferences": {
+      "get": {
+        "operationId": "getCandidatePreferences",
+        "summary": "Preferred channel and quiet hours",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Application-Receipt",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tenantId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": []
+      },
+      "put": {
+        "operationId": "updateCandidatePreferences",
+        "summary": "Update preferred channel and quiet hours",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Application-Receipt",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tenantId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/deliveries": {
+      "get": {
+        "operationId": "listDeliveries",
+        "summary": "Dispatch attempts (operations view)",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        }
+      }
+    },
+    "/deliveries/{messageId}": {
+      "get": {
+        "operationId": "getDelivery",
+        "summary": "One delivery with attempt history",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/deliveries/{messageId}/retry": {
+      "post": {
+        "operationId": "retryDelivery",
+        "summary": "Requeue an exhausted delivery",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, not on the panel, or bad receipt/scheduling token"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: double booking, expired hold, wrong stage, or feature unavailable"
+          },
+          "503": {
+            "description": "A dependency is unavailable; retry later"
+          }
+        },
+        "parameters": [
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "BffSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "OPENHIRE_SESSION"
+      },
+      "CsrfHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-XSRF-TOKEN"
+      }
+    }
+  }
+}

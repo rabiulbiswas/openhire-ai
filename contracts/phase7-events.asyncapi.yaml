@@ -1,0 +1,116 @@
+asyncapi: 3.0.0
+info:
+  title: OpenHire Phase 7 Events
+  version: 1.0.0
+  description: >-
+    At-least-once outbox delivery. Consumers deduplicate eventId and scope all state by tenantId.
+    Privacy participants must be idempotent and keep tombstones to reject late recreations.
+    Export acknowledgements contain personal data and require restricted Kafka access and retention.
+channels:
+  audit:
+    address: audit.events.v1
+    messages:
+      recorded: { $ref: '#/components/messages/AuditRecorded' }
+  compliance:
+    address: compliance.events.v1
+    messages:
+      event: { $ref: '#/components/messages/ComplianceEvent' }
+  privacyAcks:
+    address: privacy.acks.v1
+    messages:
+      acknowledgement: { $ref: '#/components/messages/PrivacyAcknowledgement' }
+operations:
+  publishAudit: { action: send, channel: { $ref: '#/channels/audit' } }
+  consumeAudit: { action: receive, channel: { $ref: '#/channels/audit' } }
+  publishCompliance: { action: send, channel: { $ref: '#/channels/compliance' } }
+  consumeCompliance: { action: receive, channel: { $ref: '#/channels/compliance' } }
+  publishPrivacyAck: { action: send, channel: { $ref: '#/channels/privacyAcks' } }
+  consumePrivacyAck: { action: receive, channel: { $ref: '#/channels/privacyAcks' } }
+components:
+  schemas:
+    Envelope:
+      type: object
+      required: [eventId, eventType, tenantId, payload]
+      properties:
+        eventId: { type: string }
+        eventType: { type: string }
+        eventVersion: { type: integer }
+        producer: { type: string }
+        occurredAt: { type: string, format: date-time }
+        tenantId: { type: string }
+        aggregateType: { type: string }
+        aggregateId: { type: string }
+        correlationId: { type: string }
+        payload: { type: object }
+  messages:
+    AuditRecorded:
+      contentType: application/json
+      payload:
+        allOf:
+          - { $ref: '#/components/schemas/Envelope' }
+          - type: object
+            properties:
+              eventType: { const: audit.event.recorded.v1 }
+              payload:
+                type: object
+                required: [action, actor, resource, details, at]
+                properties:
+                  action: { type: string }
+                  actor:
+                    type: object
+                    properties:
+                      type: { enum: [USER, CANDIDATE, SYSTEM, AI] }
+                      id: { type: string }
+                      name: { type: string }
+                  resource:
+                    type: object
+                    properties:
+                      type: { type: string }
+                      id: { type: string }
+                  candidateId: { type: string }
+                  applicationId: { type: string }
+                  details: { type: object, description: Reason codes and counts; sensitive detail keys are filtered. }
+                  at: { type: string, format: date-time }
+    ComplianceEvent:
+      contentType: application/json
+      payload:
+        allOf:
+          - { $ref: '#/components/schemas/Envelope' }
+          - type: object
+            properties:
+              eventType:
+                enum:
+                  - compliance.erasure.requested.v1
+                  - compliance.export.requested.v1
+                  - compliance.erasure.completed.v1
+                  - compliance.export.ready.v1
+                  - compliance.legal-hold.placed.v1
+                  - compliance.legal-hold.released.v1
+                  - compliance.fairness.alert.v1
+              payload:
+                type: object
+                description: Privacy requests carry requestId, candidateId, type, reason and source; completion and governance events carry their resource evidence.
+                properties:
+                  requestId: { type: string }
+                  candidateId: { type: string }
+                  type: { enum: [EXPORT, ERASURE] }
+                  source: { enum: [CANDIDATE, STAFF, RETENTION] }
+    PrivacyAcknowledgement:
+      contentType: application/json
+      payload:
+        allOf:
+          - { $ref: '#/components/schemas/Envelope' }
+          - type: object
+            properties:
+              eventType: { enum: [privacy.erasure.completed.v1, privacy.export.completed.v1] }
+              payload:
+                type: object
+                required: [requestId, service, candidateId, status]
+                properties:
+                  requestId: { type: string }
+                  service: { type: string }
+                  candidateId: { type: string }
+                  status: { enum: [ERASED, NOTHING_HELD, RETAINED_LEGAL_BASIS, EXPORTED] }
+                  counts: { type: object, additionalProperties: { type: integer } }
+                  note: { type: string }
+                  section: { type: object }

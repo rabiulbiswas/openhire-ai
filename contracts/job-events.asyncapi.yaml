@@ -1,0 +1,25 @@
+asyncapi: 3.0.0
+info: { title: OpenHire Job Events, version: 1.0.0 }
+channels:
+  jobEvents:
+    address: job.events.v1
+    messages:
+      jobEvent: { $ref: '#/components/messages/JobEvent' }
+operations:
+  publishJobEvent:
+    action: send
+    channel: { $ref: '#/channels/jobEvents' }
+components:
+  messages:
+    JobEvent:
+      payload:
+        type: object
+        required: [eventId, eventType, eventVersion, occurredAt, tenantId, aggregateId, payload]
+        properties:
+          eventId: { type: string, format: uuid }
+          eventType: { type: string }
+          eventVersion: { type: integer, const: 1 }
+          occurredAt: { type: string, format: date-time }
+          tenantId: { type: string }
+          aggregateId: { type: string }
+          payload: { type: object }

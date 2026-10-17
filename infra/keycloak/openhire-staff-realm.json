@@ -1,0 +1,236 @@
+{
+  "realm": "openhire-staff",
+  "enabled": true,
+  "displayName": "OpenHire Staff",
+  "registrationAllowed": false,
+  "verifyEmail": true,
+  "resetPasswordAllowed": true,
+  "passwordPolicy": "length(12) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1)",
+  "actionTokenGeneratedByUserLifespan": 1800,
+  "actionTokenGeneratedByAdminLifespan": 604800,
+  "rememberMe": false,
+  "bruteForceProtected": true,
+  "failureFactor": 5,
+  "waitIncrementSeconds": 60,
+  "maxFailureWaitSeconds": 900,
+  "maxDeltaTimeSeconds": 43200,
+  "otpPolicyType": "totp",
+  "otpPolicyAlgorithm": "HmacSHA1",
+  "otpPolicyDigits": 6,
+  "otpPolicyPeriod": 30,
+  "roles": {
+    "realm": [
+      {
+        "name": "SUPER_ADMIN"
+      },
+      {
+        "name": "ORG_ADMIN"
+      },
+      {
+        "name": "HR_ADMIN",
+        "description": "HR administrator: approves offers and recorded decisions"
+      },
+      {
+        "name": "RECRUITER"
+      },
+      {
+        "name": "HIRING_MANAGER"
+      },
+      {
+        "name": "INTERVIEWER"
+      },
+      {
+        "name": "COMPLIANCE_OFFICER"
+      },
+      {
+        "name": "AGENCY_RECRUITER"
+      },
+      {
+        "name": "EMPLOYEE"
+      }
+    ]
+  },
+  "users": [
+    {
+      "username": "service-account-openhire-service",
+      "enabled": true,
+      "serviceAccountClientId": "openhire-service",
+      "realmRoles": [
+        "SUPER_ADMIN"
+      ],
+      "clientRoles": {
+        "realm-management": [
+          "manage-users",
+          "view-users",
+          "query-users"
+        ]
+      }
+    },
+    {
+      "username": "admin@openhire.local",
+      "email": "admin@openhire.local",
+      "firstName": "Local",
+      "lastName": "Administrator",
+      "enabled": true,
+      "emailVerified": true,
+      "attributes": {
+        "organization_id": [
+          "demo-org"
+        ],
+        "organization_name": [
+          "Local workspace"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "OpenHire-Admin-2026!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ORG_ADMIN",
+        "RECRUITER"
+      ]
+    },
+    {
+      "username": "recruiter@openhire.local",
+      "email": "recruiter@openhire.local",
+      "firstName": "Sample",
+      "lastName": "Recruiter",
+      "enabled": true,
+      "emailVerified": true,
+      "attributes": {
+        "organization_id": [
+          "demo-org"
+        ],
+        "organization_name": [
+          "Local workspace"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "OpenHire-Recruiter-2026!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "RECRUITER"
+      ]
+    },
+    {
+      "username": "admin@second.openhire.local",
+      "email": "admin@second.openhire.local",
+      "firstName": "Second Tenant",
+      "lastName": "Administrator",
+      "enabled": true,
+      "emailVerified": true,
+      "attributes": {
+        "organization_id": [
+          "demo-org-two"
+        ],
+        "organization_name": [
+          "Second workspace"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "OpenHire-Second-2026!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ORG_ADMIN"
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "openhire-web",
+      "name": "OpenHire staff BFF",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "replace-before-use",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "http://localhost:8080/login/oauth2/code/openhire-staff",
+        "http://localhost:5173/login/oauth2/code/openhire-staff",
+        "http://localhost:5174/login/oauth2/code/openhire-staff"
+      ],
+      "webOrigins": [
+        "http://localhost:5173",
+        "http://localhost:5174"
+      ],
+      "defaultClientScopes": [
+        "basic",
+        "web-origins",
+        "acr",
+        "roles",
+        "profile",
+        "email"
+      ],
+      "protocolMappers": [
+        {
+          "name": "staff roles for BFF session",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "organization id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "organization_id",
+            "claim.name": "organization_id",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "multivalued": "false"
+          }
+        },
+        {
+          "name": "organization name",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "organization_name",
+            "claim.name": "organization_name",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "multivalued": "false"
+          }
+        }
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5176/*##http://localhost:5173/*"
+      }
+    },
+    {
+      "clientId": "openhire-service",
+      "name": "OpenHire identity service",
+      "enabled": true,
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "secret": "replace-before-use"
+    }
+  ]
+}

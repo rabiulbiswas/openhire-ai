@@ -1,0 +1,61 @@
+server:
+  port: ${INTEGRATION_HUB_PORT:8107}
+spring:
+  application:
+    name: integration-hub
+  threads:
+    virtual:
+      enabled: true
+  mongodb:
+    uri: ${MONGODB_URI:mongodb://localhost:27017/oh_integration}
+    representation:
+      uuid: standard
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${OIDC_ISSUER_URI:http://localhost:8180/realms/openhire-staff}
+          jwk-set-uri: ${OIDC_JWK_SET_URI:http://localhost:8180/realms/openhire-staff/protocol/openid-connect/certs}
+openhire:
+  integration:
+    quotas:
+      requests-per-minute: ${INTEGRATION_REQUESTS_PER_MINUTE:300}
+      calendar-changes-per-day: ${INTEGRATION_CALENDAR_CHANGES_PER_DAY:10000}
+      webhook-deliveries-per-day: ${INTEGRATION_WEBHOOK_DELIVERIES_PER_DAY:50000}
+      configurations-per-day: ${INTEGRATION_CONFIGURATIONS_PER_DAY:1000}
+    public-base-url: ${INTEGRATION_PUBLIC_BASE_URL:http://localhost:8080}
+    calendar-writes-enabled: ${INTEGRATION_CALENDAR_WRITES_ENABLED:false}
+    webhooks-enabled: ${INTEGRATION_WEBHOOKS_ENABLED:false}
+    encryption-key: ${INTEGRATION_ENCRYPTION_KEY:}
+    secrets-directory: ${INTEGRATION_SECRETS_DIRECTORY:}
+  internal-secret: ${INTERNAL_SERVICE_SECRET:local-development-secret}
+  security:
+    mode: ${SECURITY_MODE:oidc}
+  tenant:
+    default-id: ${DEFAULT_TENANT_ID:demo-org}
+  outbox:
+    collection: integration_events
+    topic: integration.events.v1
+    relay-enabled: false
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true

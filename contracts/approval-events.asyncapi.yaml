@@ -1,0 +1,25 @@
+asyncapi: 3.0.0
+info: { title: OpenHire Approval Events, version: 1.0.0 }
+channels:
+  approvalEvents:
+    address: approval.events.v1
+    messages:
+      approvalEvent: { $ref: '#/components/messages/ApprovalEvent' }
+operations:
+  publishApprovalEvent:
+    action: send
+    channel: { $ref: '#/channels/approvalEvents' }
+components:
+  messages:
+    ApprovalEvent:
+      payload:
+        type: object
+        required: [eventId, eventType, eventVersion, occurredAt, tenantId, aggregateId, payload]
+        properties:
+          eventId: { type: string, format: uuid }
+          eventType: { type: string }
+          eventVersion: { type: integer, const: 1 }
+          occurredAt: { type: string, format: date-time }
+          tenantId: { type: string }
+          aggregateId: { type: string }
+          payload: { type: object }

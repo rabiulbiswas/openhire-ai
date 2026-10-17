@@ -1,0 +1,72 @@
+server:
+  port: ${APPLICATION_SERVICE_PORT:8084}
+  shutdown: graceful
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
+  application:
+    name: application-service
+  threads:
+    virtual:
+      enabled: true
+  mongodb:
+    representation:
+      uuid: standard
+    uri: ${MONGODB_URI:mongodb://localhost:27017/oh_application}
+  data:
+    mongodb:
+      auto-index-creation: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+        delivery.timeout.ms: 10000
+        request.timeout.ms: 5000
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${OIDC_ISSUER_URI:http://localhost:8180/realms/openhire-staff}
+          jwk-set-uri: ${OIDC_JWK_SET_URI:http://localhost:8180/realms/openhire-staff/protocol/openid-connect/certs}
+
+openhire:
+  identity-url: ${IDENTITY_SERVICE_URL:http://localhost:8081}
+  internal-secret: ${INTERNAL_SERVICE_SECRET:local-development-secret}
+  candidate-url: ${CANDIDATE_SERVICE_URL:http://localhost:8085}
+  resume-url: ${RESUME_PROCESSOR_URL:http://localhost:8086}
+  compliance-url: ${COMPLIANCE_SERVICE_URL:http://localhost:8095}
+  consent-version: ${CONSENT_VERSION:privacy-v1}
+  security:
+    mode: ${SECURITY_MODE:oidc}
+  tenant:
+    default-id: ${DEFAULT_TENANT_ID:demo-org}
+  job:
+    base-url: ${JOB_SERVICE_URL:http://localhost:8082}
+  application:
+    close-other-applications: ${APPLICATION_CLOSE_OTHER_APPLICATIONS:true}
+  outbox:
+    collection: submissions
+    topic: application.events.v1
+    relay-enabled: ${OPENHIRE_OUTBOX_RELAY_ENABLED:true}
+    poll-delay: 1000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true

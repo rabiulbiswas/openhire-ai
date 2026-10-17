@@ -1,0 +1,123 @@
+asyncapi: 3.0.0
+info: { title: OpenHire Phase 5 Events, version: 1.0.0 }
+channels:
+  offers:
+    address: offer.events.v1
+    messages:
+      event: { $ref: '#/components/messages/OfferEvent' }
+  employees:
+    address: employee.events.v1
+    messages:
+      event: { $ref: '#/components/messages/EmployeeEvent' }
+  integration:
+    address: integration.events.v1
+    description: Consumed from Phase 8 (integration-hub); the hire saga's HRIS step is optional until then.
+    messages:
+      event: { $ref: '#/components/messages/HrisOutcome' }
+  applications:
+    address: application.events.v1
+    description: Consumed by offer-service (withdrawn or rejected rescinds an unanswered offer) and employee-service (HIRED completes a saga step).
+    messages:
+      event: { $ref: '#/components/messages/ApplicationStageChanged' }
+operations:
+  publishOffers:
+    action: send
+    channel: { $ref: '#/channels/offers' }
+  consumeOffers:
+    action: receive
+    channel: { $ref: '#/channels/offers' }
+  publishEmployees:
+    action: send
+    channel: { $ref: '#/channels/employees' }
+  consumeEmployees:
+    action: receive
+    channel: { $ref: '#/channels/employees' }
+  consumeIntegration:
+    action: receive
+    channel: { $ref: '#/channels/integration' }
+  consumeApplications:
+    action: receive
+    channel: { $ref: '#/channels/applications' }
+components:
+  schemas:
+    Envelope:
+      type: object
+      required: [eventId, eventType, eventVersion, occurredAt, tenantId, aggregateType, aggregateId, correlationId, payload]
+      properties:
+        eventId: { type: string }
+        producer: { type: string }
+        eventType: { type: string }
+        eventVersion: { type: integer, const: 1 }
+        occurredAt: { type: string, format: date-time }
+        tenantId: { type: string }
+        aggregateType: { type: string }
+        aggregateId: { type: string }
+        correlationId: { type: string, description: The application id }
+        payload: { type: object }
+  messages:
+    OfferEvent:
+      description: >-
+        At-least-once, keyed by offerId. Common payload fields are offerId, applicationId, candidateId, jobId,
+        jobTitle, candidateName, versionNo, status and ownerId (the recruiter who created the offer).
+        offer.approval.requested.v1 adds stepId, currentApprovers (role codes) and title. offer.sent.v1 adds
+        offerUrl, expiresAt, expiryDate, joiningDate and designation. offer.accepted.v1 adds terms
+        (base, currency, variable, bonus, joiningDate, location, designation, reportsTo), acceptedAt and acceptedBy.
+        offer.negotiation.requested.v1 adds message; declined and rescinded add an optional reason;
+        offer.revised.v1 adds reapprovalRequired. The offer letter text is never published.
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/Envelope'
+          - type: object
+            properties:
+              aggregateType: { const: Offer }
+              eventType:
+                enum: [offer.created.v1, offer.approval.requested.v1, offer.approval.rejected.v1, offer.approved.v1, offer.sent.v1, offer.viewed.v1, offer.negotiation.requested.v1, offer.revised.v1, offer.accepted.v1, offer.declined.v1, offer.expired.v1, offer.rescinded.v1]
+    EmployeeEvent:
+      description: >-
+        At-least-once, keyed by employeeId. Carries ids, the employee number, joining date and designation only;
+        name, email and phone are never published (data minimisation). employee.hris-sync.requested.v1 adds attempt;
+        employee.referral-reward.eligible.v1 adds rewardId and referrerId. Consumers deduplicate on eventId.
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/Envelope'
+          - type: object
+            properties:
+              aggregateType: { const: Employee }
+              eventType:
+                enum: [employee.created.v1, employee.onboarding.completed.v1, employee.hris-sync.requested.v1, employee.referral-reward.eligible.v1]
+              payload:
+                type: object
+                properties:
+                  employeeId: { type: string }
+                  employeeNo: { type: string, pattern: '^EMP-[0-9]{4}-[0-9]{5}$' }
+                  applicationId: { type: string }
+                  candidateId: { type: string }
+                  jobId: { type: string }
+                  offerId: { type: string }
+                  joiningDate: { type: string, format: date }
+                  designation: { type: string }
+    HrisOutcome:
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/Envelope'
+          - type: object
+            properties:
+              eventType: { enum: [integration.hris.synced.v1, integration.hris.failed.v1] }
+              payload:
+                type: object
+                properties:
+                  employeeId: { type: string }
+    ApplicationStageChanged:
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/Envelope'
+          - type: object
+            properties:
+              eventType: { const: ApplicationStageChanged }
+              payload:
+                type: object
+                properties:
+                  from: { type: string }
+                  to: { type: string }
+                  actorId: { type: string }
+                  reason: { type: string, description: 'HIRED_ELSEWHERE when closed by a hire' }

@@ -1,0 +1,1542 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OpenHire Phase 6 AI API",
+    "version": "1.0.0",
+    "description": "Local-model AI, talent and integrity. Staff routes use the BFF session plus CSRF header, or a service JWT. Public routes use an application receipt. /internal routes use the shared service secret and are never routed by the public gateway. AI output is always a recommendation, draft or signal; people make every consequential decision."
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "security": [
+    {
+      "BearerAuth": []
+    },
+    {
+      "BffSession": [],
+      "CsrfHeader": []
+    }
+  ],
+  "paths": {
+    "/jobs/ai-draft": {
+      "post": {
+        "operationId": "draftJobWithAi",
+        "summary": "AI job description, rubric, knockouts and interview plan; creates nothing",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai-settings": {
+      "get": {
+        "operationId": "getAiSettings",
+        "summary": "Task routing, local-only switch, budget and provider status (org admin)",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateAiSettings",
+        "summary": "Save routing and budget; a hosted provider is refused while local-only is on",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompts": {
+      "get": {
+        "operationId": "listPrompts",
+        "summary": "Prompt registry with version, status, traffic and evaluation state",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        }
+      }
+    },
+    "/prompts/{id}": {
+      "get": {
+        "operationId": "getPrompt",
+        "summary": "A prompt version with its templates and output schema",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/prompts/{id}/evaluate": {
+      "post": {
+        "operationId": "evaluatePrompt",
+        "summary": "Run the golden dataset against the selected model (returns 202 and a run id)",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/eval-runs/{id}": {
+      "get": {
+        "operationId": "getEvalRun",
+        "summary": "Evaluation checks with baseline, candidate and gate",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/prompts/{id}/promote": {
+      "post": {
+        "operationId": "promotePrompt",
+        "summary": "Make a version ACTIVE; 409 PROMOTION_BLOCKED with failedGates when a gate failed",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/ops-summary": {
+      "get": {
+        "operationId": "getAiOperations",
+        "summary": "Requests, latency, errors, cache, cost and circuit state by task",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        }
+      }
+    },
+    "/integrity/signals": {
+      "get": {
+        "operationId": "listIntegritySignals",
+        "summary": "Advisory integrity signals for an application",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        }
+      }
+    },
+    "/integrity/signals/{id}/dismiss": {
+      "post": {
+        "operationId": "dismissIntegritySignal",
+        "summary": "Dismiss a signal with a reason",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/talent/rediscovery": {
+      "get": {
+        "operationId": "getRediscovery",
+        "summary": "Ranked past candidates for a job, with current-fit and historical explanations",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        }
+      }
+    },
+    "/talent/search/nl": {
+      "post": {
+        "operationId": "searchTalentNaturalLanguage",
+        "summary": "Translate a query into an editable filter and run it",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/talent/search": {
+      "post": {
+        "operationId": "searchTalent",
+        "summary": "Run an edited structured filter",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/talent/{candidateId}/invite": {
+      "post": {
+        "operationId": "inviteTalent",
+        "summary": "Send the re-engagement message (a person clicks)",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        },
+        "parameters": [
+          {
+            "name": "candidateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/talent/pool-health": {
+      "get": {
+        "operationId": "getPoolHealth",
+        "summary": "Pool statistics computed from real data",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        }
+      }
+    },
+    "/public/applications/{applicationId}/talent-consent": {
+      "get": {
+        "operationId": "getTalentConsent",
+        "summary": "The candidate's talent-pool consent",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        },
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Application-Receipt",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tenantId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": []
+      },
+      "put": {
+        "operationId": "setTalentConsent",
+        "summary": "Grant or revoke talent-pool consent; revocation removes the candidate at once",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        },
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Application-Receipt",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tenantId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversations/{id}/ai-draft": {
+      "post": {
+        "operationId": "draftReplyWithAi",
+        "summary": "AI reply for a person to edit; never sent",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/applications/{id}/assessment": {
+      "get": {
+        "operationId": "getAssessment",
+        "summary": "Assessment with status, label, provenance, evidence quotes and integrity flags",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/internal/ai/embed": {
+      "post": {
+        "operationId": "aiEmbed",
+        "summary": "Embeddings (content-hash cached)",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "InternalSecret": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/ai/judge": {
+      "post": {
+        "operationId": "aiJudgeCriterion",
+        "summary": "Score one criterion from retrieved evidence chunks, with grounded quotes",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "InternalSecret": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/ai/structure-resume": {
+      "post": {
+        "operationId": "aiStructureResume",
+        "summary": "Resume to structured profile",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "InternalSecret": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/ai/jd-draft": {
+      "post": {
+        "operationId": "aiJobDraft",
+        "summary": "Job description draft",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "InternalSecret": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/ai/message-draft": {
+      "post": {
+        "operationId": "aiMessageDraft",
+        "summary": "Message draft",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "InternalSecret": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/ai/nl-filter": {
+      "post": {
+        "operationId": "aiNaturalLanguageFilter",
+        "summary": "Natural-language query to a structured filter",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "InternalSecret": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/ai/explain-fit": {
+      "post": {
+        "operationId": "aiExplainFit",
+        "summary": "Grounded fit explanation with HISTORICAL and CURRENT statements kept apart",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "InternalSecret": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/messages/template": {
+      "post": {
+        "operationId": "sendTemplateMessage",
+        "summary": "Send a template message on a person's action (talent invitations)",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "202": {
+            "description": "Accepted (long-running evaluation)"
+          },
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid input; settings errors carry errors[{field,message}]"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "402": {
+            "description": "AI_BUDGET_EXHAUSTED"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state, cooldown, or PROMOTION_BLOCKED"
+          },
+          "503": {
+            "description": "AI_UNAVAILABLE: the model is unreachable or its output could not be made valid; callers fall back"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "InternalSecret": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "BffSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "OPENHIRE_SESSION"
+      },
+      "CsrfHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-XSRF-TOKEN"
+      },
+      "InternalSecret": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Internal-Service-Secret"
+      }
+    }
+  }
+}

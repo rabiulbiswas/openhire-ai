@@ -1,0 +1,1008 @@
+name: openhire
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.0
+    restart: unless-stopped
+    command: ["start-dev", "--import-realm"]
+    ports:
+      - "${KEYCLOAK_PORT:-8180}:8080"
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HEALTH_ENABLED: "true"
+      KC_HOSTNAME: ${KEYCLOAK_PUBLIC_URL:-http://localhost:8180}
+    volumes:
+      - ./infra/keycloak/openhire-staff-realm.json:/opt/keycloak/data/import/openhire-staff-realm.json:ro
+      - ./infra/keycloak/openhire-candidate-realm.json:/opt/keycloak/data/import/openhire-candidate-realm.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q '200 OK' <&3"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  kafka:
+    image: apache/kafka:4.0.0
+    # Kafka's default heap grows to about 1 GB; a dev broker needs far less.
+    mem_limit: 768m
+    restart: unless-stopped
+    ports:
+      - "${KAFKA_PORT:-9092}:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: CONTROLLER://:9093,INTERNAL://:29092,EXTERNAL://:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:${KAFKA_PORT:-9092}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_HEAP_OPTS: "-Xms256m -Xmx512m"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:29092 --list >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+      start_period: 20s
+
+  identity-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: identity-service
+    image: openhire/identity-service:local
+    # Bounds memory so the stack fits Docker Desktop's default 8 GB; the JVM sizes its heap at 75% of this limit.
+    mem_limit: 640m
+    restart: unless-stopped
+    ports:
+      - "${IDENTITY_PORT:-8081}:8081"
+    environment:
+      IDENTITY_PORT: 8081
+      # MongoDB runs on the host and can be inspected with MongoDB Compass.
+      MONGODB_URI: ${MONGODB_URI:-mongodb://host.docker.internal:27017/openhire_identity}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      EVENT_PUBLISHER: kafka
+      OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
+      SECURITY_MODE: ${SECURITY_MODE:-oidc}
+      IDENTITY_PROVIDER: ${IDENTITY_PROVIDER:-keycloak}
+      OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
+      OIDC_JWK_SET_URI: ${OIDC_JWK_SET_URI:-http://keycloak:8080/realms/openhire-staff/protocol/openid-connect/certs}
+      KEYCLOAK_BASE_URL: ${KEYCLOAK_BASE_URL:-http://keycloak:8080}
+      KEYCLOAK_REALM: openhire-staff
+      KEYCLOAK_ADMIN_CLIENT_ID: ${KEYCLOAK_ADMIN_CLIENT_ID:-openhire-service}
+      KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET:-replace-before-use}
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
+      SAMPLE_DATA_ENABLED: ${SAMPLE_DATA_ENABLED:-true}
+      SAMPLE_ADMIN_EMAIL: ${SAMPLE_ADMIN_EMAIL:-admin@openhire.local}
+      SAMPLE_RECRUITER_EMAIL: ${SAMPLE_RECRUITER_EMAIL:-recruiter@openhire.local}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  job-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: job-service
+    image: openhire/job-service:local
+    # Bounds memory so the stack fits Docker Desktop's default 8 GB; the JVM sizes its heap at 75% of this limit.
+    mem_limit: 640m
+    restart: unless-stopped
+    ports:
+      - "${JOB_SERVICE_PORT:-8082}:8082"
+    environment:
+      JOB_SERVICE_PORT: 8082
+      MONGODB_URI: ${JOB_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_job}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      OPENHIRE_DEFAULT_TENANT: ${DEFAULT_TENANT_ID:-demo-org}
+      OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
+      OPENHIRE_LLM_BASE_URL: ${OPENHIRE_LLM_BASE_URL:-http://host.docker.internal:11434}
+      OPENHIRE_LLM_MODEL: ${OPENHIRE_LLM_MODEL:-qwen3:8b}
+      OPENHIRE_LLM_API_STYLE: ${OPENHIRE_LLM_API_STYLE:-ollama}
+      APPROVAL_SERVICE_URL: http://approval-service:8083
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
+      SECURITY_MODE: ${SECURITY_MODE:-oidc}
+      OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
+      OIDC_JWK_SET_URI: http://keycloak:8080/realms/openhire-staff/protocol/openid-connect/certs
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8082/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  approval-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: approval-service
+    image: openhire/approval-service:local
+    # Bounds memory so the stack fits Docker Desktop's default 8 GB; the JVM sizes its heap at 75% of this limit.
+    mem_limit: 640m
+    restart: unless-stopped
+    ports:
+      - "${APPROVAL_SERVICE_PORT:-8083}:8083"
+    environment:
+      APPROVAL_SERVICE_PORT: 8083
+      MONGODB_URI: ${APPROVAL_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_approval}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      EVENT_PUBLISHER: kafka
+      OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      JOB_SERVICE_URL: http://job-service:8082
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
+      SECURITY_MODE: ${SECURITY_MODE:-oidc}
+      OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
+      OIDC_JWK_SET_URI: http://keycloak:8080/realms/openhire-staff/protocol/openid-connect/certs
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8083/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  application-service:
+    profiles: [phase3]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: application-service
+    image: openhire/application-service:local
+    # Bounds memory so the stack fits Docker Desktop's default 8 GB; the JVM sizes its heap at 75% of this limit.
+    mem_limit: 640m
+    restart: unless-stopped
+    ports:
+      - "${APPLICATION_SERVICE_PORT:-8084}:8084"
+    environment:
+      APPLICATION_SERVICE_PORT: 8084
+      MONGODB_URI: ${APPLICATION_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_application}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      JOB_SERVICE_URL: http://job-service:8082
+      CANDIDATE_SERVICE_URL: http://candidate-service:8085
+      RESUME_PROCESSOR_URL: http://resume-processor:8086
+      IDENTITY_SERVICE_URL: http://identity-service:8081
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
+      COMPLIANCE_SERVICE_URL: http://compliance-service:8095
+      SECURITY_MODE: ${SECURITY_MODE:-oidc}
+      OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
+      OIDC_JWK_SET_URI: http://keycloak:8080/realms/openhire-staff/protocol/openid-connect/certs
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      job-service:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8084/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  candidate-service:
+    profiles: [phase3]
+    build:
+      context: .
+      args:
+        SERVICE: candidate-service
+    image: openhire/candidate-service:local
+    # Bounds memory so the stack fits Docker Desktop's default 8 GB; the JVM sizes its heap at 75% of this limit.
+    mem_limit: 640m
+    restart: unless-stopped
+    ports: ["${CANDIDATE_SERVICE_PORT:-8085}:8085"]
+    environment:
+      SERVICE_PORT: 8085
+      APPLICATION_SERVICE_URL: http://application-service:8084
+      MONGODB_URI: ${CANDIDATE_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_candidate}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      SECURITY_MODE: ${SECURITY_MODE:-oidc}
+      OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
+      OIDC_JWK_SET_URI: http://keycloak:8080/realms/openhire-staff/protocol/openid-connect/certs
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    depends_on:
+      kafka:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8085/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  resume-processor:
+    profiles: [phase3]
+    build:
+      context: .
+      args:
+        SERVICE: resume-processor
+    image: openhire/resume-processor:local
+    # Bounds memory so the stack fits Docker Desktop's default 8 GB; the JVM sizes its heap at 75% of this limit.
+    mem_limit: 768m
+    restart: unless-stopped
+    ports: ["${RESUME_PROCESSOR_PORT:-8086}:8086"]
+    environment:
+      SERVICE_PORT: 8086
+      MONGODB_URI: ${RESUME_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_resume}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      SECURITY_MODE: ${SECURITY_MODE:-oidc}
+      OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
+      OIDC_JWK_SET_URI: http://keycloak:8080/realms/openhire-staff/protocol/openid-connect/certs
+      RESUME_DIRECTORY: /app/resumes
+      TIKA_URL: http://tika:9998
+      CLAMAV_HOST: clamav
+      CLAMAV_PORT: 3310
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    volumes: ["resume-data:/app/resumes"]
+    depends_on:
+      kafka:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      tika:
+        condition: service_healthy
+      clamav:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8086/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  tika:
+    profiles: [phase3]
+    image: ${TIKA_IMAGE:-apache/tika:3.3.0.0-full}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:9998/tika"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  clamav:
+    profiles: [phase3]
+    image: ${CLAMAV_IMAGE:-clamav/clamav:1.4}
+    # Bounds the signature database load so it cannot starve the other containers.
+    mem_limit: 1800m
+    environment:
+      # A signature reload otherwise keeps two databases in memory at once and gets the daemon OOM-killed.
+      CLAMD_CONF_ConcurrentDatabaseReload: "no"
+      # The signatures baked into the image are enough locally; a background update triggers the reload that gets killed.
+      CLAMAV_NO_FRESHCLAMD: "true"
+    # This upstream tag is amd64-only; Docker Desktop emulates it on Apple Silicon.
+    platform: ${CLAMAV_PLATFORM:-linux/amd64}
+    restart: unless-stopped
+    volumes: ["clamav-data:/var/lib/clamav"]
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 120s
+
+  interview-service:
+    profiles: [phase4]
+    # Bounds the JVM: the image sizes its heap at 75% of the container limit.
+    mem_limit: 640m
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: interview-service
+    image: openhire/interview-service:local
+    restart: unless-stopped
+    ports:
+      - "${INTERVIEW_SERVICE_PORT:-8087}:8087"
+    environment:
+      INTERVIEW_SERVICE_PORT: 8087
+      MONGODB_URI: ${INTERVIEW_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_interview}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
+      SECURITY_MODE: ${SECURITY_MODE:-oidc}
+      OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
+      OIDC_JWK_SET_URI: http://keycloak:8080/realms/openhire-staff/protocol/openid-connect/certs
+      APPLICATION_SERVICE_URL: http://application-service:8084
+      JOB_SERVICE_URL: http://job-service:8082
+      CANDIDATE_PORTAL_URL: ${CANDIDATE_PORTAL_URL:-http://localhost:3000}
+      SCHEDULING_TOKEN_SECRET: ${SCHEDULING_TOKEN_SECRET:-local-development-scheduling-secret}
+      INTERVIEW_DEFAULT_TIMEZONE: ${INTERVIEW_DEFAULT_TIMEZONE:-Asia/Kolkata}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      application-service:
+        condition: service_healthy
+      job-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8087/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  offer-service:
+    profiles: [phase5]
+    # Bounds the JVM: the image sizes its heap at 75% of the container limit.
+    mem_limit: 640m
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: offer-service
+    image: openhire/offer-service:local
+    restart: unless-stopped
+    ports:
+      # Host side only; containers use offer-service:8090. 8090 is commonly taken by other local tools.
+      - "${OFFER_SERVICE_HOST_PORT:-8095}:8090"
+    environment:
+      OFFER_SERVICE_PORT: 8090
+      MONGODB_URI: ${OFFER_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_offer}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
+      SECURITY_MODE: ${SECURITY_MODE:-oidc}
+      OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
+      OIDC_JWK_SET_URI: http://keycloak:8080/realms/openhire-staff/protocol/openid-connect/certs
+      APPLICATION_SERVICE_URL: http://application-service:8084
+      JOB_SERVICE_URL: http://job-service:8082
+      CANDIDATE_PORTAL_URL: ${CANDIDATE_PORTAL_URL:-http://localhost:3000}
+      OFFER_TOKEN_SECRET: ${OFFER_TOKEN_SECRET:-local-development-offer-secret}
+      COMPANY_NAME: ${COMPANY_NAME:-Northwind Payments}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      application-service:
+        condition: service_healthy
+      job-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8090/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  employee-service:
+    profiles: [phase5]
+    # Bounds the JVM: the image sizes its heap at 75% of the container limit.
+    mem_limit: 640m
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: employee-service
+    image: openhire/employee-service:local
+    restart: unless-stopped
+    ports:
+      # Host side only; containers use employee-service:8091.
+      - "${EMPLOYEE_SERVICE_HOST_PORT:-8096}:8091"
+    environment:
+      EMPLOYEE_SERVICE_PORT: 8091
+      MONGODB_URI: ${EMPLOYEE_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_employee}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
+      SECURITY_MODE: ${SECURITY_MODE:-oidc}
+      OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
+      OIDC_JWK_SET_URI: http://keycloak:8080/realms/openhire-staff/protocol/openid-connect/certs
+      APPLICATION_SERVICE_URL: http://application-service:8084
+      JOB_SERVICE_URL: http://job-service:8082
+      OFFER_SERVICE_URL: http://offer-service:8090
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      application-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8091/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  ai-gateway:
+    profiles: [phase6]
+    # Bounds the JVM: the image sizes its heap at 75% of the container limit.
+    mem_limit: 512m
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: ai-gateway
+    image: openhire/ai-gateway:local
+    restart: unless-stopped
+    ports:
+      # Host side only; containers use ai-gateway:8092.
+      - "${AI_GATEWAY_HOST_PORT:-8097}:8092"
+    environment:
+      AI_GATEWAY_PORT: 8092
+      MONGODB_URI: ${AI_GATEWAY_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_ai}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
+      SECURITY_MODE: ${SECURITY_MODE:-oidc}
+      OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
+      OIDC_JWK_SET_URI: http://keycloak:8080/realms/openhire-staff/protocol/openid-connect/certs
+      APPLICATION_SERVICE_URL: http://application-service:8084
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      AI_CHAT_MODEL: ${AI_CHAT_MODEL:-qwen2.5:3b-instruct}
+      AI_EMBEDDING_MODEL: ${AI_EMBEDDING_MODEL:-nomic-embed-text}
+      AI_LOCAL_ONLY: ${AI_LOCAL_ONLY:-true}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      application-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8092/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  ai-workers:
+    profiles: [phase6]
+    # Bounds the JVM: the image sizes its heap at 75% of the container limit.
+    mem_limit: 512m
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: ai-workers
+    image: openhire/ai-workers:local
+    restart: unless-stopped
+    ports:
+      # Host side only; containers use ai-workers:8093.
+      - "${AI_WORKERS_HOST_PORT:-8098}:8093"
+    environment:
+      AI_WORKERS_PORT: 8093
+      MONGODB_URI: ${AI_WORKERS_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_ai}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
+      SECURITY_MODE: ${SECURITY_MODE:-oidc}
+      OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
+      OIDC_JWK_SET_URI: http://keycloak:8080/realms/openhire-staff/protocol/openid-connect/certs
+      APPLICATION_SERVICE_URL: http://application-service:8084
+      AI_GATEWAY_URL: http://ai-gateway:8092
+      RESUME_PROCESSOR_URL: http://resume-processor:8086
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      application-service:
+        condition: service_healthy
+      ai-gateway:
+        condition: service_healthy
+      resume-processor:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8093/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  talent-service:
+    profiles: [phase6]
+    # Bounds the JVM: the image sizes its heap at 75% of the container limit.
+    mem_limit: 512m
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: talent-service
+    image: openhire/talent-service:local
+    restart: unless-stopped
+    ports:
+      # Host side only; containers use talent-service:8094.
+      - "${TALENT_SERVICE_HOST_PORT:-8099}:8094"
+    environment:
+      TALENT_SERVICE_PORT: 8094
+      MONGODB_URI: ${TALENT_SERVICE_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_talent}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
+      SECURITY_MODE: ${SECURITY_MODE:-oidc}
+      OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
+      OIDC_JWK_SET_URI: http://keycloak:8080/realms/openhire-staff/protocol/openid-connect/certs
+      APPLICATION_SERVICE_URL: http://application-service:8084
+      JOB_SERVICE_URL: http://job-service:8082
+      AI_GATEWAY_URL: http://ai-gateway:8092
+      RESUME_PROCESSOR_URL: http://resume-processor:8086
+      COMMUNICATION_SERVICE_URL: http://communication-service:8088
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      application-service:
+        condition: service_healthy
+      job-service:
+        condition: service_healthy
+      ai-gateway:
+        condition: service_healthy
+      communication-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8094/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  compliance-service:
+    profiles: [phase7]
+    # Bounds the JVM: the image sizes its heap at 75% of the container limit.
+    mem_limit: 576m
+    # Heap plus Kafka, Mongo and TLS buffers must fit under the limit or the kernel kills the JVM.
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: compliance-service
+    image: openhire/compliance-service:local
+    restart: unless-stopped
+    ports:
+      # Host side only; containers use compliance-service:8095.
+      - "${COMPLIANCE_SERVICE_HOST_PORT:-8105}:8095"
+    environment:
+      JVM_RAM_PERCENT: 55
+      COMPLIANCE_SERVICE_PORT: 8095
+      MONGODB_URI: ${COMPLIANCE_SERVICE_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_compliance}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
+      SECURITY_MODE: ${SECURITY_MODE:-oidc}
+      OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
+      OIDC_JWK_SET_URI: http://keycloak:8080/realms/openhire-staff/protocol/openid-connect/certs
+      APPLICATION_SERVICE_URL: http://application-service:8084
+      COMPLIANCE_DATA_KEY: ${COMPLIANCE_DATA_KEY:-local-development-compliance-key-change-me}
+      OPENHIRE_COMPLIANCE_AI_URL: http://ai-gateway:8092
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      application-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8095/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  analytics-service:
+    profiles: [phase7]
+    # Bounds the JVM: the image sizes its heap at 75% of the container limit.
+    mem_limit: 576m
+    # Heap plus Kafka, Mongo and TLS buffers must fit under the limit or the kernel kills the JVM.
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: analytics-service
+    image: openhire/analytics-service:local
+    restart: unless-stopped
+    ports:
+      # Host side only; containers use analytics-service:8096.
+      - "${ANALYTICS_SERVICE_HOST_PORT:-8106}:8096"
+    environment:
+      JVM_RAM_PERCENT: 55
+      ANALYTICS_SERVICE_PORT: 8096
+      MONGODB_URI: ${ANALYTICS_SERVICE_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_analytics}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
+      SECURITY_MODE: ${SECURITY_MODE:-oidc}
+      OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
+      OIDC_JWK_SET_URI: http://keycloak:8080/realms/openhire-staff/protocol/openid-connect/certs
+      APPLICATION_SERVICE_URL: http://application-service:8084
+      ANALYTICS_POLL_SECONDS: ${ANALYTICS_POLL_SECONDS:-15}
+      OPENHIRE_ANALYTICS_PROMETHEUS_URL: ${PROMETHEUS_URL:-http://prometheus:9090}
+      OPENHIRE_ANALYTICS_METRICS_TENANTS: ${PROMETHEUS_TENANTS:-demo-org,second-org}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      application-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8096/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  communication-service:
+    profiles: [phase4]
+    # Bounds the JVM: the image sizes its heap at 75% of the container limit.
+    mem_limit: 640m
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: communication-service
+    image: openhire/communication-service:local
+    restart: unless-stopped
+    ports:
+      - "${COMMUNICATION_SERVICE_PORT:-8088}:8088"
+    environment:
+      COMMUNICATION_SERVICE_PORT: 8088
+      MONGODB_URI: ${COMMUNICATION_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_comm}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
+      SECURITY_MODE: ${SECURITY_MODE:-oidc}
+      OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
+      OIDC_JWK_SET_URI: http://keycloak:8080/realms/openhire-staff/protocol/openid-connect/certs
+      APPLICATION_SERVICE_URL: http://application-service:8084
+      AI_GATEWAY_URL: http://ai-gateway:8092
+      COMPANY_NAME: ${COMPANY_NAME:-Northwind Payments}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      application-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8088/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  notification-dispatcher:
+    profiles: [phase4]
+    # Bounds the JVM: the image sizes its heap at 75% of the container limit.
+    mem_limit: 640m
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: notification-dispatcher
+    image: openhire/notification-dispatcher:local
+    restart: unless-stopped
+    ports:
+      - "${NOTIFICATION_DISPATCHER_PORT:-8089}:8089"
+    environment:
+      NOTIFICATION_DISPATCHER_PORT: 8089
+      MONGODB_URI: ${DISPATCH_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_dispatch}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
+      SECURITY_MODE: ${SECURITY_MODE:-oidc}
+      OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
+      OIDC_JWK_SET_URI: http://keycloak:8080/realms/openhire-staff/protocol/openid-connect/certs
+      MAIL_HOST: ${MAIL_HOST:-mailpit}
+      MAIL_PORT: ${MAIL_PORT:-1025}
+      MAIL_FROM: ${MAIL_FROM:-Northwind Payments hiring <no-reply@openhire.local>}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8089/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  mailpit:
+    profiles: [phase4]
+    mem_limit: 128m
+    image: axllent/mailpit:v1.27
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+    environment:
+      MP_MAX_MESSAGES: 5000
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: api-gateway
+    image: openhire/api-gateway:local
+    # Bounds memory so the stack fits Docker Desktop's default 8 GB; the JVM sizes its heap at 75% of this limit.
+    mem_limit: 640m
+    restart: unless-stopped
+    ports:
+      - "${GATEWAY_PORT:-8080}:8080"
+    environment:
+      GATEWAY_PORT: 8080
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      IDENTITY_SERVICE_URL: http://identity-service:8081
+      JOB_SERVICE_URL: http://job-service:8082
+      APPROVAL_SERVICE_URL: http://approval-service:8083
+      APPLICATION_SERVICE_URL: http://application-service:8084
+      CANDIDATE_SERVICE_URL: http://candidate-service:8085
+      RESUME_PROCESSOR_URL: http://resume-processor:8086
+      INTERVIEW_SERVICE_URL: http://interview-service:8087
+      OFFER_SERVICE_URL: http://offer-service:8090
+      EMPLOYEE_SERVICE_URL: http://employee-service:8091
+      AI_GATEWAY_URL: http://ai-gateway:8092
+      AI_WORKERS_URL: http://ai-workers:8093
+      TALENT_SERVICE_URL: http://talent-service:8094
+      COMPLIANCE_SERVICE_URL: http://compliance-service:8095
+      ANALYTICS_SERVICE_URL: http://analytics-service:8096
+      INTEGRATION_HUB_URL: http://integration-hub:8097
+      INTEGRATION_PUBLIC_BASE_URL: ${INTEGRATION_PUBLIC_BASE_URL:-http://localhost:8080}
+      COMMUNICATION_SERVICE_URL: http://communication-service:8088
+      NOTIFICATION_DISPATCHER_URL: http://notification-dispatcher:8089
+      SECURITY_MODE: ${SECURITY_MODE:-oidc}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-oidc}
+      STAFF_UI_URL: ${STAFF_UI_URL:-http://localhost:5173/}
+      PARTNER_UI_URL: ${PARTNER_UI_URL:-http://localhost:5174/jobs}
+      AUTH_UI_URL: ${AUTH_UI_URL:-http://localhost:5176/login}
+      CANDIDATE_AUTH_UI_URL: ${CANDIDATE_AUTH_UI_URL:-http://localhost:5176/candidate-sign-in}
+      STAFF_OIDC_ISSUER: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
+      STAFF_OIDC_INTERNAL_URL: ${STAFF_OIDC_INTERNAL_URL:-http://keycloak:8080}
+      STAFF_OIDC_CLIENT_ID: ${STAFF_OIDC_CLIENT_ID:-openhire-web}
+      STAFF_OIDC_CLIENT_SECRET: ${STAFF_OIDC_CLIENT_SECRET:-replace-before-use}
+      CANDIDATE_OIDC_ISSUER: ${CANDIDATE_OIDC_ISSUER:-http://localhost:8180/realms/openhire-candidate}
+      CANDIDATE_OIDC_INTERNAL_URL: ${CANDIDATE_OIDC_INTERNAL_URL:-http://keycloak:8080}
+      CANDIDATE_OIDC_CLIENT_ID: ${CANDIDATE_OIDC_CLIENT_ID:-openhire-candidate-web}
+      CANDIDATE_OIDC_CLIENT_SECRET: ${CANDIDATE_OIDC_CLIENT_SECRET:-replace-before-use}
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
+      SESSION_COOKIE_SECURE: "false"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      identity-service:
+        condition: service_healthy
+      job-service:
+        condition: service_healthy
+      approval-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  integration-hub:
+    profiles: [phase8]
+    image: openhire/integration-hub:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: integration-hub
+    mem_limit: 512m
+    environment:
+      JVM_RAM_PERCENT: 55
+      INTEGRATION_HUB_PORT: 8097
+      INTEGRATION_ENCRYPTION_KEY: ${INTEGRATION_ENCRYPTION_KEY:-}
+      INTEGRATION_SECRETS_DIRECTORY: ${INTEGRATION_SECRETS_DIRECTORY:-}
+      INTEGRATION_WEBHOOKS_ENABLED: ${INTEGRATION_WEBHOOKS_ENABLED:-false}
+      INTEGRATION_CALENDAR_WRITES_ENABLED: ${INTEGRATION_CALENDAR_WRITES_ENABLED:-false}
+      INTEGRATION_REQUESTS_PER_MINUTE: ${INTEGRATION_REQUESTS_PER_MINUTE:-300}
+      INTEGRATION_CALENDAR_CHANGES_PER_DAY: ${INTEGRATION_CALENDAR_CHANGES_PER_DAY:-10000}
+      INTEGRATION_WEBHOOK_DELIVERIES_PER_DAY: ${INTEGRATION_WEBHOOK_DELIVERIES_PER_DAY:-50000}
+      INTEGRATION_CONFIGURATIONS_PER_DAY: ${INTEGRATION_CONFIGURATIONS_PER_DAY:-1000}
+      INTEGRATION_PUBLIC_BASE_URL: ${INTEGRATION_PUBLIC_BASE_URL:-http://localhost:8080}
+      MONGODB_URI: ${INTEGRATION_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_integration}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      REDIS_HOST: redis
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
+      OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
+      OIDC_JWK_SET_URI: http://keycloak:8080/realms/openhire-staff/protocol/openid-connect/certs
+    ports:
+      - "${INTEGRATION_HUB_HOST_PORT:-8107}:8097"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8097/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # Optional low-memory monitoring. No dependency on the full stack or the resume scanner.
+  prometheus:
+    profiles: [monitoring]
+    image: prom/prometheus:v3.5.0
+    mem_limit: 192m
+    cpus: 0.5
+    environment:
+      GOMEMLIMIT: 128MiB
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=24h
+      - --storage.tsdb.retention.size=128MB
+      - --query.max-concurrency=2
+      - --query.max-samples=100000
+    ports:
+      - "127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infra/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      # Supply a file containing INTERNAL_SERVICE_SECRET if overriding the local development default.
+      - ${PROMETHEUS_SECRET_FILE:-./infra/prometheus/internal-secret.local}:/etc/prometheus/internal-secret:ro
+      - prometheus-data:/prometheus
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:9090/-/ready"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  prometheus-data:
+  resume-data:
+  clamav-data:
+  redis-data:
+  kafka-data:

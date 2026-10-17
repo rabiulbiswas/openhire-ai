@@ -1,0 +1,72 @@
+server:
+  port: ${JOB_SERVICE_PORT:8082}
+  shutdown: graceful
+
+spring:
+  application:
+    name: job-service
+  threads:
+    virtual:
+      enabled: true
+  mongodb:
+    representation:
+      uuid: standard
+    uri: ${MONGODB_URI:mongodb://localhost:27017/oh_job}
+  data:
+    mongodb:
+      auto-index-creation: true
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2s
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+        delivery.timeout.ms: 10000
+        request.timeout.ms: 5000
+    admin:
+      fail-fast: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${OIDC_ISSUER_URI:http://localhost:8180/realms/openhire-staff}
+          jwk-set-uri: ${OIDC_JWK_SET_URI:http://localhost:8180/realms/openhire-staff/protocol/openid-connect/certs}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui
+
+openhire:
+  tenant:
+    default-id: ${OPENHIRE_DEFAULT_TENANT:demo-tenant}
+  outbox:
+    relay-enabled: ${OPENHIRE_OUTBOX_RELAY_ENABLED:true}
+    poll-delay: 1000
+  llm:
+    base-url: ${OPENHIRE_LLM_BASE_URL:http://localhost:11434}
+    model: ${OPENHIRE_LLM_MODEL:qwen3:8b}
+    api-style: ${OPENHIRE_LLM_API_STYLE:ollama}
+  security:
+    mode: ${SECURITY_MODE:local}
+  approval:
+    base-url: ${APPROVAL_SERVICE_URL:http://localhost:8083}
+  internal-secret: ${INTERNAL_SERVICE_SECRET:local-development-secret}

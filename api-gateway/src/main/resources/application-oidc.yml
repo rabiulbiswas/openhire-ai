@@ -1,0 +1,42 @@
+openhire:
+  security:
+    mode: oidc
+
+spring:
+  security:
+    oauth2:
+      client:
+        provider:
+          openhire-staff:
+            authorization-uri: ${STAFF_OIDC_ISSUER:http://localhost:8180/realms/openhire-staff}/protocol/openid-connect/auth
+            token-uri: ${STAFF_OIDC_INTERNAL_URL:http://localhost:8180}/realms/openhire-staff/protocol/openid-connect/token
+            jwk-set-uri: ${STAFF_OIDC_INTERNAL_URL:http://localhost:8180}/realms/openhire-staff/protocol/openid-connect/certs
+            user-info-uri: ${STAFF_OIDC_INTERNAL_URL:http://localhost:8180}/realms/openhire-staff/protocol/openid-connect/userinfo
+            user-name-attribute: sub
+          openhire-candidate:
+            authorization-uri: ${CANDIDATE_OIDC_ISSUER:http://localhost:8180/realms/openhire-candidate}/protocol/openid-connect/auth
+            token-uri: ${CANDIDATE_OIDC_INTERNAL_URL:http://localhost:8180}/realms/openhire-candidate/protocol/openid-connect/token
+            jwk-set-uri: ${CANDIDATE_OIDC_INTERNAL_URL:http://localhost:8180}/realms/openhire-candidate/protocol/openid-connect/certs
+            user-info-uri: ${CANDIDATE_OIDC_INTERNAL_URL:http://localhost:8180}/realms/openhire-candidate/protocol/openid-connect/userinfo
+            user-name-attribute: sub
+        registration:
+          openhire-staff:
+            provider: openhire-staff
+            client-id: ${STAFF_OIDC_CLIENT_ID:openhire-web}
+            client-secret: ${STAFF_OIDC_CLIENT_SECRET:replace-before-use}
+            client-authentication-method: client_secret_basic
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: openid,profile,email
+          openhire-candidate:
+            provider: openhire-candidate
+            client-id: ${CANDIDATE_OIDC_CLIENT_ID:openhire-candidate-web}
+            client-secret: ${CANDIDATE_OIDC_CLIENT_SECRET:replace-before-use}
+            client-authentication-method: client_secret_basic
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: openid,profile,email
+      resourceserver:
+        jwt:
+          issuer-uri: ${STAFF_OIDC_ISSUER:http://localhost:8180/realms/openhire-staff}
+          jwk-set-uri: ${STAFF_OIDC_INTERNAL_URL:http://localhost:8180}/realms/openhire-staff/protocol/openid-connect/certs

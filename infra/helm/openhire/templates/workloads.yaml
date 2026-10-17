@@ -1,0 +1,116 @@
+{{- $root := . -}}
+{{- $tag := required "Set image.tag to a tested release tag" .Values.image.tag -}}
+{{- range $service, $settings := .Values.services }}
+{{- if $settings.enabled }}
+{{- $name := printf "%s-%s" $root.Release.Name $service | trunc 63 | trimSuffix "-" }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels: {app.kubernetes.io/part-of: openhire, app.kubernetes.io/instance: {{ $root.Release.Name | quote }}}
+spec:
+  replicas: {{ default $root.Values.replicas $settings.replicas }}
+  revisionHistoryLimit: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxSurge: 1, maxUnavailable: 0}
+  selector:
+    matchLabels: {app: {{ $name | quote }}}
+  template:
+    metadata:
+      labels: {app: {{ $name | quote }}, app.kubernetes.io/part-of: openhire, app.kubernetes.io/instance: {{ $root.Release.Name | quote }}}
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 60
+      securityContext: {runAsNonRoot: true, runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001}
+      containers:
+        - name: {{ $service }}
+          {{- $serviceImage := default dict $settings.image }}
+          {{- $repository := default (printf "%s/%s" $root.Values.image.registry $service) $serviceImage.repository }}
+          {{- if $serviceImage.digest }}
+          image: {{ printf "%s@%s" $repository $serviceImage.digest | quote }}
+          {{- else }}
+          image: {{ printf "%s:%s" $repository (default $tag $serviceImage.tag) | quote }}
+          {{- end }}
+          imagePullPolicy: {{ $root.Values.image.pullPolicy }}
+          ports: [{name: http, containerPort: 8080}]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+            seccompProfile: {type: RuntimeDefault}
+          envFrom: [{secretRef: {name: {{ $name | quote }}}}]
+          env:
+            - {name: SERVER_PORT, value: "8080"}
+            - {name: SECURITY_MODE, value: oidc}
+            - {name: JVM_RAM_PERCENT, value: "60"}
+            - {name: MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED, value: "true"}
+            - {name: SERVER_SHUTDOWN, value: graceful}
+            {{- with $settings.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          resources:
+            {{- toYaml (default $root.Values.resources $settings.resources) | nindent 12 }}
+          startupProbe:
+            httpGet: {path: /actuator/health/liveness, port: http}
+            periodSeconds: 5
+            failureThreshold: 60
+          livenessProbe:
+            httpGet: {path: /actuator/health/liveness, port: http}
+            periodSeconds: 20
+          readinessProbe:
+            httpGet: {path: /actuator/health/readiness, port: http}
+            periodSeconds: 10
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
+            {{- if eq $service "resume-processor" }}
+            - {name: resumes, mountPath: /app/resumes}
+            {{- end }}
+            {{- with $settings.volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: tmp
+          emptyDir: {sizeLimit: 256Mi}
+        {{- if eq $service "resume-processor" }}
+        - name: resumes
+          persistentVolumeClaim:
+            claimName: {{ required "resume-processor.existingClaim is required when enabled" $settings.existingClaim | quote }}
+        {{- end }}
+        {{- with $settings.volumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: {{ $name | quote }}}
+spec:
+  type: ClusterIP
+  selector: {app: {{ $name | quote }}}
+  ports: [{name: http, port: 8080, targetPort: http}]
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: {name: {{ $name | quote }}}
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels: {app: {{ $name | quote }}}
+{{- if or $root.Values.autoscaling.enabled $settings.autoscaling }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: {name: {{ $name | quote }}}
+spec:
+  scaleTargetRef: {apiVersion: apps/v1, kind: Deployment, name: {{ $name | quote }}}
+  minReplicas: {{ $root.Values.autoscaling.minReplicas }}
+  maxReplicas: {{ $root.Values.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: {type: Utilization, averageUtilization: {{ $root.Values.autoscaling.cpuPercent }}}
+{{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,125 @@
+name: OpenHire Deploy
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful main-branch OpenHire CI run ID with a backend-release artifact
+        required: true
+        type: string
+      environment:
+        description: Target GitHub environment (production requires reviewer protection)
+        required: true
+        default: testing
+        type: choice
+        options: [testing, production]
+
+permissions:
+  contents: read
+  actions: read
+
+# Serialize every release; never cancel a running Helm upgrade.
+concurrency:
+  group: openhire-deploy-${{ inputs.environment || 'testing' }}
+  cancel-in-progress: false
+
+jobs:
+  authorize:
+    name: Validate trusted CI release
+    # Deployment is parked, including manual runs, until explicitly re-enabled in code.
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.release.outputs.ready }}
+      run: ${{ steps.release.outputs.run }}
+      sha: ${{ steps.release.outputs.sha }}
+      environment: ${{ steps.release.outputs.environment }}
+    steps:
+      - id: release
+        uses: actions/github-script@v7
+        env:
+          REQUESTED_RUN: ${{ inputs.run_id || github.event.workflow_run.id }}
+          TARGET_ENVIRONMENT: ${{ inputs.environment || 'testing' }}
+        with:
+          script: |
+            const run_id = Number(process.env.REQUESTED_RUN);
+            if (!Number.isSafeInteger(run_id) || run_id <= 0) throw Error('Invalid CI run ID');
+            const {data: run} = await github.rest.actions.getWorkflowRun({...context.repo, run_id});
+            const {data: workflow} = await github.rest.actions.getWorkflow({...context.repo, workflow_id: 'ci.yml'});
+            if (run.workflow_id !== workflow.id || run.conclusion !== 'success' || run.status !== 'completed' || run.head_branch !== 'main' || !['push','workflow_dispatch'].includes(run.event) || run.head_repository?.full_name !== `${context.repo.owner}/${context.repo.repo}`) throw Error('Only successful trusted main-branch CI releases may deploy');
+            const artifacts = await github.paginate(github.rest.actions.listWorkflowRunArtifacts, {...context.repo, run_id});
+            const release = artifacts.filter(a => a.name === 'backend-release' && !a.expired);
+            if (release.length !== 1) {
+              if (context.eventName === 'workflow_dispatch') throw Error('Release artifact missing or expired. Run full CI on main with publication enabled.');
+              core.setOutput('ready', 'false');
+              await core.summary.addRaw('No backend release in this CI run; nothing to deploy.').write();
+              return;
+            }
+            core.setOutput('ready', 'true'); core.setOutput('run', String(run_id));
+            core.setOutput('sha', run.head_sha); core.setOutput('environment', process.env.TARGET_ENVIRONMENT);
+            await core.summary.addLink('Source CI run', run.html_url).addRaw(`\n\nTarget: ${process.env.TARGET_ENVIRONMENT}`).write();
+
+  deploy:
+    name: Deploy / ${{ needs.authorize.outputs.environment }}
+    needs: authorize
+    if: needs.authorize.outputs.ready == 'true'
+    environment:
+      name: ${{ needs.authorize.outputs.environment }}
+      url: ${{ vars.APPLICATION_URL }}
+    # Set EKS_RUNNER_JSON to private-network runner labels for a private EKS endpoint.
+    runs-on: ${{ fromJSON(vars.EKS_RUNNER_JSON || '["ubuntu-latest"]') }}
+    timeout-minutes: 35
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    env:
+      SOURCE_SHA: ${{ needs.authorize.outputs.sha }}
+      SOURCE_RUN: ${{ needs.authorize.outputs.run }}
+      DEPLOY_ENVIRONMENT: ${{ needs.authorize.outputs.environment }}
+      EKS_CLUSTER: ${{ vars.EKS_CLUSTER }}
+      HELM_RELEASE: ${{ vars.HELM_RELEASE }}
+      K8S_NAMESPACE: ${{ vars.K8S_NAMESPACE }}
+      ECR_PREFIX: ${{ vars.ECR_PREFIX }}
+      KUBECTL_VERSION: ${{ vars.KUBECTL_VERSION }}
+    steps:
+      - name: Use an isolated Kubernetes configuration
+        run: echo "KUBECONFIG=$RUNNER_TEMP/openhire-kubeconfig" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.authorize.outputs.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: backend-release
+          run-id: ${{ needs.authorize.outputs.run }}
+          github-token: ${{ github.token }}
+          path: release-input
+      - uses: azure/setup-helm@v4.3.0
+        with:
+          version: v3.18.3
+      - name: Validate deployment settings
+        run: |
+          : "${EKS_CLUSTER:?Set environment EKS_CLUSTER}"
+          : "${HELM_RELEASE:?Set environment HELM_RELEASE}"
+          : "${K8S_NAMESPACE:?Set environment K8S_NAMESPACE}"
+          : "${ECR_PREFIX:?Set environment ECR_PREFIX}"
+          : "${KUBECTL_VERSION:?Set environment KUBECTL_VERSION compatible with EKS}"
+          command -v aws
+      - uses: azure/setup-kubectl@v4
+        with:
+          version: ${{ vars.KUBECTL_VERSION }}
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ap-south-2
+      - name: Connect to existing EKS cluster
+        run: aws eks update-kubeconfig --name "$EKS_CLUSTER" --region ap-south-2
+      - name: Deploy changed images and watch rollouts
+        run: node .github/scripts/deploy.mjs
+      - name: Remove temporary Kubernetes credentials
+        if: always()
+        run: |
+          if [[ -n "${KUBECONFIG:-}" ]]; then rm -f -- "$KUBECONFIG"; fi

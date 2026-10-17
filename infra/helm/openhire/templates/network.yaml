@@ -1,0 +1,48 @@
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: {{ printf "%s-internal" .Release.Name | quote }}}
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/instance: {{ .Release.Name | quote }}}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/instance: {{ .Release.Name | quote }}}
+      ports: [{protocol: TCP, port: 8080}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: {{ printf "%s-gateway-ingress" .Release.Name | quote }}}
+spec:
+  podSelector:
+    matchLabels: {app: {{ printf "%s-api-gateway" .Release.Name | quote }}}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: {{ .Values.networkPolicy.ingressNamespace | quote }}}
+      ports: [{protocol: TCP, port: 8080}]
+{{- end }}
+{{- if .Values.ingress.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata: {name: {{ printf "%s-gateway" .Release.Name | quote }}}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  tls:
+    - hosts: [{{ required "ingress.host required" .Values.ingress.host | quote }}]
+      secretName: {{ required "ingress.tlsSecret required" .Values.ingress.tlsSecret | quote }}
+  rules:
+    - host: {{ .Values.ingress.host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ printf "%s-api-gateway" .Release.Name | quote }}
+                port: {number: 8080}
+{{- end }}

@@ -1,0 +1,12 @@
+# Package the exact JAR tested/built by CI; do not compile a second time.
+FROM eclipse-temurin:25-jre
+RUN apt-get update && apt-get install --no-install-recommends -y curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --system --gid 10001 openhire \
+    && useradd --system --uid 10001 --gid openhire --home-dir /app --shell /usr/sbin/nologin openhire \
+    && mkdir -p /app/resumes && chown -R openhire:openhire /app
+WORKDIR /app
+COPY --chown=openhire:openhire application.jar application.jar
+USER openhire
+ENV JVM_RAM_PERCENT=60
+ENTRYPOINT ["sh", "-c", "exec java -XX:MaxRAMPercentage=${JVM_RAM_PERCENT} -XX:+ExitOnOutOfMemoryError -jar /app/application.jar"]

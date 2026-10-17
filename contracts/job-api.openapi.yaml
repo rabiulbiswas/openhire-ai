@@ -1,0 +1,53 @@
+openapi: 3.1.0
+info: { title: OpenHire Job API, version: 1.0.0 }
+servers: [{ url: /api/v1 }]
+paths:
+  /jobs:
+    get: { operationId: listJobs, responses: { '200': { description: Jobs } } }
+    post: { operationId: createJob, responses: { '201': { description: Created } } }
+  /jobs/ai-draft:
+    post: { operationId: draftJobBeforeCreate, responses: { '200': { description: AI draft } } }
+  /jobs/{id}:
+    get: { operationId: getJob, responses: { '200': { description: Job }, '404': { $ref: '#/components/responses/Problem' } } }
+    patch:
+      operationId: updateJob
+      parameters: [{ $ref: '#/components/parameters/Id' }, { $ref: '#/components/parameters/IfMatch' }]
+      responses: { '200': { description: Updated }, '412': { $ref: '#/components/responses/Problem' } }
+  /jobs/{id}/hiring-team:
+    put: { operationId: updateHiringTeam, parameters: [{ $ref: '#/components/parameters/Id' }, { $ref: '#/components/parameters/IfMatch' }], responses: { '200': { description: Updated } } }
+  /jobs/{id}/versions/{version}/interview-plan:
+    put: { operationId: updateInterviewPlan, responses: { '200': { description: Updated } } }
+  /jobs/{id}/submit:
+    post: { operationId: submitJob, responses: { '200': { description: Submitted } } }
+  /jobs/{id}/publish:
+    post: { operationId: publishJob, responses: { '200': { description: Published }, '409': { $ref: '#/components/responses/Problem' } } }
+  /jobs/{id}/pause:
+    post: { operationId: pauseJob, responses: { '200': { description: Paused } } }
+  /jobs/{id}/close:
+    post: { operationId: closeJob, responses: { '200': { description: Closed } } }
+  /jobs/{id}/reopen:
+    post: { operationId: reopenJob, responses: { '200': { description: Reopened } } }
+  /jobs/{id}/versions/{version}/ai-draft:
+    post: { operationId: draftStoredJobVersion, responses: { '200': { description: AI draft } } }
+  /jobs/internal/{id}/approval-decision:
+    post: { operationId: applyApprovalDecision, responses: { '200': { description: Decision applied }, '401': { $ref: '#/components/responses/Problem' } } }
+  /hiring-stages:
+    get: { operationId: listHiringStages, responses: { '200': { description: Stage sets } } }
+    put: { operationId: saveHiringStages, responses: { '200': { description: Saved } } }
+  /pipeline-templates:
+    get: { operationId: listPipelineTemplates, responses: { '200': { description: Templates } } }
+    put: { operationId: savePipelineTemplate, responses: { '200': { description: Saved } } }
+  /pipeline-templates/resolve:
+    get: { operationId: resolvePipelineTemplate, responses: { '200': { description: Template } } }
+  /internal-jobs:
+    get: { operationId: listInternalJobs, responses: { '200': { description: Published internal jobs } } }
+  /public/jobs:
+    get: { operationId: listPublicJobs, responses: { '200': { description: Published public jobs } } }
+  /me/inbox:
+    get: { operationId: getTodayInbox, responses: { '200': { description: Recruiter inbox } } }
+components:
+  parameters:
+    Id: { name: id, in: path, required: true, schema: { type: string } }
+    IfMatch: { name: If-Match, in: header, required: true, schema: { type: string } }
+  responses:
+    Problem: { description: RFC 9457 problem, content: { application/problem+json: { schema: { type: object } } } }

@@ -1,0 +1,273 @@
+name: OpenHire CI
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    name: Detect affected services
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.detect.outputs.services }}
+      backend: ${{ steps.detect.outputs.backend }}
+      frontend: ${{ steps.detect.outputs.frontend }}
+      chart: ${{ steps.detect.outputs.chart }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - id: detect
+        run: node .github/scripts/affected.mjs
+
+  pipeline-checks:
+    name: Pipeline and Helm validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: azure/setup-helm@v4.3.0
+        with:
+          version: v3.18.3
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache: false
+      - name: Validate GitHub workflow syntax and expressions
+        run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.7 -shellcheck= .github/workflows/ci.yml .github/workflows/deploy.yml
+      - run: node --test .github/scripts/*.test.mjs backend/scripts/deploy-local.test.mjs backend/scripts/mongo-recovery.test.mjs
+      - run: bash -n backend/run-backend.sh backend/scripts/deploy-local.sh
+      - run: helm lint backend/infra/helm/openhire --set image.tag=ci-validation
+      - run: helm template openhire backend/infra/helm/openhire --set image.tag=ci-validation > /dev/null
+
+  backend:
+    name: Backend / ${{ matrix.service }}
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        service: ${{ fromJSON(needs.changes.outputs.services) }}
+    services:
+      redis:
+        image: redis:8-alpine
+        ports: ['6379:6379']
+        options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 12
+      mongo:
+        image: mongo:8.2
+        ports: ['27017:27017']
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.adminCommand({ping:1}).ok'"
+          --health-interval 10s --health-timeout 5s --health-retries 12
+    env:
+      OPENHIRE_RUN_MONGO_TESTS: 'true'
+      OPENHIRE_TEST_MONGO_URI: mongodb://localhost:27017/
+      OPENHIRE_RUN_OLLAMA_TESTS: 'false'
+      OPENHIRE_LLM_CONNECTIVITY_TEST: 'false'
+      OPENHIRE_RUN_RECOVERY_TESTS: 'false'
+      SERVICE: ${{ matrix.service }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Check, test, build JAR and SBOM
+        working-directory: backend
+        run: bash gradlew ":$SERVICE:spotlessCheck" ":$SERVICE:test" ":$SERVICE:bootJar" ":$SERVICE:cyclonedxBom" --no-daemon --no-configuration-cache --max-workers=2
+      - name: Preserve test reports, including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-${{ matrix.service }}
+          path: |
+            backend/${{ matrix.service }}/build/reports/
+            backend/${{ matrix.service }}/build/test-results/
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jar-${{ matrix.service }}
+          path: backend/${{ matrix.service }}/build/libs/${{ matrix.service }}.jar
+          if-no-files-found: error
+          retention-days: 14
+
+  shared-tests:
+    name: Shared-library tests
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Require Docker for infrastructure tests
+        run: docker info > /dev/null
+      - working-directory: backend
+        run: bash gradlew :platform-starter:spotlessCheck :platform-starter:test :service-support:spotlessCheck :service-support:test --no-daemon --max-workers=2
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-shared
+          path: |
+            backend/platform-starter/build/reports/
+            backend/service-support/build/reports/
+
+  frontend:
+    name: Frontend / workspace build and tests
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - run: pnpm --filter @openhire/console mocks:init
+      - run: pnpm --filter @openhire/console exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-reports-and-builds
+          path: |
+            frontend/apps/*/dist/
+            frontend/apps/console/playwright-report/
+            frontend/apps/console/test-results/
+          retention-days: 14
+
+  ci-gate:
+    name: CI gate
+    needs: [changes, pipeline-checks, backend, shared-tests, frontend]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require all expected checks
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          node -e 'const n=JSON.parse(process.env.RESULTS); for(const [k,v] of Object.entries(n)){if(["failure","cancelled"].includes(v.result))throw Error(k+" "+v.result)} if(n.changes.result!=="success"||n["pipeline-checks"].result!=="success")throw Error("Mandatory checks missing"); if(n.changes.outputs.backend==="true"&&(n.backend.result!=="success"||n["shared-tests"].result!=="success"))throw Error("Backend checks missing"); if(n.changes.outputs.frontend==="true"&&n.frontend.result!=="success")throw Error("Frontend checks missing")'
+      - name: Pipeline summary
+        env:
+          SERVICES: ${{ needs.changes.outputs.services }}
+        run: |
+          echo '## CI passed' >> "$GITHUB_STEP_SUMMARY"
+          echo "Affected services: $SERVICES" >> "$GITHUB_STEP_SUMMARY"
+          echo 'CI-only mode: image publication and deployment are disabled. Live providers, LLM, DR and full-stack browser acceptance are separate gates.' >> "$GITHUB_STEP_SUMMARY"
+
+  publish:
+    name: ECR / ${{ matrix.service }}
+    needs: [changes, ci-gate]
+    # CI-only for now. Re-enabling publication requires a reviewed workflow change.
+    if: ${{ false }}
+    environment: image-publish
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        service: ${{ fromJSON(needs.changes.outputs.services) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: jar-${{ matrix.service }}
+          path: image-context
+      - name: Prepare tested JAR
+        env:
+          SERVICE: ${{ matrix.service }}
+        run: cp "image-context/$SERVICE.jar" image-context/application.jar
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_PUBLISH_ROLE_ARN }}
+          aws-region: ap-south-2
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - uses: docker/setup-buildx-action@v3
+      - id: image
+        uses: docker/build-push-action@v6
+        with:
+          context: image-context
+          file: backend/Dockerfile.ci
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.ecr.outputs.registry }}/openhire/${{ matrix.service }}:${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          provenance: true
+          sbom: true
+      - name: Record immutable image
+        env:
+          SERVICE: ${{ matrix.service }}
+          REPOSITORY: ${{ steps.ecr.outputs.registry }}/openhire/${{ matrix.service }}
+          DIGEST: ${{ steps.image.outputs.digest }}
+        run: |
+          node -e 'require("fs").writeFileSync("image.json",JSON.stringify({service:process.env.SERVICE,repository:process.env.REPOSITORY,digest:process.env.DIGEST,sha:process.env.GITHUB_SHA}))'
+          echo "### Published $SERVICE" >> "$GITHUB_STEP_SUMMARY"
+          echo "$REPOSITORY@$DIGEST" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: image-${{ matrix.service }}
+          path: image.json
+          retention-days: 30
+
+  release:
+    name: Assemble deployment manifest
+    needs: [changes, ci-gate, publish]
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - if: needs.changes.outputs.backend == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          pattern: image-*
+          path: release-images
+      - name: Assemble complete manifest for this change
+        env:
+          EXPECTED_SERVICES: ${{ needs.changes.outputs.services }}
+        run: node .github/scripts/release.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backend-release
+          path: release.json
+          if-no-files-found: error
+          retention-days: 30

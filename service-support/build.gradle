@@ -1,0 +1,14 @@
+plugins {
+    id 'java-library'
+    id 'io.spring.dependency-management'
+}
+dependencyManagement { imports { mavenBom 'org.springframework.boot:spring-boot-dependencies:4.1.1' } }
+dependencies {
+    api project(':platform-starter')
+    api 'org.springframework.boot:spring-boot-starter-data-mongodb'
+    api 'org.springframework.boot:spring-boot-starter-web'
+    api 'org.springframework.boot:spring-boot-starter-security'
+    api 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    api 'org.springframework.boot:spring-boot-starter-kafka'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}

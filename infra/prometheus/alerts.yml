@@ -1,0 +1,17 @@
+groups:
+  - name: openhire-phase7
+    rules:
+      - alert: OpenHireSloBudgetExhausted
+        expr: openhire_slo_error_budget_remaining_percent <= 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'OpenHire SLO budget exhausted: {{ $labels.slo_id }}'
+      - alert: OpenHireSloExporterUnavailable
+        expr: up{job="openhire-slo"} == 0
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: OpenHire SLO exporter is unavailable

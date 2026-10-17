@@ -1,0 +1,81 @@
+server:
+  port: ${NOTIFICATION_DISPATCHER_PORT:8089}
+  shutdown: graceful
+
+spring:
+  application:
+    name: notification-dispatcher
+  threads:
+    virtual:
+      enabled: true
+  mongodb:
+    representation:
+      uuid: standard
+    uri: ${MONGODB_URI:mongodb://localhost:27017/oh_dispatch}
+  data:
+    mongodb:
+      auto-index-creation: true
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2s
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+        delivery.timeout.ms: 10000
+        request.timeout.ms: 5000
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${OIDC_ISSUER_URI:http://localhost:8180/realms/openhire-staff}
+          jwk-set-uri: ${OIDC_JWK_SET_URI:http://localhost:8180/realms/openhire-staff/protocol/openid-connect/certs}
+
+openhire:
+  internal-secret: ${INTERNAL_SERVICE_SECRET:local-development-secret}
+  security:
+    mode: ${SECURITY_MODE:oidc}
+  tenant:
+    default-id: ${DEFAULT_TENANT_ID:demo-org}
+  dispatch:
+    email:
+      from: ${MAIL_FROM:OpenHire <no-reply@openhire.local>}
+    notifications-per-hour: ${DISPATCH_NOTIFICATIONS_PER_HOUR:30}
+    release-delay: ${DISPATCH_RELEASE_DELAY_MS:30000}
+    retry:
+      attempts: ${DISPATCH_RETRY_ATTEMPTS:4}
+      first-delay-ms: ${DISPATCH_RETRY_FIRST_DELAY_MS:10000}
+      multiplier: ${DISPATCH_RETRY_MULTIPLIER:6}
+      max-delay-ms: ${DISPATCH_RETRY_MAX_DELAY_MS:600000}
+  outbox:
+    collection: deliveries
+    topic: communication.delivery.v1
+    relay-enabled: ${OPENHIRE_OUTBOX_RELAY_ENABLED:true}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true

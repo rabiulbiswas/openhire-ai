@@ -1,0 +1,318 @@
+server:
+  port: ${GATEWAY_PORT:8080}
+  forward-headers-strategy: framework
+  reactive:
+    session:
+      cookie:
+        name: OPENHIRE_SESSION
+        http-only: true
+        same-site: lax
+        secure: ${SESSION_COOKIE_SECURE:false}
+
+spring:
+  application:
+    name: api-gateway
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  session:
+    timeout: 30m
+    data:
+      redis:
+        namespace: openhire:sessions
+        repository-type: indexed
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            # Phase 4 routes take precedence over the broader Phase 3 application paths.
+            - id: phase4-candidate-messages
+              order: -40
+              uri: ${COMMUNICATION_SERVICE_URL:http://localhost:8088}
+              predicates:
+                - Path=/api/v1/public/applications/*/messages,/api/v1/public/applications/*/communication-preferences
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 30
+                    key-resolver: "#{@publicIntakeKeyResolver}"
+            - id: phase4-candidate-scheduling
+              order: -40
+              uri: ${INTERVIEW_SERVICE_URL:http://localhost:8087}
+              predicates:
+                - Path=/api/v1/public/scheduling/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 30
+                    key-resolver: "#{@publicIntakeKeyResolver}"
+            - id: phase4-interviews
+              order: -40
+              uri: ${INTERVIEW_SERVICE_URL:http://localhost:8087}
+              predicates:
+                - Path=/api/v1/interviews/**,/api/v1/rounds/**,/api/v1/me/interviews,/api/v1/applications/*/interview-loop,/api/v1/applications/*/debrief
+              filters:
+                - TokenRelay
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 20
+                    redis-rate-limiter.burstCapacity: 40
+                    key-resolver: "#{@tenantKeyResolver}"
+            - id: phase4-communication
+              order: -40
+              uri: ${COMMUNICATION_SERVICE_URL:http://localhost:8088}
+              predicates:
+                - Path=/api/v1/conversations/**,/api/v1/message-templates/**,/api/v1/notifications/**,/api/v1/me/notification-preferences
+              filters:
+                - TokenRelay
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 20
+                    redis-rate-limiter.burstCapacity: 40
+                    key-resolver: "#{@tenantKeyResolver}"
+            - id: phase4-deliveries
+              order: -40
+              uri: ${NOTIFICATION_DISPATCHER_URL:http://localhost:8089}
+              predicates:
+                - Path=/api/v1/deliveries/**
+              filters:
+                - TokenRelay
+            - id: phase7-compliance
+              order: -40
+              uri: ${COMPLIANCE_SERVICE_URL:http://localhost:8095}
+              predicates:
+                - Path=/api/v1/audit-events/**,/api/v1/ai-decisions/**,/api/v1/trace/**,/api/v1/consent-texts/**,/api/v1/consent-records/**,/api/v1/privacy/**,/api/v1/legal-holds/**,/api/v1/retention-policies/**,/api/v1/reports/**,/api/v1/compliance/**
+              filters:
+                - TokenRelay
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 20
+                    redis-rate-limiter.burstCapacity: 40
+                    key-resolver: "#{@tenantKeyResolver}"
+            - id: phase7-compliance-public
+              order: -41
+              uri: ${COMPLIANCE_SERVICE_URL:http://localhost:8095}
+              predicates:
+                - Path=/api/v1/public/applications/*/privacy-requests,/api/v1/public/applications/*/self-identification,/api/v1/public/privacy-requests/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 5
+                    redis-rate-limiter.burstCapacity: 15
+                    key-resolver: "#{@publicIntakeKeyResolver}"
+            - id: phase7-analytics
+              order: -40
+              uri: ${ANALYTICS_SERVICE_URL:http://localhost:8096}
+              predicates:
+                - Path=/api/v1/analytics/**,/api/v1/platform/slo,/api/v1/platform/services,/api/v1/platform/consumers,/api/v1/admin/dlq/**
+              filters:
+                - TokenRelay
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 20
+                    redis-rate-limiter.burstCapacity: 40
+                    key-resolver: "#{@tenantKeyResolver}"
+            - id: phase8-integration
+              order: -40
+              uri: ${INTEGRATION_HUB_URL:http://localhost:8107}
+              predicates:
+                - Path=/api/v1/connectors,/api/v1/connectors/**,/api/v1/webhooks,/api/v1/webhooks/**,/api/v1/mcp,/api/v1/public/mcp/resource-metadata
+              filters:
+                - TokenRelay
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 20
+                    redis-rate-limiter.burstCapacity: 40
+                    key-resolver: "#{@tenantKeyResolver}"
+            - id: phase8-mcp-discovery
+              order: -41
+              uri: ${INTEGRATION_HUB_URL:http://localhost:8107}
+              predicates:
+                - Path=/.well-known/oauth-protected-resource/api/v1/mcp
+              filters:
+                - SetPath=/api/v1/public/mcp/resource-metadata
+            - id: phase6-ai-gateway
+              order: -45
+              uri: ${AI_GATEWAY_URL:http://localhost:8092}
+              predicates:
+                - Path=/api/v1/jobs/ai-draft,/api/v1/ai-settings,/api/v1/prompts/**,/api/v1/eval-runs/**,/api/v1/ai/**
+              filters:
+                - TokenRelay
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                    key-resolver: "#{@tenantKeyResolver}"
+            - id: phase6-integrity
+              order: -40
+              uri: ${AI_WORKERS_URL:http://localhost:8093}
+              predicates:
+                - Path=/api/v1/integrity/**
+              filters:
+                - TokenRelay
+            - id: phase6-talent
+              order: -40
+              uri: ${TALENT_SERVICE_URL:http://localhost:8094}
+              predicates:
+                - Path=/api/v1/talent/**
+              filters:
+                - TokenRelay
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                    key-resolver: "#{@tenantKeyResolver}"
+            - id: phase6-talent-consent
+              order: -41
+              uri: ${TALENT_SERVICE_URL:http://localhost:8094}
+              predicates:
+                - Path=/api/v1/public/applications/*/talent-consent
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 30
+                    key-resolver: "#{@publicIntakeKeyResolver}"
+            - id: phase5-offers
+              order: -40
+              uri: ${OFFER_SERVICE_URL:http://localhost:8090}
+              predicates:
+                - Path=/api/v1/offers/**,/api/v1/offer-templates/**,/api/v1/offer-clauses/**,/api/v1/applications/*/offer
+              filters:
+                - TokenRelay
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 20
+                    redis-rate-limiter.burstCapacity: 40
+                    key-resolver: "#{@tenantKeyResolver}"
+            - id: phase5-candidate-offers
+              order: -40
+              uri: ${OFFER_SERVICE_URL:http://localhost:8090}
+              predicates:
+                - Path=/api/v1/public/offers/**,/api/v1/public/applications/*/offer
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 30
+                    key-resolver: "#{@publicIntakeKeyResolver}"
+            - id: phase5-employees
+              order: -40
+              uri: ${EMPLOYEE_SERVICE_URL:http://localhost:8091}
+              predicates:
+                - Path=/api/v1/employees/**,/api/v1/hire-sagas/**,/api/v1/me/onboarding/**,/api/v1/me/referral-rewards,/api/v1/referral-rewards/**
+              filters:
+                - TokenRelay
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 20
+                    redis-rate-limiter.burstCapacity: 40
+                    key-resolver: "#{@tenantKeyResolver}"
+            - id: phase3-public-applications
+              order: -30
+              uri: ${APPLICATION_SERVICE_URL:http://localhost:8084}
+              predicates:
+                - Path=/api/v1/public/applications/**,/api/v1/public/api-applications,/api/v1/public/consent
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 30
+                    key-resolver: "#{@publicIntakeKeyResolver}"
+            - id: phase3-applications
+              order: -20
+              uri: ${APPLICATION_SERVICE_URL:http://localhost:8084}
+              predicates:
+                - Path=/api/v1/applications/**,/api/v1/jobs/*/applications,/api/v1/jobs/*/pipeline,/api/v1/imports/**,/api/v1/assessments/**,/api/v1/partner/**,/api/v1/partner-assignments/**,/api/v1/me/referrals
+              filters:
+                - TokenRelay
+            - id: phase3-candidates
+              uri: ${CANDIDATE_SERVICE_URL:http://localhost:8085}
+              predicates:
+                - Path=/api/v1/candidates/**,/api/v1/merge-suggestions/**
+              filters:
+                - TokenRelay
+            - id: phase3-resumes
+              uri: ${RESUME_PROCESSOR_URL:http://localhost:8086}
+              predicates:
+                - Path=/api/v1/resumes/**
+              filters:
+                - TokenRelay
+            - id: application-intake
+              uri: ${APPLICATION_SERVICE_URL:http://localhost:8084}
+              predicates:
+                - Path=/api/v1/intake/applications/**
+              filters:
+                - TokenRelay
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 20
+                    redis-rate-limiter.burstCapacity: 40
+                    key-resolver: "#{@tenantKeyResolver}"
+            - id: public-job-service
+              order: -10
+              uri: ${JOB_SERVICE_URL:http://localhost:8082}
+              predicates:
+                - Path=/api/v1/public/jobs/**
+            - id: identity-service
+              uri: ${IDENTITY_SERVICE_URL:http://localhost:8081}
+              predicates:
+                - Path=/api/v1/platform/**,/api/v1/users/**,/api/v1/roles/**,/api/v1/invites/**,/api/v1/public/**,/api/v1/api-keys/**,/api/v1/setup/**,/api/v1/auth-policy/**,/api/v1/sso-config/**,/api/v1/scim/**
+              filters:
+                - TokenRelay
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 20
+                    redis-rate-limiter.burstCapacity: 40
+                    key-resolver: "#{@tenantKeyResolver}"
+            - id: job-service
+              uri: ${JOB_SERVICE_URL:http://localhost:8082}
+              predicates:
+                - Path=/api/v1/jobs/**,/api/v1/pipeline-templates/**,/api/v1/hiring-stages/**,/api/v1/internal-jobs/**,/api/v1/me/inbox
+              filters:
+                - TokenRelay
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 20
+                    redis-rate-limiter.burstCapacity: 40
+                    key-resolver: "#{@tenantKeyResolver}"
+            - id: approval-service
+              uri: ${APPROVAL_SERVICE_URL:http://localhost:8083}
+              predicates:
+                - Path=/api/v1/approvals/**,/api/v1/approval-delegations/**,/api/v1/approval-delegation-periods/**
+              filters:
+                - TokenRelay
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 20
+                    redis-rate-limiter.burstCapacity: 40
+                    key-resolver: "#{@tenantKeyResolver}"
+
+openhire:
+  integration:
+    public-base-url: ${INTEGRATION_PUBLIC_BASE_URL:http://localhost:8080}
+  tenant:
+    default-id: ${DEFAULT_TENANT_ID:demo-org}
+  ui:
+    staff-url: ${STAFF_UI_URL:http://localhost:5173/}
+    partner-url: ${PARTNER_UI_URL:http://localhost:5174/jobs}
+    auth-url: ${AUTH_UI_URL:http://localhost:5176/login}
+    candidate-auth-url: ${CANDIDATE_AUTH_UI_URL:http://localhost:5176/candidate-sign-in}
+  identity-service-url: ${IDENTITY_SERVICE_URL:http://localhost:8081}
+  internal-secret: ${INTERNAL_SERVICE_SECRET:local-development-secret}
+  security:
+    mode: ${SECURITY_MODE:local}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true

@@ -1,0 +1,30 @@
+rule_files:
+  - /etc/prometheus/alerts.yml
+evaluation_interval: 1m
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'openhire_slo_error_budget_remaining_percent{scope="tenant",tenant_id="test",slo_id="public-api-availability"}'
+        values: '0+0x10'
+      - series: 'up{job="openhire-slo",instance="analytics-service:8096"}'
+        values: '0+0x10'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: OpenHireSloBudgetExhausted
+        exp_alerts:
+          - exp_labels:
+              scope: tenant
+              tenant_id: test
+              slo_id: public-api-availability
+              severity: warning
+            exp_annotations:
+              summary: 'OpenHire SLO budget exhausted: public-api-availability'
+      - eval_time: 10m
+        alertname: OpenHireSloExporterUnavailable
+        exp_alerts:
+          - exp_labels:
+              job: openhire-slo
+              instance: analytics-service:8096
+              severity: warning
+            exp_annotations:
+              summary: OpenHire SLO exporter is unavailable

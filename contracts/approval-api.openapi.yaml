@@ -1,0 +1,28 @@
+openapi: 3.1.0
+info: { title: OpenHire Approval API, version: 1.0.0 }
+servers: [{ url: /api/v1 }]
+paths:
+  /approvals:
+    get: { operationId: listApprovals, responses: { '200': { description: Approval page } } }
+    post: { operationId: createApproval, responses: { '201': { description: Created } } }
+  /internal/approvals:
+    post: { operationId: createApprovalInternal, responses: { '201': { description: Created }, '401': { description: Invalid internal secret } } }
+  /approvals/counts:
+    get: { operationId: approvalCounts, responses: { '200': { description: Counts } } }
+  /approvals/sla-overdue:
+    get: { operationId: overdueApprovals, responses: { '200': { description: Overdue approvals } } }
+  /approvals/{id}:
+    get: { operationId: getApproval, responses: { '200': { description: Approval } } }
+  /approvals/{id}/approve:
+    post: { operationId: approve, responses: { '204': { description: Approved } } }
+  /approvals/{id}/reject:
+    post: { operationId: reject, responses: { '204': { description: Rejected } } }
+  /approvals/{id}/request-changes:
+    post: { operationId: requestChanges, responses: { '204': { description: Changes requested } } }
+  /approvals/{id}/undo:
+    post: { operationId: undoApproval, responses: { '204': { description: Undone } } }
+  /approval-delegations:
+    post: { operationId: delegateApproval, responses: { '204': { description: Delegated } } }
+  /approval-delegation-periods:
+    get: { operationId: listDelegationPeriods, responses: { '200': { description: Periods } } }
+    post: { operationId: createDelegationPeriod, responses: { '201': { description: Created } } }

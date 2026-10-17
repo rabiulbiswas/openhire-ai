@@ -1,0 +1,186 @@
+openapi: 3.1.0
+info:
+  title: OpenHire Identity and Tenancy API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+security:
+  - bffSession: []
+  - apiKey: []
+paths:
+  /api/v1/platform/organizations:
+    get:
+      operationId: listOrganizations
+      responses: {"200": {description: Organizations}}
+    post:
+      operationId: createOrganization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CreateOrganization"}
+      responses: {"201": {description: Created}}
+  /api/v1/users:
+    get:
+      operationId: listTeamMembers
+      parameters: [{$ref: "#/components/parameters/TenantId"}]
+      responses: {"200": {description: Team members}}
+  /api/v1/users/{id}/roles:
+    patch:
+      operationId: updateMemberRoles
+      parameters:
+        - {$ref: "#/components/parameters/TenantId"}
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses: {"200": {description: Updated member}}
+  /api/v1/roles:
+    get:
+      operationId: listRoles
+      parameters: [{$ref: "#/components/parameters/TenantId"}]
+      responses: {"200": {description: Roles}}
+    post:
+      operationId: createRole
+      parameters: [{$ref: "#/components/parameters/TenantId"}]
+      responses: {"201": {description: Created role}}
+  /api/v1/invites:
+    get:
+      operationId: listInvitations
+      parameters: [{$ref: "#/components/parameters/TenantId"}]
+      responses: {"200": {description: Invitations without token hashes}}
+    post:
+      operationId: inviteTeamMember
+      parameters: [{$ref: "#/components/parameters/TenantId"}]
+      responses: {"201": {description: Invitation with one-time token}}
+  /api/v1/public/invitations/{token}/accept:
+    post:
+      security: []
+      operationId: acceptInvitation
+      parameters:
+        - {name: token, in: path, required: true, schema: {type: string}}
+      responses: {"200": {description: Member and home-page redirect}}
+  /api/v1/public/verifications/{code}/complete:
+    post:
+      security: []
+      operationId: completeVerification
+      parameters:
+        - {name: code, in: path, required: true, schema: {type: string}}
+      responses:
+        "200":
+          description: Verified and ready to redirect
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AuthCompletion"}
+  /api/v1/api-keys:
+    get:
+      operationId: listApiKeys
+      parameters: [{$ref: "#/components/parameters/TenantId"}]
+      responses: {"200": {description: API-key metadata without hashes}}
+    post:
+      operationId: createApiKey
+      parameters: [{$ref: "#/components/parameters/TenantId"}]
+      responses: {"201": {description: API key with one-time plaintext secret}}
+  /api/v1/auth-policy:
+    get:
+      operationId: getAuthPolicy
+      parameters: [{$ref: "#/components/parameters/TenantId"}]
+      responses: {"200": {description: Authentication policy}}
+    put:
+      operationId: updateAuthPolicy
+      parameters: [{$ref: "#/components/parameters/TenantId"}]
+      responses: {"200": {description: Updated policy}}
+  /api/v1/sso-config:
+    get:
+      operationId: getSsoConfiguration
+      parameters: [{$ref: "#/components/parameters/TenantId"}]
+      responses: {"200": {description: SSO configuration}}
+    put:
+      operationId: updateSsoConfiguration
+      parameters: [{$ref: "#/components/parameters/TenantId"}]
+      responses: {"200": {description: Updated SSO configuration}}
+  /api/v1/setup:
+    get:
+      operationId: getSetupProgress
+      parameters: [{$ref: "#/components/parameters/TenantId"}]
+      responses: {"200": {description: Setup progress}}
+  /bff/session:
+    get:
+      operationId: getBrowserSession
+      responses: {"200": {description: Session status}}
+    delete:
+      operationId: revokeBrowserSession
+      responses: {"204": {description: Revoked}}
+  /bff/logout:
+    get:
+      operationId: logoutBrowserAndIdentityProvider
+      responses:
+        "302": {description: BFF and provider sessions revoked; redirect to configured sign-in page}
+  /api/v1/me:
+    get:
+      operationId: getMyProfile
+      responses:
+        "200":
+          description: Current user's profile
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/MeProfile"}
+    patch:
+      operationId: updateMyProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/MeProfile"}
+      responses: {"204": {description: Profile updated in the Redis-backed BFF session}}
+  /api/v1/me/sessions:
+    get:
+      operationId: listMyBrowserSessions
+      responses:
+        "200":
+          description: Browser sessions for the authenticated principal
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/BrowserSession"}
+    delete:
+      operationId: revokeMyOtherBrowserSessions
+      responses: {"204": {description: Every session except the current browser was revoked}}
+components:
+  securitySchemes:
+    bffSession: {type: apiKey, in: cookie, name: OPENHIRE_SESSION}
+    apiKey: {type: apiKey, in: header, name: X-API-Key}
+  parameters:
+    TenantId:
+      name: X-Tenant-Id
+      in: header
+      required: true
+      schema: {type: string}
+  schemas:
+    CreateOrganization:
+      type: object
+      required: [name, slug]
+      properties:
+        name: {type: string, minLength: 1}
+        slug: {type: string, pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"}
+    AuthCompletion:
+      type: object
+      required: [verified, redirectTo]
+      properties:
+        verified: {type: boolean, const: true}
+        redirectTo: {type: string, const: "/recruiter/today"}
+    MeProfile:
+      type: object
+      required: [name, title, timezone, language]
+      properties:
+        name: {type: string, minLength: 1}
+        title: {type: string}
+        timezone: {type: string, minLength: 1}
+        language: {type: string, minLength: 1}
+    BrowserSession:
+      type: object
+      required: [id, device, location, lastActiveAt, current]
+      properties:
+        id: {type: string}
+        device: {type: string}
+        location: {type: string}
+        lastActiveAt: {type: string, format: date-time}
+        current: {type: boolean}

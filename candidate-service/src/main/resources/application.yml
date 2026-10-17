@@ -1,0 +1,62 @@
+server:
+  port: ${SERVICE_PORT:8085}
+  shutdown: graceful
+spring:
+  application:
+    name: candidate-service
+  mongodb:
+    representation:
+      uuid: standard
+    uri: ${MONGODB_URI:mongodb://localhost:27017/oh_candidate}
+  data:
+    mongodb:
+      auto-index-creation: true
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+        delivery.timeout.ms: 10000
+        request.timeout.ms: 5000
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${OIDC_ISSUER_URI:http://localhost:8180/realms/openhire-staff}
+          jwk-set-uri: ${OIDC_JWK_SET_URI:http://localhost:8180/realms/openhire-staff/protocol/openid-connect/certs}
+openhire:
+  application-url: ${APPLICATION_SERVICE_URL:http://localhost:8084}
+  security:
+    mode: ${SECURITY_MODE:oidc}
+  tenant:
+    default-id: ${DEFAULT_TENANT_ID:demo-org}
+  internal-secret: ${INTERNAL_SERVICE_SECRET:local-development-secret}
+  outbox:
+    relay-enabled: true
+    collection: candidates
+    topic: candidate.events.v1
+  resume:
+    directory: ${RESUME_DIRECTORY:./.openhire-resumes}
+    tika-url: ${TIKA_URL:http://localhost:9998}
+    clamav-host: ${CLAMAV_HOST:localhost}
+    clamav-port: ${CLAMAV_PORT:3310}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true

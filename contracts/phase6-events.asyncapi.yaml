@@ -1,0 +1,139 @@
+asyncapi: 3.0.0
+info: { title: OpenHire Phase 6 Events, version: 1.0.0 }
+channels:
+  matchingCommands:
+    address: matching.commands.v1
+    description: Application-service asks ai-workers for a full AI assessment after rules screening.
+    messages:
+      command: { $ref: '#/components/messages/MatchingRequested' }
+  assessments:
+    address: assessment.events.v1
+    messages:
+      event: { $ref: '#/components/messages/AssessmentCompleted' }
+  integrity:
+    address: integrity.events.v1
+    messages:
+      event: { $ref: '#/components/messages/IntegrityEvent' }
+  ai:
+    address: ai.events.v1
+    messages:
+      event: { $ref: '#/components/messages/AiEvent' }
+  talent:
+    address: talent.events.v1
+    messages:
+      event: { $ref: '#/components/messages/TalentEvent' }
+operations:
+  publishMatchingCommands: { action: send, channel: { $ref: '#/channels/matchingCommands' } }
+  consumeMatchingCommands: { action: receive, channel: { $ref: '#/channels/matchingCommands' } }
+  publishAssessments: { action: send, channel: { $ref: '#/channels/assessments' } }
+  consumeAssessments: { action: receive, channel: { $ref: '#/channels/assessments' } }
+  publishIntegrity: { action: send, channel: { $ref: '#/channels/integrity' } }
+  consumeIntegrity: { action: receive, channel: { $ref: '#/channels/integrity' } }
+  publishAi: { action: send, channel: { $ref: '#/channels/ai' } }
+  publishTalent: { action: send, channel: { $ref: '#/channels/talent' } }
+components:
+  schemas:
+    Envelope:
+      type: object
+      required: [eventId, eventType, eventVersion, occurredAt, tenantId, aggregateType, aggregateId, correlationId, payload]
+      properties:
+        eventId: { type: string }
+        producer: { type: string }
+        eventType: { type: string }
+        eventVersion: { type: integer, const: 1 }
+        occurredAt: { type: string, format: date-time }
+        tenantId: { type: string }
+        aggregateType: { type: string }
+        aggregateId: { type: string }
+        correlationId: { type: string }
+        payload: { type: object }
+  messages:
+    MatchingRequested:
+      description: >-
+        Keyed by applicationId. Carries the rubric (id, label, weight, requirement), must-have skills, knockout
+        questions and answers, candidate name (for redaction), resumeId and jobVersion. No resume text.
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/Envelope'
+          - type: object
+            properties:
+              eventType: { const: matching.requested.v1 }
+    AssessmentCompleted:
+      description: >-
+        An AI recommendation, never a decision. Kafka key is the assessment id (one row per version). status is
+        COMPLETE, PARTIAL (rules and lexical only, AI unavailable) or NOT_ELIGIBLE. Criteria carry exact resume
+        quotes and a grounded flag; provenance names the model, prompt and rubric version. label is always
+        "AI recommendation - requires human review" for COMPLETE. resumeId lets consumers ignore stale results.
+        Consumers never change an application's stage because of this event.
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/Envelope'
+          - type: object
+            properties:
+              aggregateType: { const: Assessment }
+              eventType: { const: assessment.completed.v1 }
+              payload:
+                type: object
+                properties:
+                  applicationId: { type: string }
+                  assessmentId: { type: string }
+                  status: { enum: [COMPLETE, PARTIAL, NOT_ELIGIBLE] }
+                  score: { type: integer, minimum: 0, maximum: 100 }
+                  confidence: { enum: [HIGH, MEDIUM, LOW] }
+                  jobId: { type: string }
+                  jobVersion: { type: integer }
+                  rubricVersion: { type: string }
+                  resumeId: { type: string }
+                  criteria:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        label: { type: string }
+                        requirement: { enum: [MUST, NICE] }
+                        weight: { type: number }
+                        score: { type: number }
+                        evidence: { type: array, items: { type: string } }
+                        grounded: { type: boolean }
+                  strengths: { type: array, items: { type: string } }
+                  gapsToProbe: { type: array, items: { type: string } }
+                  hardGaps: { type: array, items: { type: string } }
+                  provenance:
+                    type: object
+                    properties: { model: { type: string }, promptKey: { type: string }, promptVersion: { type: string }, rubricVersion: { type: string }, createdAt: { type: string }, traceId: { type: string } }
+                  label: { type: string }
+    IntegrityEvent:
+      description: >-
+        Advisory only; never changes a score or stage. Evidence text carries no personal data.
+        integrity.signal.dismissed.v1 clears the flag on the application.
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/Envelope'
+          - type: object
+            properties:
+              eventType: { enum: [integrity.signal.raised.v1, integrity.signal.dismissed.v1] }
+              payload:
+                type: object
+                properties:
+                  applicationId: { type: string }
+                  signalId: { type: string }
+                  type: { enum: [TIMELINE_OVERLAP, DUPLICATE_IDENTITY, INJECTION_ATTEMPT, AI_TEXT_LIKELIHOOD] }
+                  severity: { enum: [LOW, MEDIUM, HIGH] }
+                  confidence: { type: number }
+                  evidence: { type: string }
+    AiEvent:
+      description: One per live model call, without prompt or resume text. Evaluation calls emit nothing.
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/Envelope'
+          - type: object
+            properties:
+              eventType: { enum: [ai.request.completed.v1, ai.budget.alert.v1] }
+    TalentEvent:
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/Envelope'
+          - type: object
+            properties:
+              eventType: { enum: [talent.rediscovery.completed.v1, talent.invited.v1] }

@@ -1,0 +1,128 @@
+asyncapi: 3.0.0
+info: { title: OpenHire Phase 4 Events, version: 1.0.0 }
+channels:
+  interviews:
+    address: interview.events.v1
+    messages:
+      event: { $ref: '#/components/messages/InterviewEvent' }
+  commands:
+    address: communication.commands.v1
+    description: >-
+      Outbound message commands from communication-service to notification-dispatcher. Failed
+      dispatches move through communication.commands.v1-retry-0, -retry-1, -retry-2 and finally
+      communication.commands.v1-dlt (Spring Kafka retry topics, exponential back-off).
+    messages:
+      command: { $ref: '#/components/messages/MessageRequested' }
+  deliveries:
+    address: communication.delivery.v1
+    messages:
+      update: { $ref: '#/components/messages/DeliveryUpdated' }
+  applications:
+    address: application.events.v1
+    description: Consumed. Phase 4 adds ApplicationDecisionRecorded to the Phase 3 envelope.
+    messages:
+      event: { $ref: '#/components/messages/ApplicationDecisionRecorded' }
+operations:
+  publishInterviews:
+    action: send
+    channel: { $ref: '#/channels/interviews' }
+  publishCommands:
+    action: send
+    channel: { $ref: '#/channels/commands' }
+  consumeCommands:
+    action: receive
+    channel: { $ref: '#/channels/commands' }
+  publishDeliveries:
+    action: send
+    channel: { $ref: '#/channels/deliveries' }
+  consumeApplications:
+    action: receive
+    channel: { $ref: '#/channels/applications' }
+components:
+  schemas:
+    Envelope:
+      type: object
+      required: [eventId, eventType, eventVersion, occurredAt, tenantId, aggregateType, aggregateId, correlationId, payload]
+      properties:
+        eventId: { type: string }
+        producer: { type: string }
+        eventType: { type: string }
+        eventVersion: { type: integer, const: 1 }
+        occurredAt: { type: string, format: date-time }
+        tenantId: { type: string }
+        aggregateType: { type: string }
+        aggregateId: { type: string }
+        correlationId: { type: string }
+        payload: { type: object }
+  messages:
+    InterviewEvent:
+      description: >-
+        At-least-once, keyed by loop id. Round events carry loopId, applicationId, candidateId, jobId,
+        jobTitle, roundId, roundName, status, start/end/timezone when booked, meetingUrl and panel
+        (name and email only). Scorecard ratings and notes are never published.
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/Envelope'
+          - type: object
+            properties:
+              aggregateType: { const: InterviewLoop }
+              eventType:
+                enum: [interview.loop-created.v1, interview.scheduled.v1, interview.rescheduled.v1, interview.cancelled.v1, interview.no-show.v1, interview.completed.v1, interview.scorecard.submitted.v1, interview.feedback-overdue.v1, interview.scheduling-link.issued.v1]
+    MessageRequested:
+      description: >-
+        Keyed by messageId, which is also the dispatcher's dedupe key. category TRANSACTIONAL bypasses
+        quiet hours; NOTIFICATION is deferred to the end of the recipient's quiet hours.
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/Envelope'
+          - type: object
+            properties:
+              eventType: { const: communication.message.requested.v1 }
+              payload:
+                type: object
+                required: [messageId, audience, channel, recipient, body, category]
+                properties:
+                  messageId: { type: string }
+                  audience: { type: string, enum: [CANDIDATE, STAFF] }
+                  channel: { type: string, enum: [EMAIL, WHATSAPP, SMS] }
+                  fallbackChannel: { type: [string, 'null'], enum: [EMAIL, null] }
+                  recipient:
+                    type: object
+                    properties: { name: { type: string }, email: { type: string }, phone: { type: string } }
+                  subject: { type: string }
+                  body: { type: string }
+                  category: { type: string, enum: [TRANSACTIONAL, NOTIFICATION] }
+                  quietHours:
+                    type: object
+                    properties: { from: { type: string }, to: { type: string }, timezone: { type: string } }
+    DeliveryUpdated:
+      description: >-
+        Keyed by messageId. Status only moves forward (QUEUED, DEFERRED, SENT, DELIVERED, FAILED);
+        communication-service ignores out-of-order updates. Recipient addresses are erased once SENT.
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/Envelope'
+          - type: object
+            properties:
+              eventType: { const: communication.delivery.updated.v1 }
+              payload:
+                type: object
+                required: [messageId, status]
+                properties:
+                  messageId: { type: string }
+                  status: { type: string, enum: [QUEUED, DEFERRED, SENT, DELIVERED, FAILED] }
+                  channel: { type: string, enum: [EMAIL, WHATSAPP, SMS] }
+                  reason: { type: string }
+    ApplicationDecisionRecorded:
+      description: HIRE moves the application to OFFER, NO_HIRE to REJECTED. Followed by ApplicationStageChanged.
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/Envelope'
+          - type: object
+            properties:
+              eventType: { const: ApplicationDecisionRecorded }
+              payload:
+                type: object
+                properties:
+                  decision: { type: string, enum: [HIRE, NO_HIRE] }
+                  decidedBy: { type: string }

@@ -1,0 +1,1725 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OpenHire Phase 3 UI API",
+    "version": "1.0.0",
+    "description": "Staff routes use BFF session plus CSRF header, or service JWT. Public receipt routes do not use ambient session authority. Internal shared-secret endpoints are documented in service Markdown and are not gateway routes."
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "security": [
+    {
+      "BearerAuth": []
+    },
+    {
+      "BffSession": [],
+      "CsrfHeader": []
+    }
+  ],
+  "paths": {
+    "/applications": {
+      "post": {
+        "operationId": "submitApplication",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "jobId",
+                  "name",
+                  "email",
+                  "processingConsent",
+                  "consentVersion"
+                ],
+                "properties": {
+                  "jobId": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "maxLength": 254
+                  },
+                  "processingConsent": {
+                    "type": "boolean",
+                    "const": true
+                  },
+                  "consentVersion": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "RECRUITER",
+                      "AGENCY",
+                      "REFERRAL",
+                      "INTERNAL",
+                      "PUBLIC_API"
+                    ]
+                  },
+                  "owner": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "externalReference": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "answers": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "jobId",
+                  "name",
+                  "email",
+                  "processingConsent",
+                  "consentVersion"
+                ],
+                "properties": {
+                  "jobId": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "maxLength": 254
+                  },
+                  "processingConsent": {
+                    "type": "string",
+                    "enum": [
+                      "true"
+                    ]
+                  },
+                  "consentVersion": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "RECRUITER",
+                      "AGENCY",
+                      "REFERRAL",
+                      "INTERNAL",
+                      "PUBLIC_API"
+                    ]
+                  },
+                  "owner": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "externalReference": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "answers": {
+                    "type": "string",
+                    "description": "JSON object of question ID to answer"
+                  },
+                  "resume": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listApplications",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000,
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        }
+      }
+    },
+    "/jobs/{id}/applications": {
+      "get": {
+        "operationId": "listJobApplications",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000,
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        }
+      }
+    },
+    "/jobs/{id}/pipeline": {
+      "get": {
+        "operationId": "getPipeline",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000,
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        }
+      }
+    },
+    "/applications/{id}/assessment": {
+      "get": {
+        "operationId": "getAssessment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        }
+      }
+    },
+    "/partner/jobs": {
+      "get": {
+        "operationId": "listAssignedJobs",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        }
+      }
+    },
+    "/partner/submissions": {
+      "get": {
+        "operationId": "listPartnerSubmissions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        }
+      }
+    },
+    "/me/referrals": {
+      "get": {
+        "operationId": "listOwnSubmissions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        }
+      }
+    },
+    "/candidates/{id}/360": {
+      "get": {
+        "operationId": "getCandidate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        }
+      }
+    },
+    "/merge-suggestions": {
+      "get": {
+        "operationId": "listMergeSuggestions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        }
+      }
+    },
+    "/imports/{id}": {
+      "get": {
+        "operationId": "getImport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        }
+      }
+    },
+    "/applications/{id}/stage": {
+      "patch": {
+        "operationId": "changeStage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "stage"
+                ],
+                "properties": {
+                  "stage": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/applications/{id}/shortlist": {
+      "post": {
+        "operationId": "shortlist",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        }
+      }
+    },
+    "/applications/{id}/reject": {
+      "post": {
+        "operationId": "reject",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "reason"
+                ],
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/applications/{id}/undo-decision": {
+      "post": {
+        "operationId": "undoDecision",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        }
+      }
+    },
+    "/applications/{id}/retry": {
+      "post": {
+        "operationId": "retryProcessing",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        }
+      }
+    },
+    "/applications/{id}/eligibility": {
+      "post": {
+        "operationId": "reviewEligibility",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "reason"
+                ],
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assessments/{id}/override": {
+      "post": {
+        "operationId": "overrideScore",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "newScore",
+                  "reason"
+                ],
+                "properties": {
+                  "newScore": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/partner-assignments/{actorId}/{jobId}": {
+      "put": {
+        "operationId": "setAgencyAssignment",
+        "parameters": [
+          {
+            "name": "actorId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "active"
+                ],
+                "properties": {
+                  "active": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/candidates/{id}/owner": {
+      "put": {
+        "operationId": "setCandidateOwner",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "owner"
+                ],
+                "properties": {
+                  "owner": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/candidates/merge": {
+      "post": {
+        "operationId": "mergeCandidates",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "suggestionId",
+                  "keep"
+                ],
+                "properties": {
+                  "suggestionId": {
+                    "type": "string"
+                  },
+                  "keep": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "enum": [
+                        "a",
+                        "b"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/merge-suggestions/{id}/dismiss": {
+      "post": {
+        "operationId": "dismissDuplicate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        }
+      }
+    },
+    "/applications/{id}/resume": {
+      "post": {
+        "operationId": "replaceResume",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "resume"
+                ],
+                "properties": {
+                  "resume": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/imports": {
+      "post": {
+        "operationId": "startImport",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "jobId",
+                  "file",
+                  "processingConsent",
+                  "consentVersion"
+                ],
+                "properties": {
+                  "jobId": {
+                    "type": "string"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "processingConsent": {
+                    "type": "string",
+                    "enum": [
+                      "true"
+                    ]
+                  },
+                  "consentVersion": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/consent": {
+      "get": {
+        "operationId": "getConsent",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        },
+        "security": []
+      }
+    },
+    "/public/applications": {
+      "post": {
+        "operationId": "submitCareerApplication",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "jobId",
+                  "name",
+                  "email",
+                  "processingConsent",
+                  "consentVersion",
+                  "tenantId",
+                  "receiptToken",
+                  "resume"
+                ],
+                "properties": {
+                  "jobId": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "maxLength": 254
+                  },
+                  "processingConsent": {
+                    "type": "string",
+                    "enum": [
+                      "true"
+                    ]
+                  },
+                  "consentVersion": {
+                    "type": "string"
+                  },
+                  "owner": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "externalReference": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "answers": {
+                    "type": "string",
+                    "description": "JSON object of question ID to answer"
+                  },
+                  "resume": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "tenantId": {
+                    "type": "string"
+                  },
+                  "receiptToken": {
+                    "type": "string",
+                    "minLength": 32,
+                    "maxLength": 200
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/applications/{id}": {
+      "get": {
+        "operationId": "getPublicStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tenantId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        },
+        "security": [
+          {
+            "ApplicationReceipt": []
+          }
+        ]
+      }
+    },
+    "/public/applications/{id}/withdraw": {
+      "post": {
+        "operationId": "withdrawCareerApplication",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tenantId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        },
+        "security": [
+          {
+            "ApplicationReceipt": []
+          }
+        ]
+      }
+    },
+    "/resumes/{id}/download": {
+      "get": {
+        "operationId": "downloadCleanResume",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Clean, successfully extracted attachment",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        }
+      }
+    },
+    "/public/jobs": {
+      "get": {
+        "operationId": "listPublicJobs",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        },
+        "security": []
+      }
+    },
+    "/public/jobs/{id}": {
+      "get": {
+        "operationId": "getPublicJob",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tenantId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        },
+        "security": []
+      }
+    },
+    "/public/api-applications": {
+      "post": {
+        "operationId": "submitApiKeyApplication",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful result; asynchronous processing can still be pending"
+          },
+          "400": {
+            "description": "Invalid input or missing consent"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role, tenant, agency assignment, or receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Changed idempotency payload, state, or concurrent update conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "jobId",
+                  "name",
+                  "email",
+                  "processingConsent",
+                  "consentVersion"
+                ],
+                "properties": {
+                  "jobId": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "maxLength": 254
+                  },
+                  "processingConsent": {
+                    "type": "boolean",
+                    "const": true
+                  },
+                  "consentVersion": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "RECRUITER",
+                      "AGENCY",
+                      "REFERRAL",
+                      "INTERNAL",
+                      "PUBLIC_API"
+                    ]
+                  },
+                  "owner": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "externalReference": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "answers": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "jobId",
+                  "name",
+                  "email",
+                  "processingConsent",
+                  "consentVersion"
+                ],
+                "properties": {
+                  "jobId": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "maxLength": 254
+                  },
+                  "processingConsent": {
+                    "type": "string",
+                    "enum": [
+                      "true"
+                    ]
+                  },
+                  "consentVersion": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "RECRUITER",
+                      "AGENCY",
+                      "REFERRAL",
+                      "INTERNAL",
+                      "PUBLIC_API"
+                    ]
+                  },
+                  "owner": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "externalReference": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "answers": {
+                    "type": "string",
+                    "description": "JSON object of question ID to answer"
+                  },
+                  "resume": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKey": []
+          }
+        ],
+        "description": "Key must be active and have applications:write scope. Tenant and actor are derived from validated key identity; source is always PUBLIC_API."
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "BffSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "OPENHIRE_SESSION"
+      },
+      "CsrfHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-XSRF-TOKEN"
+      },
+      "ApplicationReceipt": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Application-Receipt"
+      },
+      "ApiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key"
+      }
+    }
+  }
+}

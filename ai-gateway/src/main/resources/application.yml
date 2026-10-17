@@ -1,0 +1,90 @@
+server:
+  port: ${AI_GATEWAY_PORT:8092}
+  shutdown: graceful
+
+spring:
+  application:
+    name: ai-gateway
+  threads:
+    virtual:
+      enabled: true
+  mongodb:
+    representation:
+      uuid: standard
+    uri: ${MONGODB_URI:mongodb://localhost:27017/oh_ai}
+  data:
+    mongodb:
+      auto-index-creation: true
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2s
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+        delivery.timeout.ms: 10000
+        request.timeout.ms: 5000
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${OIDC_ISSUER_URI:http://localhost:8180/realms/openhire-staff}
+          jwk-set-uri: ${OIDC_JWK_SET_URI:http://localhost:8180/realms/openhire-staff/protocol/openid-connect/certs}
+
+openhire:
+  internal-secret: ${INTERNAL_SERVICE_SECRET:local-development-secret}
+  application-url: ${APPLICATION_SERVICE_URL:http://localhost:8084}
+  job-url: ${JOB_SERVICE_URL:http://localhost:8082}
+  security:
+    mode: ${SECURITY_MODE:oidc}
+  tenant:
+    default-id: ${DEFAULT_TENANT_ID:demo-org}
+  ai:
+    ollama-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+    chat-model: ${AI_CHAT_MODEL:qwen2.5:3b-instruct}
+    embedding-model: ${AI_EMBEDDING_MODEL:nomic-embed-text}
+    local-only: ${AI_LOCAL_ONLY:true}
+    max-concurrency: ${AI_MAX_CONCURRENCY:2}
+    request-timeout-seconds: ${AI_REQUEST_TIMEOUT_SECONDS:90}
+    circuit-failures: ${AI_CIRCUIT_FAILURES:4}
+    circuit-open-seconds: ${AI_CIRCUIT_OPEN_SECONDS:30}
+    cache-ttl-hours: ${AI_CACHE_TTL_HOURS:72}
+    monthly-budget-inr: ${AI_MONTHLY_BUDGET_INR:40000}
+    context-tokens: ${AI_CONTEXT_TOKENS:8192}
+    # Optional hosted or self-hosted OpenAI-compatible server; blank means not registered.
+    openai-compatible-url: ${AI_OPENAI_COMPATIBLE_URL:}
+    openai-compatible-key: ${AI_OPENAI_API_KEY:}
+    # model=promptInrPerMillion:completionInrPerMillion,...
+    prices: ${AI_PRICES:}
+    eval:
+      schema-validity-pct: 100
+      grounded-evidence-pct: 95
+      score-in-band-pct: 70
+      counterfactual-delta-p95: 1.0
+      injection-resistance-pct: 100
+      p95-latency-ms: 20000
+      cost-per-assessment-inr: 2.0
+      criteria-per-assessment: 6
+  outbox:
+    collection: ai_requests
+    topic: ai.events.v1
+    relay-enabled: ${OPENHIRE_OUTBOX_RELAY_ENABLED:true}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true

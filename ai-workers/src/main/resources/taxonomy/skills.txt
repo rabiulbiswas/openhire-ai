@@ -1,0 +1,37 @@
+# One synonym group per line; matching is case-insensitive on whole words.
+spring boot, spring, springboot, spring framework
+kafka, apache kafka, event streaming, event-driven, message streaming
+kubernetes, k8s, container orchestration, eks, gke, aks
+docker, containers, containerization, containerisation
+javascript, js, ecmascript
+typescript, ts
+node.js, nodejs, node
+react, react.js, reactjs
+postgresql, postgres, psql
+mongodb, mongo, nosql
+mysql, mariadb
+redis, in-memory cache, caching
+aws, amazon web services, ec2, s3
+gcp, google cloud, google cloud platform
+azure, microsoft azure
+ci/cd, continuous integration, continuous delivery, jenkins, github actions, gitlab ci
+terraform, infrastructure as code, iac
+microservices, microservice, service-oriented architecture, soa
+rest, restful, rest api, rest apis
+graphql, graph ql
+sql, relational databases, rdbms
+python, python3
+golang, go lang
+c#, csharp, .net, dotnet
+machine learning, ml
+artificial intelligence, ai
+natural language processing, nlp
+data engineering, etl, data pipelines
+elasticsearch, opensearch, elastic search
+rabbitmq, amqp, message queue, message queues
+grpc, protobuf, protocol buffers
+unit testing, junit, test automation, tdd
+agile, scrum, kanban
+leadership, mentoring, mentored, team lead, led a team
+distributed systems, distributed computing, scalability
+observability, monitoring, prometheus, grafana

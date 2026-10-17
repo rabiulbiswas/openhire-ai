@@ -1,0 +1,6 @@
+apiVersion: v2
+name: openhire
+description: OpenHire application deployments; databases, broker, identity provider and secret provisioning are external prerequisites.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

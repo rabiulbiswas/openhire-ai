@@ -1,0 +1,1222 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OpenHire Phase 5 UI API",
+    "version": "1.0.0",
+    "description": "Offers, hire saga and employee workflows. Staff routes use BFF session plus CSRF header, or service JWT. Public routes authenticate with a signed offer token or an application receipt, never an ambient session. Errors are RFC 9457 problem details."
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "security": [
+    {
+      "BearerAuth": []
+    },
+    {
+      "BffSession": [],
+      "CsrfHeader": []
+    }
+  ],
+  "paths": {
+    "/offers": {
+      "get": {
+        "operationId": "listOffers",
+        "summary": "Offers for the tenant, optionally filtered by status",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        }
+      }
+    },
+    "/offers/{id}": {
+      "get": {
+        "operationId": "getOffer",
+        "summary": "Offer with approval chain, terms, band and version history",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "updateOffer",
+        "summary": "Save terms and cover note as a version; compensation changes after submission restart approval",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/applications/{applicationId}/offer": {
+      "post": {
+        "operationId": "createOffer",
+        "summary": "Create a draft from an application at OFFER (returns the open offer if one exists; restarts a closed one)",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        },
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "getApplicationOffer",
+        "summary": "The application's offer; 404 when none",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        },
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/offers/{id}/submit": {
+      "post": {
+        "operationId": "submitOffer",
+        "summary": "Request approval; needs a reporting line and location",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/offers/{id}/approvals/{stepId}/approve": {
+      "post": {
+        "operationId": "approveOfferStep",
+        "summary": "Approve the current step (role-gated; one person per step; not the requester)",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stepId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/offers/{id}/approvals/{stepId}/reject": {
+      "post": {
+        "operationId": "rejectOfferStep",
+        "summary": "Reject with a reason; returns the offer to draft",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stepId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/offers/{id}/send": {
+      "post": {
+        "operationId": "sendOffer",
+        "summary": "Send an approved offer to the candidate (idempotent)",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/offers/{id}/rescind": {
+      "post": {
+        "operationId": "rescindOffer",
+        "summary": "Rescind an unanswered offer (HR)",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/offer-templates": {
+      "get": {
+        "operationId": "listOfferTemplates",
+        "summary": "Versioned offer letter templates",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        }
+      }
+    },
+    "/offer-templates/{key}": {
+      "put": {
+        "operationId": "saveOfferTemplate",
+        "summary": "Save a new template version; unknown merge fields are rejected (HR)",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        },
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/offer-clauses": {
+      "get": {
+        "operationId": "listOfferClauses",
+        "summary": "Reusable clause blocks",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        }
+      }
+    },
+    "/offer-clauses/{key}": {
+      "put": {
+        "operationId": "saveOfferClause",
+        "summary": "Save a new clause version (HR)",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        },
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/offers": {
+      "get": {
+        "operationId": "getPublicOffer",
+        "summary": "The candidate's offer; the first view marks it VIEWED",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Offer-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "HMAC token taken from the #token= fragment of the emailed link"
+          }
+        ],
+        "security": []
+      }
+    },
+    "/public/offers/accept": {
+      "post": {
+        "operationId": "acceptOffer",
+        "summary": "Accept by typing the full name (idempotent)",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Offer-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "HMAC token taken from the #token= fragment of the emailed link"
+          }
+        ],
+        "security": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/offers/decline": {
+      "post": {
+        "operationId": "declineOffer",
+        "summary": "Decline with an optional reason (idempotent)",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Offer-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "HMAC token taken from the #token= fragment of the emailed link"
+          }
+        ],
+        "security": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/offers/negotiate": {
+      "post": {
+        "operationId": "requestOfferChanges",
+        "summary": "Ask for changes",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Offer-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "HMAC token taken from the #token= fragment of the emailed link"
+          }
+        ],
+        "security": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/applications/{applicationId}/offer": {
+      "get": {
+        "operationId": "getOfferByReceipt",
+        "summary": "Offer status and a fresh link for the portal status page",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        },
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Application-Receipt",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tenantId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": []
+      }
+    },
+    "/employees": {
+      "get": {
+        "operationId": "listEmployees",
+        "summary": "New hires, optionally by status and joining date",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        }
+      }
+    },
+    "/employees/{id}": {
+      "get": {
+        "operationId": "getEmployee",
+        "summary": "Employee detail",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/employees/{id}/activate": {
+      "post": {
+        "operationId": "activateEmployee",
+        "summary": "PRE_BOARDING to ACTIVE (HR); 409 when already active",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/employees/{id}/onboarding": {
+      "get": {
+        "operationId": "getOnboarding",
+        "summary": "Onboarding checklist (HR or the employee)",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/employees/{id}/onboarding/tasks/{taskId}": {
+      "patch": {
+        "operationId": "toggleOnboardingTask",
+        "summary": "Mark a task done or not done",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/onboarding": {
+      "get": {
+        "operationId": "getMyOnboarding",
+        "summary": "The signed-in employee's checklist, matched on email; 404 when none",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        }
+      }
+    },
+    "/me/onboarding/tasks/{taskId}": {
+      "patch": {
+        "operationId": "toggleMyOnboardingTask",
+        "summary": "Toggle one of the signed-in employee's own tasks",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        },
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hire-sagas": {
+      "get": {
+        "operationId": "listHireSagas",
+        "summary": "Hire sagas, optionally by status (ORG_ADMIN, HR_ADMIN)",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        }
+      }
+    },
+    "/hire-sagas/{id}/retry": {
+      "post": {
+        "operationId": "retryHireSaga",
+        "summary": "Retry a parked saga (ORG_ADMIN, HR_ADMIN)",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/referral-rewards": {
+      "get": {
+        "operationId": "getMyReferralRewards",
+        "summary": "The signed-in employee's referral rewards",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input or a rule was not met"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Wrong role or tenant, or an invalid receipt"
+          },
+          "404": {
+            "description": "Unknown or inaccessible record"
+          },
+          "409": {
+            "description": "Conflicting state: wrong stage, not approved, already decided, or no longer open"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "BffSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "OPENHIRE_SESSION"
+      },
+      "CsrfHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-XSRF-TOKEN"
+      }
+    }
+  }
+}

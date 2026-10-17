@@ -151,7 +151,7 @@ storage, ECR and EKS are billable according to your account; these pipelines are
 From the repository root, with Node and Helm available:
 
 ```sh
-node --test .github/scripts/*.test.mjs scripts/deploy-local.test.mjs scripts/mongo-recovery.test.mjs
+node --test .github/scripts/*.test.mjs scripts/testing/deploy-local.test.mjs scripts/testing/mongo-recovery.test.mjs
 helm lint infra/helm/openhire --set image.tag=offline-test
 helm template openhire infra/helm/openhire --set image.tag=offline-test
 ```

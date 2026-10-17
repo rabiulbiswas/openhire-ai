@@ -4,7 +4,7 @@
 
 Phase 2 implementation is complete and runtime-accepted on 2026-10-09:
 
-- `scripts/verify-phase2-workflow.sh` passes (create → edit → submit → approve → publish through the gateway).
+- `scripts/testing/verify-phase2-workflow.sh` passes (create → edit → submit → approve → publish through the gateway).
 - The live browser spec `apps/console/e2e-live/phase2-workflow.spec.ts` passes against the real stack with a
   real Keycloak sign-in (5 consecutive passes). It previously had no sign-in step and two ambiguous selectors;
   both were fixed in the spec, not the product.
@@ -80,7 +80,7 @@ With the services and UI running, execute the API workflow:
 
 ```bash
 cd /Users/rabiulbiswas/Desktop/openhire-web/backend
-./scripts/verify-phase2-workflow.sh
+./scripts/testing/verify-phase2-workflow.sh
 ```
 
 Then execute the browser workflow:

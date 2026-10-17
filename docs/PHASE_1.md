@@ -2,7 +2,7 @@
 
 ## Delivery status
 
-Phase 1 implementation is complete and runtime-accepted on 2026-10-09: `scripts/verify-phase1-runtime.sh`
+Phase 1 implementation is complete and runtime-accepted on 2026-10-09: `scripts/testing/verify-phase1-runtime.sh`
 passes against a freshly rebuilt stack, and the live browser spec `apps/console/e2e-live/phase1-session.spec.ts`
 proves sign-out ends both the BFF session and the Keycloak session (5 consecutive passes).
 
@@ -46,7 +46,7 @@ Start the stack manually, then run:
 
 ```bash
 cd /Users/rabiulbiswas/Desktop/openhire-web/backend
-./scripts/verify-phase1-runtime.sh
+./scripts/testing/verify-phase1-runtime.sh
 ```
 
 The script checks gateway health, both realm discovery documents, the public BFF session contract and the staff OIDC redirect. Browser review then covers verification, TOTP, password reset and logout UX.

@@ -6,8 +6,8 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
-const script = fileURLToPath(new URL('./deploy-local.sh', import.meta.url));
-const launcher = fileURLToPath(new URL('../run-backend.sh', import.meta.url));
+const script = fileURLToPath(new URL('../deployment/deploy-local.sh', import.meta.url));
+const launcher = fileURLToPath(new URL('../../run-backend.sh', import.meta.url));
 
 function run(args, overrides = {}, entry = script) {
   const directory = mkdtempSync(join(tmpdir(), 'openhire-deploy-test-'));

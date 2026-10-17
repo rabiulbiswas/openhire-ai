@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { Readable } from 'node:stream';
-import { encryptArchive, verifyArchive, restoreArguments, databaseName, keyFrom } from './mongo-recovery.mjs';
+import { encryptArchive, verifyArchive, restoreArguments, databaseName, keyFrom } from '../maintenance/mongo-recovery.mjs';
 
 test('backup authenticates, rejects tampering/wrong keys, and never overwrites', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'openhire-recovery-test-'));

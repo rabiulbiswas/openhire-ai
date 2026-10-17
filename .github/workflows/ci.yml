@@ -48,8 +48,8 @@ jobs:
           cache: false
       - name: Validate GitHub workflow syntax and expressions
         run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.7 -shellcheck= .github/workflows/ci.yml .github/workflows/deploy.yml
-      - run: node --test .github/scripts/*.test.mjs scripts/deploy-local.test.mjs scripts/mongo-recovery.test.mjs
-      - run: bash -n run-backend.sh scripts/deploy-local.sh
+      - run: node --test .github/scripts/*.test.mjs scripts/testing/deploy-local.test.mjs scripts/testing/mongo-recovery.test.mjs
+      - run: bash -n run-backend.sh scripts/deployment/deploy-local.sh
       - run: helm lint infra/helm/openhire --set image.tag=ci-validation
       - run: helm template openhire infra/helm/openhire --set image.tag=ci-validation > /dev/null
 

@@ -32,7 +32,7 @@ test('GitHub change detection CLI runs at the standalone repository root', () =>
 test('CI uses standalone paths and does not require the frontend repository', () => {
   const workflow = fs.readFileSync('.github/workflows/ci.yml', 'utf8');
   assert.doesNotMatch(workflow, /backend\/|frontend\/|working-directory: backend|^  frontend:/m);
-  assert.match(workflow, /node --test .* scripts\/deploy-local.test.mjs scripts\/mongo-recovery.test.mjs/);
+  assert.match(workflow, /node --test .* scripts\/testing\/deploy-local.test.mjs scripts\/testing\/mongo-recovery.test.mjs/);
   assert.equal((workflow.match(/if: \$\{\{ false \}\}/g) || []).length, 2);
   assert.match(fs.readFileSync('.github/workflows/deploy.yml', 'utf8'), /if: \$\{\{ false \}\}/);
 });

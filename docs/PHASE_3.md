@@ -151,7 +151,7 @@ docker compose up -d --no-deps --wait --wait-timeout 60 api-gateway
 export OPENHIRE_JOB_ID='fe734ab3-fb7c-4665-ac62-73469758d314'
 export OPENHIRE_TEST_USERNAME='recruiter@openhire.local'
 # Set OPENHIRE_TEST_PASSWORD securely, or supply OPENHIRE_STAFF_TOKEN instead.
-node scripts/verify-phase3-runtime.mjs
+node scripts/testing/verify-phase3-runtime.mjs
 ```
 
 The runtime script generates a harmless PDF in memory, tests real authentication and CSRF, intake,
@@ -182,7 +182,7 @@ export OPENHIRE_JOB_ID='your-open-job-id'
 export OPENHIRE_TENANT_ID='demo-org'
 export OPENHIRE_RESUME='/absolute/path/to/clean-fixture.pdf'
 export OPENHIRE_ANSWERS='{"question-id":"yes"}'
-bash scripts/verify-phase3-workflow.sh
+bash scripts/testing/verify-phase3-workflow.sh
 ```
 
 The script creates one real development application, verifies replay/receipt security and screening,
@@ -198,7 +198,7 @@ then withdraws it. It leaves the application as audit/test data. Separately veri
 Run the load test only against an isolated development tenant:
 
 ```bash
-k6 run scripts/phase3-load.js
+k6 run scripts/testing/phase3-load.js
 ```
 
 It requests 500 applications/minute for five minutes plus a short burst and creates roughly 2,700 records.

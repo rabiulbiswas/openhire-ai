@@ -65,7 +65,7 @@ All paths are prefixed by `/api/v1`. Exact methods, parameters, credentials and 
 
 Unit, controller, architecture, crypto and isolated Mongo tests are under `src/test`.
 Enable database checks with `OPENHIRE_RUN_MONGO_TESTS=true`.
-The end-to-end gate is `backend/scripts/verify-phase7-workflow.mjs`, followed by the live Phase 7 browser test.
+The end-to-end gate is `scripts/testing/verify-phase7-workflow.mjs`, followed by the live Phase 7 browser test.
 Record retention runs in the same daily sweep and manual endpoint. `recordPolicies` reports per-policy status,
 bounded eligible counts and processed counts; failures and legal holds are visible rather than counted as success.
 `audit.events` creates verified `audit_archive` copies without changing the source chain.

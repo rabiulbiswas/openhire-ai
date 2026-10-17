@@ -23,19 +23,6 @@ replay_pid*
 *.hprof
 *.jfr
 
-# pnpm / Turborepo / React / Next.js generated output
-node_modules/
-.pnpm-store/
-.turbo/
-.next/
-.vite/
-.cache/
-dist/
-dist_keycloak/
-storybook-static/
-*.tsbuildinfo
-/frontend/apps/*/out/
-
 # Test reports, coverage and browser authentication state
 coverage/
 .nyc_output/
@@ -61,12 +48,12 @@ logs/
 .direnv/
 
 # Local credentials and operational data (not source fixtures)
-/backend/infra/prometheus/internal-secret.local
-/backend/.secrets/
-/backend/secrets/
-/backend/backups/
-/backend/resumes/
-/backend/data/
+/infra/prometheus/internal-secret.local
+/.secrets/
+/secrets/
+/backups/
+/resumes/
+/data/
 .openhire-backup-*/
 *.oha
 

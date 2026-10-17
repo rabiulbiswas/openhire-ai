@@ -38,7 +38,7 @@ Diagrams use Mermaid blocks; view them in a Mermaid-capable Markdown preview. Pr
 ## Maintain and verify
 
 ```sh
-node backend/scripts/service-reference.mjs --check
+node scripts/maintenance/service-reference.mjs --check
 ```
 
 The read-only extractor detects stale endpoint references. `--patch --service=interview-service` emits a patch for review/application; it does not mutate files. Review business narratives when behavior changes, and keep public, staff and internal security boundaries distinct.

@@ -19,7 +19,7 @@ const ollama = process.env.OLLAMA_HOST_URL || 'http://localhost:11434';
 const tenant = process.env.OPENHIRE_TENANT_ID || 'demo-org';
 assert(['localhost', '127.0.0.1'].includes(new URL(keycloak).hostname), 'Fixture provisioning is local-only');
 const run = randomUUID().slice(0, 8);
-const seed = JSON.parse(readFileSync(new URL('../infra/keycloak/openhire-staff-realm.json', import.meta.url)));
+const seed = JSON.parse(readFileSync(new URL('../../infra/keycloak/openhire-staff-realm.json', import.meta.url)));
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const pass = text => console.log(`PASS: ${text}`);
 const info = text => console.log(`INFO: ${text}`);

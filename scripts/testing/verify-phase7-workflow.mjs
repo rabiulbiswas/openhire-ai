@@ -11,7 +11,7 @@ import { readFileSync } from 'node:fs';
 import { staffToken } from './phase3-staff-token.mjs';
 import { resumePdf } from './phase3-pdf-fixture.mjs';
 import { strongResume, twinResume, weakResume } from './phase6-resumes.mjs';
-import { checkPhase7Dependencies } from './phase7-preflight.mjs';
+import { checkPhase7Dependencies } from '../maintenance/phase7-preflight.mjs';
 
 const gateway = process.env.OPENHIRE_GATEWAY_URL || 'http://localhost:8080';
 const keycloak = process.env.OPENHIRE_KEYCLOAK_URL || 'http://localhost:8180';
@@ -20,7 +20,7 @@ const tenant = process.env.OPENHIRE_TENANT_ID || 'demo-org';
 assert(['localhost', '127.0.0.1'].includes(new URL(keycloak).hostname), 'Fixture provisioning is local-only');
 checkPhase7Dependencies({ gateway, keycloak, mailpit });
 const run = randomUUID().slice(0, 8);
-const seed = JSON.parse(readFileSync(new URL('../infra/keycloak/openhire-staff-realm.json', import.meta.url)));
+const seed = JSON.parse(readFileSync(new URL('../../infra/keycloak/openhire-staff-realm.json', import.meta.url)));
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const pass = text => console.log(`PASS: ${text}`);
 const info = text => console.log(`INFO: ${text}`);

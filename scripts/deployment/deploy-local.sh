@@ -3,7 +3,7 @@
 # No host Java/Gradle installation is needed. Infrastructure and volumes are retained.
 set -Eeuo pipefail
 
-BACKEND_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+BACKEND_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 PROJECT_NAME="${OPENHIRE_DOCKER_PROJECT:-openhire}"
 WAIT_SECONDS="${OPENHIRE_STARTUP_TIMEOUT:-300}"
 LOG_TAIL="${OPENHIRE_LOG_TAIL:-200}"
@@ -17,7 +17,7 @@ SERVICES=()
 
 usage() {
   cat <<'USAGE'
-Usage: ./scripts/deploy-local.sh [--no-build] [--no-follow] [service ...]
+Usage: ./scripts/deployment/deploy-local.sh [--no-build] [--no-follow] [service ...]
        ./run-backend.sh deploy [options] [service ...]
 
 No service names: deploy all 18 backend applications (not the frontend or Prometheus).
@@ -36,9 +36,9 @@ Environment:
   OPENHIRE_FOLLOW_LOGS     1 to follow, 0 to return after startup (default: 1)
 
 Examples:
-  ./scripts/deploy-local.sh
-  ./scripts/deploy-local.sh identity-service api-gateway
-  ./scripts/deploy-local.sh --no-build --no-follow job-service
+  ./scripts/deployment/deploy-local.sh
+  ./scripts/deployment/deploy-local.sh identity-service api-gateway
+  ./scripts/deployment/deploy-local.sh --no-build --no-follow job-service
 
 MongoDB must already run on the host or at your configured URI. No LLM is started.
 Ctrl+C while following logs leaves services running. Raw timestamped Compose logs

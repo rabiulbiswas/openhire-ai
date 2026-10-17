@@ -10,7 +10,7 @@ assert(['localhost', '127.0.0.1'].includes(new URL(keycloak).hostname), 'Fixture
 const jobId = process.env.OPENHIRE_JOB_ID;
 assert(jobId, 'Set OPENHIRE_JOB_ID');
 const run = randomUUID();
-const seed = JSON.parse(readFileSync(new URL('../infra/keycloak/openhire-staff-realm.json', import.meta.url)));
+const seed = JSON.parse(readFileSync(new URL('../../infra/keycloak/openhire-staff-realm.json', import.meta.url)));
 async function login(username, password) {
   process.env.OPENHIRE_TEST_USERNAME = username;
   process.env.OPENHIRE_TEST_PASSWORD = password;

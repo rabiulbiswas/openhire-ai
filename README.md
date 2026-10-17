@@ -1,29 +1,67 @@
 # OpenHire backend
 
-Phases 0 to 6 are implemented and runtime-accepted on the local stack; each phase document records its evidence and
-the checks that still need an owner decision. Phase 3 covers application intake, candidate identity/merge and resume
-processing; Phase 4 interviews, messaging and notification delivery; Phase 5 offers, the hire saga and employee
-onboarding; Phase 6 a local-model AI layer for matching, drafting, talent search and integrity signals.
+Standalone backend repository for OpenHire: **18 runnable services and two shared libraries**. The frontend is
+maintained separately in `openhire-frontend`. Run commands here from the directory containing `settings.gradle`;
+there is no enclosing `backend/` subdirectory.
+
+Implementation spans Phases 0–8, including recruiting, AI, compliance and enterprise integrations. This does not
+mean every phase is production-accepted. Phase documents contain historical evidence; consult the
+[remaining-work register](docs/PHASE_IMPLEMENTATION_GAPS.md) for known gaps and validate the current commit in CI
+and your target environment. Live provider credentials, enterprise interoperability, security and disaster-recovery
+acceptance remain separate from offline builds/tests. Older phase documents may still use pre-split paths.
+
+Quick links: [services](#active-modules) · [build and test](#local-build-and-test--step-by-step) ·
+[CI](#github-cicd) · [service designs and APIs](docs/services/README.md).
 
 ## Technology baseline
 
 - Java 25, Spring Boot 4.1.1, Spring Cloud 2025.1.2, Gradle 9.2.1
-- Host MongoDB databases `openhire_identity`, `oh_job`, and `oh_approval`
+- MongoDB business persistence: for example `openhire_identity`, `oh_job`, `oh_approval`, `oh_resume` and
+  `oh_integration`; Compose defines each URI. AI gateway/workers share `oh_ai`.
 - Redis-backed BFF sessions and gateway rate limits
-- Kafka identity, job and approval events
+- Kafka domain events, outbox delivery and asynchronous processing
 - Keycloak 26.8 for staff/candidate OIDC; isolated local identity adapter remains available for development
 
 ## Active modules
 
-- `platform-starter`: tenant context, event envelope, RFC 9457 errors.
-- `identity-service`: organizations, users, RBAC, invitations, API keys, SSO/auth policy, setup, quotas, and break-glass requests.
-- `api-gateway`: BFF session boundary, OIDC entry point, tenant propagation, routing, and Redis token-bucket limiting.
-- `job-service`: immutable job versions, lifecycle, hiring configuration, idempotency, outbox and local-LLM drafting.
-- `approval-service`: sequential/parallel approvals, assigned decisions, delegation, SLA reminders and outbox events.
-- `application-service`: multichannel intake, imports, screening, pipeline and atomic Mongo outbox (8084).
-- `candidate-service`: identity resolution, provenance, Candidate 360 and reviewed merges (8085).
-- `resume-processor`: quarantined uploads, ClamAV scanning, Tika/OCR and safe retrieval (8086).
-- `service-support`: shared workflow security, indexes, internal clients and outbox (library, not a service).
+Default ports below are from `docker-compose.yml`. Browser requests belong at the gateway; direct service ports
+are for local diagnostics. Host ports and container ports differ for several later services.
+
+| Service | Responsibility | Host → container port |
+| --- | --- | --- |
+| `api-gateway` | BFF sessions, OIDC, routing and rate limits | 8080 → 8080 |
+| `identity-service` | Organizations, members, roles, SSO/SAML and SCIM | 8081 → 8081 |
+| `job-service` | Requisitions, versions, publication and drafting | 8082 → 8082 |
+| `approval-service` | Approval inbox, decisions and delegation | 8083 → 8083 |
+| `application-service` | Intake, pipeline and human decisions | 8084 → 8084 |
+| `candidate-service` | Candidate identity, profile and reviewed merges | 8085 → 8085 |
+| `resume-processor` | Quarantine, scanning, extraction, OCR and retries | 8086 → 8086 |
+| `interview-service` | Scheduling, scorecards and debrief | 8087 → 8087 |
+| `communication-service` | Conversations, templates and preferences | 8088 → 8088 |
+| `notification-dispatcher` | Channel delivery and retries | 8089 → 8089 |
+| `offer-service` | Offer terms, approvals and responses | 8095 → 8090 |
+| `employee-service` | Hire saga, onboarding and referral rewards | 8096 → 8091 |
+| `ai-gateway` | Model calls, guardrails, prompts and usage | 8097 → 8092 |
+| `ai-workers` | Matching and integrity processing | 8098 → 8093 |
+| `talent-service` | Consent-aware search and rediscovery | 8099 → 8094 |
+| `compliance-service` | Audit, privacy, retention and fairness | 8105 → 8095 |
+| `analytics-service` | Metrics, SLOs and failed-event recovery | 8106 → 8096 |
+| `integration-hub` | Calendar adapters, webhooks, MCP and budgets | 8107 → 8097 |
+
+Shared libraries: `platform-starter` supplies tenant context, event envelopes and common errors;
+`service-support` supplies workflow security, indexes, privacy helpers, internal clients and outbox facilities.
+Neither runs as a service. Integrity processing lives in `ai-workers`, not a separate nineteenth service.
+
+Repository layout: service folders contain code/tests; `gradle/` and root Groovy build files manage dependencies;
+`contracts/` holds API/event contracts; `scripts/` contains local tooling and acceptance checks; `infra/` contains
+Keycloak, Helm and monitoring configuration; `.github/` contains this backend's CI and disabled deployment scaffolding.
+
+Scripts are grouped into `scripts/deployment/`, `scripts/testing/`, `scripts/setup/` and `scripts/maintenance/`.
+See the [script guide](scripts/README.md) for purposes, commands and safety notes. `./run-backend.sh deploy` remains
+the standard local deployment entry point.
+
+See the [infrastructure guide](infra/README.md) for every Keycloak, Helm and Prometheus file, prerequisites and
+the distinction between local development configuration and future Kubernetes deployment.
 
 ## Architecture
 
@@ -57,15 +95,17 @@ JVM builds/runs; Node and pnpm are needed when running the frontend separately.
 ### 2. Open the backend directory and review configuration
 
 ```bash
-cd /Users/rabiulbiswas/Desktop/openhire-ai/backend
+cd /Users/rabiulbiswas/Desktop/openhire-ai
 docker info
 docker compose version
 ./run-backend.sh deploy --help
 ```
 
-Defaults are defined in `docker-compose.yml`. If customization is needed, create a private `backend/.env` using
-`.env.example` as a reference; do not overwrite an existing `.env`. Compose loads it automatically. Shell environment
-variables override `.env` values. Do not commit real passwords, tokens or connection strings.
+Defaults are defined in `docker-compose.yml` and each service's `src/main/resources/application*.yml`.
+This checkout does not include a root `.env.example`. If customization is needed, create a private root `.env`
+with only the required overrides, using Compose variable names as the reference; do not overwrite an existing
+file. Compose loads it automatically, but direct Gradle/JVM runs do not automatically load it. Shell environment
+variables override Compose `.env` values. Do not commit real passwords, tokens or connection strings.
 
 Important configuration checks:
 
@@ -77,12 +117,12 @@ Important configuration checks:
   Local security mode deliberately bypasses normal sign-in and is not an authentication test.
 - Keep client secrets, browser issuer URLs and redirect URLs consistent with Keycloak. Existing realms are not
   updated by startup import. Do not delete a populated realm to apply a client-setting change.
-- The example environment includes direct-JVM localhost URLs. Do not blindly copy those into Docker overrides:
+- Do not blindly copy direct-JVM localhost URLs into Docker overrides:
   a host model URL, if enabled, must be reachable from containers (normally `http://host.docker.internal:11434`).
 
 ### 3. Build and deploy
 
-From `openhire-ai/backend`:
+From the `openhire-ai` repository root:
 
 ```bash
 # Build all 18 backend applications, start dependencies, verify startup and follow logs
@@ -101,7 +141,7 @@ From `openhire-ai/backend`:
 ./run-backend.sh logs job-service api-gateway
 ```
 
-The direct entry point is `bash scripts/deploy-local.sh`. It uses the existing Gradle Dockerfile,
+The direct entry point is `bash scripts/deployment/deploy-local.sh`. It uses the existing Gradle Dockerfile,
 builds serially and follows timestamped raw logs with stack traces and 200 initial lines per service.
 Ctrl+C while watching logs leaves the containers running. Set `OPENHIRE_LOG_TAIL`,
 `OPENHIRE_STARTUP_TIMEOUT` or `OPENHIRE_DOCKER_PROJECT` as needed; `--help` lists all options.
@@ -133,10 +173,21 @@ Default endpoints (adjust for your port overrides):
 | Mailpit | http://localhost:8025 | Local test inbox when dispatch infrastructure is started |
 | Integration hub health | http://localhost:8107/actuator/health | Does not prove a provider is connected |
 
-The backend command does not start the frontend. Follow the [frontend README](../frontend/README.md) and run the
-console/auth applications from `openhire-ai/frontend` in separate terminals. Use its backend-connected mode rather
-than mocks when reviewing real authentication or workflows. All browser API traffic should go through the gateway;
-the browser receives an HttpOnly session cookie, not access/refresh tokens.
+The backend command does not start the frontend. It is a separate repository, locally at
+`/Users/rabiulbiswas/Desktop/openhire-frontend`. Install its dependencies and start console/auth in separate terminals:
+
+```bash
+cd /Users/rabiulbiswas/Desktop/openhire-frontend
+pnpm install --frozen-lockfile
+pnpm dev
+# In another terminal in that same repository:
+pnpm dev:auth
+```
+
+Use backend-connected mode rather than mock APIs when reviewing authentication/workflows. Default console and
+auth addresses are `http://localhost:5173` and `http://localhost:5176`. Gateway `STAFF_UI_URL`, `AUTH_UI_URL`,
+candidate/partner URLs and Keycloak redirect origins must agree with the apps you run. Browser API traffic should
+go through the gateway; the browser receives an HttpOnly session cookie, not access/refresh tokens.
 
 ### 5. Follow logs, redeploy and stop
 
@@ -196,6 +247,113 @@ run `./run-backend.sh logs` afterward. `phase8` starts only integration-hub and 
 The phase-based `start_stack` path uses `--remove-orphans`; prefer `deploy` for targeted updates while preserving
 other phase containers. No memory capacity guarantee is implied by the Compose limits.
 
+## Local build and test — step by step
+
+These commands run from the standalone backend repository root, where `settings.gradle` and `gradlew` live.
+They do not deploy services. Use a development/test MongoDB instance, never production: acceptance tests create
+temporary databases and delete their fixture databases during cleanup.
+
+### 1. Check prerequisites
+
+Install JDK 25; the checked-in wrapper downloads Gradle 9.2.1, so a separate Gradle installation is unnecessary.
+The first build needs internet access for dependencies. Node 22 and Helm are needed only for pipeline helper checks.
+Docker is needed for Testcontainers-based infrastructure tests. MongoDB and Redis are needed for enabled
+integration/context tests; a full running application stack is not needed for the resume recovery fixture.
+
+```bash
+cd /Users/rabiulbiswas/Desktop/openhire-ai
+java -version
+
+# If the wrong JDK is selected on macOS (after installing JDK 25):
+export JAVA_HOME=$(/usr/libexec/java_home -v 25)
+export PATH="$JAVA_HOME/bin:$PATH"
+bash gradlew --version
+```
+
+### 2. Check formatting, test and build one service
+
+Replace `resume-processor` with another module name to target that service. Gradle builds required shared libraries.
+
+```bash
+bash gradlew :resume-processor:spotlessCheck :resume-processor:test :resume-processor:bootJar --no-daemon
+
+# Optional: fix formatting if spotlessCheck reports differences (modifies Java files)
+bash gradlew :resume-processor:spotlessApply --no-daemon
+
+# Build the same service's dependency inventory used by CI
+bash gradlew :resume-processor:cyclonedxBom --no-daemon --no-configuration-cache
+```
+
+The executable JAR is `resume-processor/build/libs/resume-processor.jar`. Without the environment flag below,
+Mongo-gated acceptance tests are skipped; a successful default test run does not prove recovery acceptance.
+
+### 3. Run resume recovery acceptance with MongoDB
+
+Start your local MongoDB server first; Compass is a client, not a database server. The fixture starts its own
+scanner and extraction servers, so ClamAV, Tika, Redis, Kafka and the deployed resume service are not required
+for this specific test class. Keep the trailing slash on the base Mongo URI for compatibility with other tests.
+
+```bash
+OPENHIRE_RUN_MONGO_TESTS=true \
+OPENHIRE_TEST_MONGO_URI=mongodb://localhost:27017/ \
+bash gradlew :resume-processor:test \
+  --tests 'com.openhire.resumeprocessor.ResumeRecoveryAcceptanceTest' \
+  --rerun-tasks --no-daemon
+
+# Run every resume-processor test, including Mongo acceptance
+OPENHIRE_RUN_MONGO_TESTS=true \
+OPENHIRE_TEST_MONGO_URI=mongodb://localhost:27017/ \
+bash gradlew :resume-processor:test --rerun-tasks --no-daemon
+```
+
+`--rerun-tasks` prevents a previous test result from being reused after changing environment flags. Allow time
+for the intentional scanner timeout (30 seconds). The tests verify quarantine, automatic retry backoff,
+recovery, OCR fallback, malware rejection and retry exhaustion. Do not change retries to fail immediately
+or disable tests to make CI pass. The JVM class-data-sharing warning is not itself a test failure.
+
+### 4. Check the full backend workspace
+
+```bash
+# Formatting, default tests and executable JARs for all applicable modules
+bash gradlew spotlessCheck test bootJar --no-daemon --max-workers=2
+
+# Shared-library tests (Docker must be running for infrastructure smoke coverage)
+docker info
+bash gradlew :platform-starter:test :service-support:test --rerun-tasks --no-daemon
+```
+
+The default workspace run does not enable all environment-gated acceptance tests. To include Mongo-gated tests,
+provide the same `OPENHIRE_RUN_MONGO_TESTS=true` and `OPENHIRE_TEST_MONGO_URI` variables as above, use
+`--rerun-tasks`, and supply each test suite's required dependencies. Live LLM, external-provider and disaster
+recovery acceptance require additional setup; the default build is not a substitute for those checks.
+
+### 5. Validate CI helpers without building Java
+
+```bash
+node --test .github/scripts/*.test.mjs scripts/testing/deploy-local.test.mjs scripts/testing/mongo-recovery.test.mjs
+bash -n run-backend.sh scripts/deployment/deploy-local.sh
+helm lint infra/helm/openhire --set image.tag=local-validation
+helm template openhire infra/helm/openhire --set image.tag=local-validation > /dev/null
+```
+
+Deployment helper tests use fake commands; they do not contact AWS or deploy workloads.
+
+### 6. Read failures and rerun
+
+```bash
+# macOS: open the resume test report
+open resume-processor/build/reports/tests/test/index.html
+
+# Add diagnostics when reproducing a failure
+bash gradlew :resume-processor:test --rerun-tasks --stacktrace --info --no-daemon
+```
+
+For Mongo-gated failures, keep the environment variables from step 3 on the diagnostic command too.
+Each module writes HTML reports to `<module>/build/reports/tests/test/index.html` and XML results to
+`<module>/build/test-results/test/`. In GitHub Actions, download `reports-<service>` for the failing job.
+**CI gate** fails when a required service fails; fix the first test/build error rather than bypassing the gate.
+Commit and push fixes, then run CI against the new commit rather than re-running an old failed commit.
+
 ## Optional direct Java development
 
 Use Java 25 and the Gradle wrapper only when building/running outside Docker. MongoDB, Redis, Kafka and Keycloak must
@@ -220,15 +378,40 @@ credentials; matching interactive demo accounts are imported into Keycloak for l
 - `recruiter@openhire.local` / `OpenHire-Recruiter-2026!`
 - `admin@second.openhire.local` / `OpenHire-Second-2026!`
 
+These are development-only fixtures, not production credentials. Disable demo seeding and replace imported
+fixture users/secrets before any shared or production deployment. Compose's Keycloak admin and service-secret
+defaults are also for local use; changing `.env` does not rotate credentials already stored in an imported realm.
+
 Logout uses `/bff/logout`: it revokes the Redis session, closes the Keycloak SSO session, and redirects to the
 configured authentication page. Account profile and session management are available at `/api/v1/me` and
 `/api/v1/me/sessions`.
 
 ## GitHub CI/CD
 
-See the [pipeline setup and deployment guide](../.github/README.md) for affected-service builds, tests, ECR publication,
-approval-gated EKS releases and the GitHub Actions pipeline UI. CI runs without AWS; publication/deployment remain
-disabled until explicitly configured. Runtime secrets are not stored in the workflow.
+The active backend workflow is [.github/workflows/ci.yml](.github/workflows/ci.yml), displayed as **OpenHire CI**.
+It runs on pushes to `main`, pull requests targeting `main`, and manual dispatch. Changed services and shared-library
+dependents are built/tested; a manual run checks all services. Frontend CI lives in its own repository.
+
+CI runs formatting, Java tests, JAR/SBOM creation, helper tests and Helm validation. Mongo/Redis fixtures and
+Testcontainers support enabled integration tests; live LLM/provider checks are separate. **CI gate** is the aggregate
+required check. Reports are uploaded even on failures when available; inspect them before rerunning.
+
+Image publication, release assembly and deployment are **hard-disabled in workflow code**, including manual
+deployment runs. Setting an AWS variable alone cannot enable them. No AWS credentials are needed for current CI.
+The [pipeline guide](.github/README.md) describes the retained future ECR/EKS path; it is not active deployment.
+GitHub CI does not change your running local containers; use the explicit local deployment commands above.
+
+### Security, operations and API references
+
+- Use [service designs and endpoint references](docs/services/README.md) with [contracts](contracts/) when integrating
+  clients. They include public, staff and internal boundaries; do not assume a documented endpoint is anonymous.
+- Check generated endpoint documentation without running services: `node scripts/maintenance/service-reference.mjs --check`.
+- Phase 7 covers monitoring, privacy and retention; Phase 8 covers integrations and recovery. Read the relevant
+  phase/service guide before enabling a destructive retention job, restoration or live provider connection.
+- Optional Prometheus is available through `./run-backend.sh monitoring` at `http://localhost:9090` by default.
+  Its configured container cap is not a guarantee that the whole stack fits your host.
+- Local Compose publishes service ports and uses development security settings (including a non-secure session
+  cookie). Do not expose this local stack directly to the internet or treat it as production deployment configuration.
 
 ### Local verification
 
@@ -236,7 +419,7 @@ disabled until explicitly configured. Runtime secrets are not stored in the work
 curl --fail http://localhost:8080/actuator/health
 
 # Launcher tests use fake Docker commands; they do not deploy services (Node required)
-node --test scripts/deploy-local.test.mjs
+node --test scripts/testing/deploy-local.test.mjs
 ```
 
 Business APIs require authenticated sessions/tokens and applicable CSRF protection. An arbitrary `X-Tenant-Id`
@@ -266,5 +449,14 @@ Detailed service documentation:
 - [Application service](docs/services/application-service.md)
 - [Candidate service](docs/services/candidate-service.md)
 - [Resume processor](docs/services/resume-processor.md)
-- [Phase 3 acceptance](docs/PHASE_3.md)
-- [Phase 2 progress](docs/PHASE_2.md)
+- [Interview service](docs/services/interview-service.md)
+- [Communication service](docs/services/communication-service.md)
+- [Notification dispatcher](docs/services/notification-dispatcher.md)
+- [Offer service](docs/services/offer-service.md)
+- [Employee service](docs/services/employee-service.md)
+- [AI gateway](docs/services/ai-gateway.md)
+- [AI workers](docs/services/ai-workers.md)
+- [Talent service](docs/services/talent-service.md)
+- [Compliance service](docs/services/compliance-service.md)
+- [Analytics service](docs/services/analytics-service.md)
+- [Integration hub](docs/services/integration-hub.md)

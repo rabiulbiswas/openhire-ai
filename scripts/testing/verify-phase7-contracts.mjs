@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-const root = new URL('../', import.meta.url);
+const root = new URL('../../', import.meta.url);
 const contract = JSON.parse(readFileSync(new URL('contracts/phase7-api.openapi.json', root), 'utf8'));
 const controllers = {
   'compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/': ['StaffController', 'PublicController', 'AuditController'],

@@ -14,7 +14,7 @@ const mailpit = process.env.OPENHIRE_MAILPIT_URL || 'http://localhost:8025';
 const tenant = process.env.OPENHIRE_TENANT_ID || 'demo-org';
 assert(['localhost', '127.0.0.1'].includes(new URL(keycloak).hostname), 'Fixture provisioning is local-only');
 const run = randomUUID().slice(0, 8);
-const seed = JSON.parse(readFileSync(new URL('../infra/keycloak/openhire-staff-realm.json', import.meta.url)));
+const seed = JSON.parse(readFileSync(new URL('../../infra/keycloak/openhire-staff-realm.json', import.meta.url)));
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const pass = text => console.log(`PASS: ${text}`);
 
@@ -267,18 +267,18 @@ try {
 
   // ---- Optional: provider outage, retry topics and recovery --------------------------------------------------
   if (process.env.OPENHIRE_TEST_OUTAGE === 'true') {
-    execFileSync('docker', ['compose', 'stop', 'mailpit'], { cwd: new URL('..', import.meta.url).pathname, stdio: 'ignore' });
+    execFileSync('docker', ['compose', 'stop', 'mailpit'], { cwd: new URL('../..', import.meta.url).pathname, stdio: 'ignore' });
     try {
       const outage = await api(`/conversations/${conversation.id}/messages`, recruiter, { text: `During outage ${run}`, channel: 'EMAIL' }, 'POST', 201);
       await until('retry attempts during the outage', async () => {
         const delivery = await api(`/deliveries/${outage.id}`, recruiter, undefined, 'GET', [200, 404]);
         return delivery?.attempts >= 2 && delivery.status !== 'SENT' ? delivery : null;
       }, 60000);
-      execFileSync('docker', ['compose', 'start', 'mailpit'], { cwd: new URL('..', import.meta.url).pathname, stdio: 'ignore' });
+      execFileSync('docker', ['compose', 'start', 'mailpit'], { cwd: new URL('../..', import.meta.url).pathname, stdio: 'ignore' });
       await until('delivery after recovery', async () => (await api(`/deliveries/${outage.id}`, recruiter)).status === 'SENT', 240000);
       pass('SMTP outage retried through the retry topics and delivered after recovery');
     } finally {
-      execFileSync('docker', ['compose', 'start', 'mailpit'], { cwd: new URL('..', import.meta.url).pathname, stdio: 'ignore' });
+      execFileSync('docker', ['compose', 'start', 'mailpit'], { cwd: new URL('../..', import.meta.url).pathname, stdio: 'ignore' });
     }
   }
   console.log(`Phase 4 workflow completed. Development job ${job.id} and application ${application.id} are retained as test data.`);

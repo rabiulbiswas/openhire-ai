@@ -66,7 +66,7 @@ Dependencies: these core approval changes do not need a live LLM or external cal
 
 ## Phase 3 — application intake, resume processing and Candidate 360
 
-- [ ] **VERIFY — planned intake load gate.** Run `scripts/phase3-load.js` only against an authorized isolated test tenant/job. The notes record roughly 2,700 generated applications and no completed load run. Measure processing drain time and scanner backlog in addition to intake latency/errors.
+- [ ] **VERIFY — planned intake load gate.** Run `scripts/testing/phase3-load.js` only against an authorized isolated test tenant/job. The notes record roughly 2,700 generated applications and no completed load run. Measure processing drain time and scanner backlog in addition to intake latency/errors.
 - [ ] **BUILD — multi-node resume storage for EKS.** The accepted local implementation uses a single-host volume. Select shared storage/object storage, then preserve quarantine, malware scanning, signed/authorized downloads and retention/legal-hold behavior across replicas. A PVC declaration alone does not prove multi-node access safety.
 - [ ] **VERIFY/DECIDE — candidate receipt recovery and account linking.** Phase 3 explicitly lacked cross-device receipt recovery; reconcile later portal changes before deciding exactly what code remains. Test lost receipt, wrong account, expiry and tenant isolation.
 - [ ] **DECIDE — probabilistic identity matching.** Current accepted merging uses deterministic/reviewed suggestions. Decide whether calibrated probabilistic matching from the original scope is required; if so, add evaluation thresholds and false-merge tests before enabling it.

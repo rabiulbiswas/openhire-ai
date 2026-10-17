@@ -8,7 +8,7 @@ export function checkPhase7Dependencies(urls) {
     const url = new URL(value);
     assert(['localhost', '127.0.0.1', '[::1]'].includes(url.hostname), `${name} must be local for fixture acceptance`);
   }
-  const compose = fileURLToPath(new URL('../docker-compose.yml', import.meta.url));
+  const compose = fileURLToPath(new URL('../../docker-compose.yml', import.meta.url));
   const output = execFileSync('docker', ['compose', '-f', compose, 'ps', '--all', '--format', 'json'], { encoding: 'utf8' });
   const rows = output.trim().startsWith('[')
     ? JSON.parse(output)

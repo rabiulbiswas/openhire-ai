@@ -90,4 +90,4 @@ flowchart LR
 - Tenant isolation and idempotent-create tests.
 - Architecture boundary test.
 - Opt-in LLM connectivity test.
-- `scripts/verify-phase2-workflow.sh` for the complete live API flow.
+- `scripts/testing/verify-phase2-workflow.sh` for the complete live API flow.

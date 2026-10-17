@@ -82,7 +82,7 @@ Manual production erasure should always follow a reviewed dry run. Deleted logs 
 
 ```sh
 OPENHIRE_RUN_MONGO_TESTS=true ./gradlew :compliance-service:test :ai-gateway:test :analytics-service:test --max-workers=1 --no-daemon
-node scripts/verify-phase7-contracts.mjs
+node scripts/testing/verify-phase7-contracts.mjs
 ```
 
 Database tests create and drop only uniquely named `oh_phase7_*` fixture databases. Tests cover unchanged audit

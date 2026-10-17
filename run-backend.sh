@@ -116,7 +116,7 @@ if [[ "${command_name}" == "help" || "${command_name}" == "-h" || "${command_nam
 fi
 
 if [[ "${command_name}" == "deploy" ]]; then
-  exec bash "${SCRIPT_DIR}/scripts/deploy-local.sh" "$@"
+  exec bash "${SCRIPT_DIR}/scripts/deployment/deploy-local.sh" "$@"
 fi
 
 require_docker

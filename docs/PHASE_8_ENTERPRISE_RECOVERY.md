@@ -6,7 +6,7 @@ Implementation checkpoint: 2026-10-16. This adds a constrained SCIM Users profil
 
 Use `SECURITY_MODE=oidc` and `IDENTITY_PROVIDER=keycloak`. Local mode explicitly refuses enterprise provisioning rather than returning simulated success. Use the existing Keycloak administration client with narrowly scoped permissions for users, federation and reading authentication flows. Never put its secret into source control.
 
-The operator migration is `backend/scripts/configure-enterprise-identity.mjs`. Supply `SCIM_TENANT_ID` for an existing OpenHire organization. Without `--apply`, it only prints the intended changes. With `--apply`, supply a short-lived `KEYCLOAK_ADMIN_TOKEN`, `KEYCLOAK_BASE_URL`, and optional `KEYCLOAK_REALM`. No administration token or generated client secret is printed. Non-local Keycloak must use HTTPS.
+The operator migration is `scripts/setup/configure-enterprise-identity.mjs`. Supply `SCIM_TENANT_ID` for an existing OpenHire organization. Without `--apply`, it only prints the intended changes. With `--apply`, supply a short-lived `KEYCLOAK_ADMIN_TOKEN`, `KEYCLOAK_BASE_URL`, and optional `KEYCLOAK_REALM`. No administration token or generated client secret is printed. Non-local Keycloak must use HTTPS.
 
 The migration:
 
@@ -75,13 +75,13 @@ Concurrency test: 20 competing operations after one consumed slot against a limi
 
 ## Encrypted Mongo recovery tool
 
-`backend/scripts/mongo-recovery.mjs` requires Node, `mongodump` and `mongorestore`. Provide a private mode-600 Mongo tools configuration file via `RECOVERY_MONGO_CONFIG` (URI/password remain out of command arguments). Set `RECOVERY_ENCRYPTION_KEY` to a base64 32-byte key from a secret manager; retain it separately from the backup. Use a least-privileged backup identity and a separate isolated restore-cluster identity. No default credentials are supplied.
+`scripts/maintenance/mongo-recovery.mjs` requires Node, `mongodump` and `mongorestore`. Provide a private mode-600 Mongo tools configuration file via `RECOVERY_MONGO_CONFIG` (URI/password remain out of command arguments). Set `RECOVERY_ENCRYPTION_KEY` to a base64 32-byte key from a secret manager; retain it separately from the backup. Use a least-privileged backup identity and a separate isolated restore-cluster identity. No default credentials are supplied.
 
 ```sh
-node scripts/mongo-recovery.mjs backup /secure-backups/integration.oha oh_integration
-node scripts/mongo-recovery.mjs verify /secure-backups/integration.oha
-node scripts/mongo-recovery.mjs rehearse /secure-backups/integration.oha
-node scripts/mongo-recovery.mjs rehearse /secure-backups/integration.oha --execute
+node scripts/maintenance/mongo-recovery.mjs backup /secure-backups/integration.oha oh_integration
+node scripts/maintenance/mongo-recovery.mjs verify /secure-backups/integration.oha
+node scripts/maintenance/mongo-recovery.mjs rehearse /secure-backups/integration.oha
+node scripts/maintenance/mongo-recovery.mjs rehearse /secure-backups/integration.oha --execute
 ```
 
 - Backups stream one explicitly named application database into an AES-256-GCM envelope. Metadata is authenticated; an unsuccessful dump never publishes a completed backup. Existing backup files are never overwritten.
@@ -104,7 +104,7 @@ Final checkpoint: 32 identity-service tests, 73 integration-hub tests (including
 
 ```sh
 OPENHIRE_RUN_MONGO_TESTS=true OPENHIRE_RUN_RECOVERY_TESTS=true ./gradlew :identity-service:test :integration-hub:test :api-gateway:test --no-daemon --max-workers=1
-node --test scripts/mongo-recovery.test.mjs
+node --test scripts/testing/mongo-recovery.test.mjs
 ```
 
 The recovery test requires local Mongo plus Mongo database tools. It creates and drops only its own randomly named test databases. Identity/provider calls are mocked except the temporary local Mongo recovery fixture. Live SAML login, actual SCIM client interoperability, provider certification and production disaster-recovery acceptance are not implied by passing tests.

@@ -33,7 +33,7 @@ assert.equal((await finish(await upload('corrupt.pdf','%PDF-1.4 corrupt fixture'
 const infected=await finish(await upload('antivirus-test.docx',zip({...docx,'eicar.txt':'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*'})));
 assert.equal(infected.status,'REJECTED'); assert.equal(infected.error,'MALWARE_DETECTED');
 console.log('PASS: real ClamAV clean/EICAR handling, PDF/DOCX extraction, corrupt content, traversal and macro rejection');
-const root=new URL('../../node_modules/.pnpm/',import.meta.url);
+const root=new URL('../../../node_modules/.pnpm/',import.meta.url);
 const installed=readdirSync(root).find(name=>name.startsWith('sharp@')); assert(installed,'Install workspace UI dependencies for the image-only PDF fixture');
 const sharpDir=new URL(`${installed}/node_modules/sharp/`,root);
 const sharpPkg=JSON.parse(readFileSync(new URL('package.json',sharpDir),'utf8'));

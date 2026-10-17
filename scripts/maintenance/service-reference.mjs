@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-const backend = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const backend = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const modules = [...fs.readFileSync(path.join(backend, 'settings.gradle'), 'utf8').matchAll(/include '([^']+)'/g)]
   .map(m => m[1]).filter(m => !['platform-starter', 'service-support'].includes(m));
 function files(dir) { return fs.readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? files(path.join(dir, e.name)) : [path.join(dir, e.name)]); }

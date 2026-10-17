@@ -19,7 +19,7 @@ for(const name of ['organization_id','organization_name','openhire_scim_id']) {
 const saved=await fetch(`${realm}/users/profile`,{method:'PUT',headers,body:JSON.stringify(profile)}); assert.equal(saved.status,200);
 const clientsResponse=await fetch(`${realm}/clients?clientId=openhire-web`,{headers}); assert.equal(clientsResponse.status,200);
 const [client]=await clientsResponse.json(); assert(client,'Staff client missing');
-const desired=JSON.parse(readFileSync(new URL('../infra/keycloak/openhire-staff-realm.json',import.meta.url))).clients.find(c=>c.clientId==='openhire-web');
+const desired=JSON.parse(readFileSync(new URL('../../infra/keycloak/openhire-staff-realm.json',import.meta.url))).clients.find(c=>c.clientId==='openhire-web');
 client.redirectUris=[...new Set([...(client.redirectUris||[]),...desired.redirectUris])];
 client.webOrigins=[...new Set([...(client.webOrigins||[]),...desired.webOrigins])];
 const savedClient=await fetch(`${realm}/clients/${client.id}`,{method:'PUT',headers,body:JSON.stringify(client)}); assert.equal(savedClient.status,204);

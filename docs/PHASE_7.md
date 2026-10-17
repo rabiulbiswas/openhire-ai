@@ -248,7 +248,7 @@ reconciliation against seeded journeys, and tenant isolation are covered by the 
   not be bypassed to obtain a passing result.
 - Rebuild/redeploy compliance-service, ai-gateway and analytics-service before live acceptance. The changes have
   not been deployed to the already-running stack during this independent implementation/test pass.
-- Rerun `node backend/scripts/verify-phase7-workflow.mjs` and the live Phase 7 browser workflow. Verify decision
+- Rerun `node scripts/testing/verify-phase7-workflow.mjs` and the live Phase 7 browser workflow. Verify decision
   provenance, complete distributed export/erasure, retention and legal holds, fairness, metric reconciliation,
   tenant isolation and dead-letter replay against the running stack.
 - Production boundaries remain: Prometheus serves sampled rolling indicators, not a new HTTP histogram system;
@@ -262,7 +262,7 @@ Observed on 2026-10-15 (not claims about unexecuted checks):
 | Check | Result |
 |---|---|
 | `OPENHIRE_RUN_MONGO_TESTS=true ./gradlew :analytics-service:test :compliance-service:test :ai-gateway:test --max-workers=1` | Passed: 99 analytics + 75 compliance + 102 AI-gateway tests, zero failures; one separate opt-in OllamaIntegrationTest skipped. New Mongo archival/purge tests executed. |
-| `node backend/scripts/verify-phase7-contracts.mjs` | Passed: all 42 REST operations match controllers, unique operation IDs, valid path parameters and resolved local schema references |
+| `node scripts/testing/verify-phase7-contracts.mjs` | Passed: all 42 REST operations match controllers, unique operation IDs, valid path parameters and resolved local schema references |
 | Prometheus configuration and rules | Actual promtool validation passed in temporary 192 MB-capped containers; both alert rules passed synthetic-series rule tests. No full-stack startup required. |
 | Console TypeScript check | Passed |
 | Console unit suite | Final serial run passed all 158 tests in 32 files (`vitest run --maxWorkers=1`), including the new record-retention preview test |

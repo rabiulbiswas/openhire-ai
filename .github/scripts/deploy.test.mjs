@@ -15,7 +15,9 @@ function simulate(failure = '') {
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'openhire-cd-test-'));
   fs.mkdirSync(path.join(temp, 'bin'));
   fs.mkdirSync(path.join(temp, 'release-input'));
-  fs.symlinkSync(path.join(root, 'backend'), path.join(temp, 'backend'), 'dir');
+  for (const name of ['settings.gradle', 'infra', ...fs.readdirSync(root).filter(name => fs.existsSync(path.join(root, name, 'build.gradle')))]) {
+    fs.symlinkSync(path.join(root, name), path.join(temp, name));
+  }
   fs.writeFileSync(path.join(temp, 'release-input/release.json'), JSON.stringify({
     sha, runId: '123', services: ['job-service'], images: [{service:'job-service', repository:prefix+'/job-service', digest:'sha256:'+'b'.repeat(64), sha}]
   }));
@@ -26,7 +28,7 @@ const fs=require('fs'),path=require('path');
 const command=path.basename(process.argv[1]),args=process.argv.slice(2);
 fs.appendFileSync(process.env.FAKE_CALLS,JSON.stringify({command,args})+'\\n');
 if(command==='git' && args[0]==='merge-base' && process.env.FAKE_FAILURE==='stale')process.exit(1);
-if(command==='git' && args[0]==='diff')process.stdout.write(process.env.FAKE_FAILURE==='missing'?'backend/identity-service/src/main/X.java\\0':'backend/job-service/src/main/X.java\\0');
+if(command==='git' && args[0]==='diff')process.stdout.write(process.env.FAKE_FAILURE==='missing'?'identity-service/src/main/X.java\\0':'job-service/src/main/X.java\\0');
 if(command==='helm' && args[0]==='get')process.stdout.write(fs.readFileSync('values.json'));
 if(command==='helm' && args[0]==='upgrade'){
  fs.copyFileSync(args[args.indexOf('-f')+1],'captured-overrides.json');

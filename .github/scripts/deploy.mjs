@@ -46,7 +46,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const summary = process.env.GITHUB_STEP_SUMMARY;
   try {
     if (summary) fs.appendFileSync(summary, `## Deployment plan\n\nEnvironment: ${process.env.DEPLOY_ENVIRONMENT}\n\n| Service | Image digest | Action |\n| --- | --- | --- |\n${manifest.images.map(i => `| ${i.service} | \`${i.digest}\` | ${current.services[i.service].enabled ? 'roll out if changed' : 'record image; workload disabled'} |`).join('\n')}\n\nUnchanged service image values are preserved. Helm may also apply reviewed chart changes.\n`);
-    execute('helm', ['upgrade', release, 'backend/infra/helm/openhire', '-n', namespace,
+    execute('helm', ['upgrade', release, 'infra/helm/openhire', '-n', namespace,
       '--reuse-values', '-f', overridePath, '--atomic', '--wait', '--timeout', '15m', '--history-max', '10']);
     for (const service of active) execute('kubectl', ['rollout', 'status', `deployment/${release}-${service}`, '-n', namespace, '--timeout=180s']);
     if (summary) fs.appendFileSync(summary, '\n**Rollout completed.** Readiness is verified; business workflow acceptance remains a separate gate.\n');

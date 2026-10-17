@@ -19,7 +19,6 @@ jobs:
     outputs:
       services: ${{ steps.detect.outputs.services }}
       backend: ${{ steps.detect.outputs.backend }}
-      frontend: ${{ steps.detect.outputs.frontend }}
       chart: ${{ steps.detect.outputs.chart }}
     steps:
       - uses: actions/checkout@v4
@@ -49,10 +48,10 @@ jobs:
           cache: false
       - name: Validate GitHub workflow syntax and expressions
         run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.7 -shellcheck= .github/workflows/ci.yml .github/workflows/deploy.yml
-      - run: node --test .github/scripts/*.test.mjs backend/scripts/deploy-local.test.mjs backend/scripts/mongo-recovery.test.mjs
-      - run: bash -n backend/run-backend.sh backend/scripts/deploy-local.sh
-      - run: helm lint backend/infra/helm/openhire --set image.tag=ci-validation
-      - run: helm template openhire backend/infra/helm/openhire --set image.tag=ci-validation > /dev/null
+      - run: node --test .github/scripts/*.test.mjs scripts/deploy-local.test.mjs scripts/mongo-recovery.test.mjs
+      - run: bash -n run-backend.sh scripts/deploy-local.sh
+      - run: helm lint infra/helm/openhire --set image.tag=ci-validation
+      - run: helm template openhire infra/helm/openhire --set image.tag=ci-validation > /dev/null
 
   backend:
     name: Backend / ${{ matrix.service }}
@@ -91,7 +90,6 @@ jobs:
           java-version: '25'
       - uses: gradle/actions/setup-gradle@v4
       - name: Check, test, build JAR and SBOM
-        working-directory: backend
         run: bash gradlew ":$SERVICE:spotlessCheck" ":$SERVICE:test" ":$SERVICE:bootJar" ":$SERVICE:cyclonedxBom" --no-daemon --no-configuration-cache --max-workers=2
       - name: Preserve test reports, including failures
         if: always()
@@ -99,13 +97,13 @@ jobs:
         with:
           name: reports-${{ matrix.service }}
           path: |
-            backend/${{ matrix.service }}/build/reports/
-            backend/${{ matrix.service }}/build/test-results/
+            ${{ matrix.service }}/build/reports/
+            ${{ matrix.service }}/build/test-results/
           retention-days: 14
       - uses: actions/upload-artifact@v4
         with:
           name: jar-${{ matrix.service }}
-          path: backend/${{ matrix.service }}/build/libs/${{ matrix.service }}.jar
+          path: ${{ matrix.service }}/build/libs/${{ matrix.service }}.jar
           if-no-files-found: error
           retention-days: 14
 
@@ -124,57 +122,18 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Require Docker for infrastructure tests
         run: docker info > /dev/null
-      - working-directory: backend
-        run: bash gradlew :platform-starter:spotlessCheck :platform-starter:test :service-support:spotlessCheck :service-support:test --no-daemon --max-workers=2
+      - run: bash gradlew :platform-starter:spotlessCheck :platform-starter:test :service-support:spotlessCheck :service-support:test --no-daemon --max-workers=2
       - if: always()
         uses: actions/upload-artifact@v4
         with:
           name: reports-shared
           path: |
-            backend/platform-starter/build/reports/
-            backend/service-support/build/reports/
-
-  frontend:
-    name: Frontend / workspace build and tests
-    needs: changes
-    if: needs.changes.outputs.frontend == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    defaults:
-      run:
-        working-directory: frontend
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          package_json_file: frontend/package.json
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: pnpm
-          cache-dependency-path: frontend/pnpm-lock.yaml
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm format:check
-      - run: pnpm lint
-      - run: pnpm typecheck
-      - run: pnpm test
-      - run: pnpm build
-      - run: pnpm --filter @openhire/console mocks:init
-      - run: pnpm --filter @openhire/console exec playwright install --with-deps chromium
-      - run: pnpm test:e2e
-      - if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-reports-and-builds
-          path: |
-            frontend/apps/*/dist/
-            frontend/apps/console/playwright-report/
-            frontend/apps/console/test-results/
-          retention-days: 14
+            platform-starter/build/reports/
+            service-support/build/reports/
 
   ci-gate:
     name: CI gate
-    needs: [changes, pipeline-checks, backend, shared-tests, frontend]
+    needs: [changes, pipeline-checks, backend, shared-tests]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -182,7 +141,7 @@ jobs:
         env:
           RESULTS: ${{ toJSON(needs) }}
         run: |
-          node -e 'const n=JSON.parse(process.env.RESULTS); for(const [k,v] of Object.entries(n)){if(["failure","cancelled"].includes(v.result))throw Error(k+" "+v.result)} if(n.changes.result!=="success"||n["pipeline-checks"].result!=="success")throw Error("Mandatory checks missing"); if(n.changes.outputs.backend==="true"&&(n.backend.result!=="success"||n["shared-tests"].result!=="success"))throw Error("Backend checks missing"); if(n.changes.outputs.frontend==="true"&&n.frontend.result!=="success")throw Error("Frontend checks missing")'
+          node -e 'const n=JSON.parse(process.env.RESULTS); for(const [k,v] of Object.entries(n)){if(["failure","cancelled"].includes(v.result))throw Error(k+" "+v.result)} if(n.changes.result!=="success"||n["pipeline-checks"].result!=="success")throw Error("Mandatory checks missing"); if(n.changes.outputs.backend==="true"&&(n.backend.result!=="success"||n["shared-tests"].result!=="success"))throw Error("Backend checks missing")'
       - name: Pipeline summary
         env:
           SERVICES: ${{ needs.changes.outputs.services }}
@@ -228,7 +187,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: image-context
-          file: backend/Dockerfile.ci
+          file: Dockerfile.ci
           platforms: linux/amd64
           push: true
           tags: ${{ steps.ecr.outputs.registry }}/openhire/${{ matrix.service }}:${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}

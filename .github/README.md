@@ -1,12 +1,14 @@
 # OpenHire GitHub Actions CI/CD
 
-## Separate repository preparation
+## Standalone backend repository
 
-Standalone, CI-only pipelines now live in `backend/.github/` and `frontend/.github/`. Use those directories
-with their respective folder contents as each new repository's root; see their README files for setup.
-The workflows in this outer directory remain the original combined-repository implementation and must not
-be copied over the standalone workflows. Nested workflows do not run while still nested in this repository.
-No repositories, remotes or deployments were created by this preparation.
+This repository now contains backend source directly at its root: `settings.gradle`, service directories,
+`scripts/` and `infra/`. Its active workflow is `.github/workflows/ci.yml`. There is no `backend/` wrapper
+and no frontend job. Frontend CI belongs to the separate `openhire-frontend` repository.
+
+If an older run reports missing `backend/settings.gradle` or `backend/infra/helm/openhire`, commit and push
+the corrected workflow, helpers and tests together. Re-running a job from the old commit uses the old files;
+start a run on the new commit instead. Keep the existing required check name **CI gate**.
 
 ## Current mode: build and test only
 
@@ -39,12 +41,11 @@ logging for application logs. Pipeline logs show Helm progress, rollout status a
 | One backend service's source/build/test files | Test/build/package that service |
 | `platform-starter` | All transitive dependents (currently all business services except independent API gateway) |
 | `service-support` | Its transitive consumers |
-| Gradle root/wrapper/catalog, Dockerfile, workflow/helpers | All backend services; conservatively verify frontend too |
+| Gradle root/wrapper/catalog, Dockerfile, workflow/helpers | All backend services |
 | API/event contracts | All backend services |
 | Helm chart only | Validate chart; no publication or deployment |
-| Frontend source/config | Build/test frontend workspace; no backend rebuild |
 | Backend Markdown documentation only | Pipeline validation only |
-| First push or manual CI run | Full backend and frontend validation |
+| First push or manual CI run | Full backend validation |
 
 Deleted and renamed files are included (`git diff --no-renames`). PRs compare their base to the tested merge checkout;
 pushes compare the previous pushed SHA to the current SHA. Missing history fails closed rather than guessing.
@@ -54,13 +55,13 @@ backend builds run. The complete branch-protection check is **CI gate**, which h
 Mongo integration tests use disposable Mongo 8.2 on the runner. Redis is also available for context tests.
 The platform smoke test uses Docker/Testcontainers for Mongo/Redis/Kafka. External providers and LLMs are mocked or
 explicitly skipped. Live model, recovery-tool integration, full-stack E2E and provider certification are separate gates.
-Frontend browser tests use the existing mock API, not the production backend. CI does not waive existing formatter,
+Frontend checks run in their own repository. Backend CI does not waive existing formatter,
 lint or test failures; those must be fixed if the first clean run exposes them.
 
 ## Build once, deploy by digest
 
 1. PR: validation + affected service tests/builds, no AWS permissions or publication.
-2. Main push/manual CI: same checks; if enabled, package tested JARs using `backend/Dockerfile.ci` and push images.
+2. Main push/manual CI: same checks; if enabled, package tested JARs using `Dockerfile.ci` and push images.
 3. Each image gets a commit/run/attempt tag and an immutable digest. Assemble `backend-release` only after required
    checks and every selected image publication succeed. Partial publication cannot produce a deployable release.
 4. Automatic testing deployment is optional. Production deployment is a manual **OpenHire Deploy** run referencing
@@ -73,13 +74,13 @@ lint or test failures; those must be fixed if the first clean run exposes them.
    not undo database changes. A post-upgrade verification failure needs operator review, not a claimed database rollback.
 
 All images currently target **linux/amd64**. Use compatible EKS nodes; ARM/Graviton needs a separately tested build target.
-This pipeline deploys the **18 backend applications**. Frontend CI is included, but frontend hosting/deployment is not:
-the SPA/auth/Next.js applications need a separately selected hosting topology and authentication origins.
+The retained deployment implementation targets the **18 backend applications**. Frontend CI and deployment
+are managed separately in the frontend repository.
 
 ## GitHub setup (no AWS deployment yet)
 
-1. Review and commit `.github/`, backend/frontend source, Gradle wrapper and lockfiles. This checkout initially had only
-   `.gitignore` tracked; untracked files do not run in GitHub. Do not commit local `.env`, credentials or build outputs.
+1. Review and commit `.github/`, backend source, Gradle wrapper and lockfiles at the repository root.
+   Untracked files do not run in GitHub. Do not commit local `.env`, credentials or build outputs.
 2. Push to a GitHub repository with default branch `main`, enable Actions, and run **OpenHire CI** manually once.
 3. Add **CI gate** as a required branch-protection check. Protect workflow changes with review/CODEOWNERS as appropriate.
 4. No AWS configuration is required. Publication/deployment jobs are hard-disabled; keep CD variables unset for future safety.
@@ -150,12 +151,12 @@ storage, ECR and EKS are billable according to your account; these pipelines are
 From the repository root, with Node and Helm available:
 
 ```sh
-node --test .github/scripts/*.test.mjs backend/scripts/deploy-local.test.mjs backend/scripts/mongo-recovery.test.mjs
-helm lint backend/infra/helm/openhire --set image.tag=offline-test
-helm template openhire backend/infra/helm/openhire --set image.tag=offline-test
+node --test .github/scripts/*.test.mjs scripts/deploy-local.test.mjs scripts/mongo-recovery.test.mjs
+helm lint infra/helm/openhire --set image.tag=offline-test
+helm template openhire infra/helm/openhire --set image.tag=offline-test
 ```
 
-These tests cover all 18 service selectors, shared dependency propagation, docs/chart/frontend changes, artifact
+These tests cover all 18 service selectors, shared dependency propagation, docs/chart changes, artifact
 validation, incomplete-release rejection and image preservation. They do not claim GitHub execution or live EKS acceptance.
 
 Validation checkpoint (2026-10-17): 20 local Node tests passed, Helm lint/render and per-service digest checks passed,

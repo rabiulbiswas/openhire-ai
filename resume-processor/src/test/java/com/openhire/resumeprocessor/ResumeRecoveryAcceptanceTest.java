@@ -97,24 +97,60 @@ class ResumeRecoveryAcceptanceTest {
     }
 
     private Document finish(String id) throws Exception {
-        pipeline.work();
+        return await(id, false);
+    }
+
+    private Document await(String id, boolean retryPending) throws Exception {
+        Document row = null;
         for (int i = 0; i < 90; i++) {
-            var row = pipeline.result("fixture", id);
-            if (java.util.Set.of("DONE", "FAILED", "REJECTED").contains(row.getString("status"))) return row;
+            // This fixture constructs the service directly, so there is no Spring scheduler.
+            pipeline.work();
+            row = pipeline.result("fixture", id);
+            if (retryPending) {
+                if ("PENDING".equals(row.getString("status"))
+                        && row.containsKey("nextAttempt")
+                        && Instant.parse(row.getString("nextAttempt")).isAfter(Instant.now())) return row;
+            } else if (java.util.Set.of("DONE", "FAILED", "REJECTED").contains(row.getString("status"))) {
+                return row;
+            }
             Thread.sleep(500);
         }
-        throw new AssertionError("Resume work did not finish");
+        throw new AssertionError("Resume did not reach " + (retryPending ? "retry backoff" : "a terminal state")
+                + "; last state=" + row);
+    }
+
+    private void assertQuarantinedBackoff(String id) throws Exception {
+        var pending = await(id, true);
+        assertThat(pending.getInteger("attempts")).isEqualTo(1);
+        assertThat(Instant.parse(pending.getString("nextAttempt"))).isAfter(Instant.now());
+        assertThatThrownBy(() -> pipeline.download("fixture", id)).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> pipeline.retry("fixture", id)).isInstanceOf(RuntimeException.class);
+        var stored = mongo.findOne(Query.query(Criteria.where("_id").is(id)), Document.class, "resumes");
+        assertThat(stored).doesNotContainKeys("lease", "leaseUntil");
+        assertThat(mongo.count(
+                        Query.query(ResumePipeline.claimable(Instant.now().toString())), "resumes"))
+                .isZero();
+    }
+
+    private void makeRetryDue(String id) {
+        // Advance only this isolated fixture's backoff; production retry delays remain unchanged.
+        mongo.updateFirst(
+                Query.query(Criteria.where("_id").is(id)),
+                new Update().set("nextAttempt", Instant.EPOCH.toString()),
+                "resumes");
     }
 
     @Test
     void scannerTimeoutFailsClosedAndCanRecover() throws Exception {
         scan.set("TIMEOUT");
         var id = upload();
-        assertThat(finish(id).getString("status")).isEqualTo("FAILED");
-        assertThatThrownBy(() -> pipeline.download("fixture", id)).isInstanceOf(RuntimeException.class);
+        assertQuarantinedBackoff(id);
         scan.set("OK");
-        pipeline.retry("fixture", id);
-        assertThat(finish(id).getString("status")).isEqualTo("DONE");
+        makeRetryDue(id);
+        var recovered = finish(id);
+        assertThat(recovered.getString("status")).isEqualTo("DONE");
+        assertThat(recovered.getInteger("attempts")).isEqualTo(2);
+        assertThat(pipeline.download("fixture", id)).isNotEmpty();
     }
 
     @Test
@@ -130,12 +166,29 @@ class ResumeRecoveryAcceptanceTest {
     void extractionFailureRetriesAndShortTextUsesOcr() throws Exception {
         extract.set("FAIL");
         var id = upload();
-        assertThat(finish(id).getString("status")).isEqualTo("FAILED");
+        assertQuarantinedBackoff(id);
         extract.set("OCR");
-        pipeline.retry("fixture", id);
+        makeRetryDue(id);
         var recovered = finish(id);
         assertThat(recovered.getString("status")).isEqualTo("DONE");
+        assertThat(recovered.getInteger("attempts")).isEqualTo(2);
         assertThat(((Document) recovered.get("steps")).getString("ocr")).isEqualTo("PASSED");
+    }
+
+    @Test
+    void repeatedExtractorOutageStopsAtAttemptLimit() throws Exception {
+        extract.set("FAIL");
+        var id = upload();
+        assertQuarantinedBackoff(id);
+        makeRetryDue(id);
+        assertThat(await(id, true).getInteger("attempts")).isEqualTo(2);
+        makeRetryDue(id);
+        var failed = finish(id);
+        assertThat(failed.getString("status")).isEqualTo("FAILED");
+        assertThat(failed.getInteger("attempts")).isEqualTo(3);
+        assertThat(failed.getString("error")).isEqualTo("EXTRACTION_UNAVAILABLE");
+        assertThatThrownBy(() -> pipeline.download("fixture", id)).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> pipeline.retry("fixture", id)).isInstanceOf(RuntimeException.class);
     }
 
     @Test

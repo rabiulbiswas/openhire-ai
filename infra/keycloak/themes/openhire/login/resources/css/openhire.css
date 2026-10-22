@@ -1,0 +1,38 @@
+/* Keep the provider's accessible controls, validation, MFA and recovery templates intact. */
+:root {
+  --pf-v5-global--primary-color--100: #6554c0;
+  --pf-v5-global--primary-color--200: #5142a3;
+  --pf-v5-global--link--Color: #6554c0;
+  --pf-v5-global--FontFamily--text: system-ui, sans-serif;
+}
+body, .login-pf body, #keycloak-bg { background: #f5f5fa; font-family: system-ui, sans-serif; }
+.pf-v5-c-login { min-height: 100vh; padding: 32px 20px; background: transparent; }
+.pf-v5-c-login__container {
+  display: grid; grid-template-columns: minmax(260px, 1fr) minmax(320px, 1fr);
+  gap: 0; width: min(100%, 1024px); margin: auto; align-items: stretch;
+  border-radius: 20px; overflow: hidden; box-shadow: 0 16px 60px #211b4420;
+}
+#kc-header {
+  display: flex; flex-direction: column; justify-content: center; gap: 40px;
+  margin: 0; padding: 56px 40px; color: white;
+  background: linear-gradient(145deg, #34265f, #6554c0);
+}
+#kc-header-wrapper { color: white; font-size: 30px; font-weight: 750; letter-spacing: -.6px; }
+#kc-header::after {
+  content: 'Hire faster. Decide for yourself.';
+  font-size: clamp(28px, 3vw, 40px); font-weight: 650; line-height: 1.2; max-width: 340px;
+}
+.pf-v5-c-login__main { background: white; color: #25213f; padding: 40px 12px; min-width: 0; }
+.pf-v5-c-login__main-header, .pf-v5-c-login__main-body, .pf-v5-c-login__main-footer { background: transparent; }
+#kc-page-title { font-size: 26px; font-weight: 700; color: #25213f; }
+.pf-v5-c-form-control { border-radius: 8px; }
+.pf-v5-c-button.pf-m-primary { border-radius: 8px; min-height: 44px; font-weight: 600; }
+.openhire-footer { color: #696478; font-size: 13px; padding: 24px 32px 0; line-height: 1.6; }
+a { color: #6554c0; }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid #a99be8; outline-offset: 3px; }
+@media (max-width: 700px) {
+  .pf-v5-c-login__container { grid-template-columns: 1fr; max-width: 500px; }
+  #kc-header { padding: 24px 28px; gap: 16px; }
+  #kc-header::after { font-size: 23px; }
+  .pf-v5-c-login__main { padding: 24px 0; }
+}

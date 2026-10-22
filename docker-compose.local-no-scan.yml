@@ -1,0 +1,11 @@
+# Explicit opt-in only. Never use this override in shared or production deployments.
+# Requires Docker Compose 2.24.4+ for !override.
+services:
+  resume-processor:
+    environment:
+      RESUME_SCAN_ENABLED: "false"
+      SPRING_PROFILES_ACTIVE: local-no-scan
+    depends_on:
+      clamav: !reset null
+  clamav:
+    profiles: !override [antivirus]

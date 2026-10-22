@@ -37,9 +37,9 @@
       "secret": "replace-before-use",
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
-      "redirectUris": ["http://localhost:8080/login/oauth2/code/openhire-candidate"],
-      "webOrigins": ["http://localhost:5173"],
-      "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"],
+      "redirectUris": ["http://localhost:8080/login/oauth2/code/openhire-candidate", "http://localhost:5176/login/oauth2/code/openhire-candidate", "http://localhost:3000/login/oauth2/code/openhire-candidate"],
+      "webOrigins": ["http://localhost:5176", "http://localhost:3000"],
+      "defaultClientScopes": ["basic", "web-origins", "acr", "roles", "profile", "email"],
       "attributes": {
         "pkce.code.challenge.method": "S256",
         "post.logout.redirect.uris": "http://localhost:5176/*##http://localhost:3000/*"

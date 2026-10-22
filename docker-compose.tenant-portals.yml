@@ -1,0 +1,27 @@
+# Local opt-in only; browsers reach apps through the loopback reverse proxy.
+services:
+  api-gateway:
+    environment:
+      OPENHIRE_PORTALS_ENABLED: "true"
+      OPENHIRE_PORTALS_BASE_DOMAIN: localhost
+      OPENHIRE_SECURITY_MODE: oidc
+      SPRING_PROFILES_ACTIVE: oidc
+      # Proxy supplies Host directly; never trust caller-provided Forwarded headers.
+      SERVER_FORWARD_HEADERS_STRATEGY: none
+      TENANT_OIDC_CLIENT_SECRET: ${TENANT_OIDC_CLIENT_SECRET:-local-tenant-client-change-me}
+      PLATFORM_OIDC_CLIENT_SECRET: ${PLATFORM_OIDC_CLIENT_SECRET:-local-platform-client-change-me}
+  identity-service:
+    environment:
+      SECURITY_MODE: oidc
+      IDENTITY_PROVIDER: keycloak
+      OPENHIRE_PORTALS_ENABLED: "true"
+      OPENHIRE_PORTALS_BASE_DOMAIN: localhost
+      OPENHIRE_PORTALS_SCHEME: http
+  tenant-proxy:
+    image: nginx:1.28-alpine
+    restart: unless-stopped
+    ports: ["127.0.0.1:80:80"]
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    volumes:
+      - ./infra/tenant-portals/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    mem_limit: 64m

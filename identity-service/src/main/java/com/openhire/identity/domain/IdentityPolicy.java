@@ -26,6 +26,10 @@ public final class IdentityPolicy {
         if (!SLUG.matcher(value).matches() || value.length() > 63) {
             throw new IllegalArgumentException("Slug must contain lowercase letters, numbers, and hyphens");
         }
+        if (java.util.Set.of("admin", "auth", "api", "www", "mail", "static", "assets", "support", "localhost")
+                .contains(value)) {
+            throw new IllegalArgumentException("This slug is reserved for platform infrastructure");
+        }
         return value;
     }
 

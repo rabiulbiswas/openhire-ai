@@ -57,6 +57,31 @@ public class IdentityController {
         return service.organizations();
     }
 
+    @PostMapping("/platform/organizations/onboard")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    org.springframework.http.ResponseEntity<?> onboard(@Valid @RequestBody OnboardRequest request) {
+        return org.springframework.http.ResponseEntity.status(HttpStatus.CREATED)
+                .cacheControl(org.springframework.http.CacheControl.noStore())
+                .body(service.onboardOrganization(actor(), request.name(), request.slug(), request.adminEmail()));
+    }
+
+    @GetMapping("/platform/organizations/{id}")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    Object organizationOverview(@PathVariable String id) {
+        return service.organizationOverview(id);
+    }
+
+    @PostMapping("/platform/organizations/{id}/admin-invitations")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    org.springframework.http.ResponseEntity<?> adminInvitation(@PathVariable String id, @Valid @RequestBody AdminInviteRequest request) {
+        return org.springframework.http.ResponseEntity.status(HttpStatus.CREATED)
+                .cacheControl(org.springframework.http.CacheControl.noStore())
+                .body(service.inviteOrganizationAdmin(actor(), id, request.email()));
+    }
+
+    public record OnboardRequest(@NotBlank String name, @NotBlank String slug, @NotBlank @Email String adminEmail) {}
+    public record AdminInviteRequest(@NotBlank @Email String email) {}
+
     @PatchMapping("/platform/organizations/{id}/status")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     Object organizationStatus(@PathVariable String id, @Valid @RequestBody StatusRequest request) {
@@ -150,6 +175,28 @@ public class IdentityController {
             throw new IllegalArgumentException("Invalid internal credential");
         }
         return service.validateApiKey(request.apiKey());
+    }
+
+    @GetMapping("/internal/tenant-access/{slug}")
+    Object tenantAccess(@PathVariable String slug,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String subject,
+            @RequestHeader("X-Internal-Secret") String suppliedSecret) {
+        if (!java.security.MessageDigest.isEqual(internalSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                suppliedSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8))) {
+            throw new org.springframework.web.server.ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        return service.tenantAccess(slug, subject);
+    }
+
+    @PostMapping("/internal/tenant-access/{slug}/activate")
+    void activateTenantMember(@PathVariable String slug,
+            @org.springframework.web.bind.annotation.RequestParam String subject,
+            @RequestHeader("X-Internal-Secret") String suppliedSecret) {
+        if (!java.security.MessageDigest.isEqual(internalSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                suppliedSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8))) {
+            throw new org.springframework.web.server.ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        service.activateTenantMember(slug, subject);
     }
 
     @GetMapping("/api-keys")

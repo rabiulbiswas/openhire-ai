@@ -36,6 +36,25 @@ public class ResumePipeline {
     private final String tika, clamHost;
     private final int clamPort;
 
+    @Value("${openhire.resume.scan-enabled:true}")
+    private boolean scanEnabled = true;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private org.springframework.core.env.Environment environment;
+
+    @jakarta.annotation.PostConstruct
+    void validateScannerMode() {
+        if (!scanEnabled) {
+            var profiles = Set.of(environment.getActiveProfiles());
+            if (!profiles.contains("local-no-scan")
+                    || profiles.stream().anyMatch(p -> !Set.of("local-no-scan", "local", "dev", "oidc").contains(p))) {
+                throw new IllegalStateException("Disabling resume scanning requires the isolated local-no-scan profile");
+            }
+            org.slf4j.LoggerFactory.getLogger(ResumePipeline.class)
+                    .warn("LOCAL DEVELOPMENT ONLY: resume malware scanning disabled; use trusted synthetic files only");
+        }
+    }
+
     public ResumePipeline(
             MongoTemplate mongo,
             @Value("${openhire.resume.directory}") String directory,
@@ -229,8 +248,12 @@ public class ResumePipeline {
         String status = "DONE", error = "", text = "";
         try {
             byte[] bytes = Files.readAllBytes(root.resolve(id));
-            scan(bytes);
-            steps.put("virusScan", "PASSED");
+            if (scanEnabled) {
+                scan(bytes);
+                steps.put("virusScan", "PASSED");
+            } else {
+                steps.put("virusScan", "SKIPPED_LOCAL_DEV");
+            }
             text = extract(bytes, row.getString("mime"), "no_ocr");
             steps.put("extract", "PASSED");
             if (text.strip().length() < 30 && "application/pdf".equals(row.getString("mime"))) {

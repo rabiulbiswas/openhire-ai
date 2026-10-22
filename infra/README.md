@@ -9,6 +9,9 @@ Operational commands live in [`scripts/`](../scripts/README.md), not here.
 ```text
 infra/
 ├── README.md
+├── clamav/
+│   ├── README.md
+│   └── start-local.sh
 ├── keycloak/
 │   ├── README.md
 │   ├── openhire-staff-realm.json
@@ -32,6 +35,7 @@ infra/
 | Component | Purpose | When used |
 | --- | --- | --- |
 | Keycloak | Authenticates staff and candidates and issues OIDC tokens | Normal local OIDC sign-in and future deployed environments |
+| [ClamAV](clamav/README.md) | Resume malware scanning, foreground lifecycle and signature maintenance | Local Phase 3 uploads; scanner failure remains fail-closed |
 | Helm chart | Describes how backend application containers run in Kubernetes | Offline CI validation now; a reviewed Kubernetes/EKS deployment later |
 | Prometheus | Collects operational metrics and evaluates alert rules | Optional local monitoring; not needed for a normal Java build |
 

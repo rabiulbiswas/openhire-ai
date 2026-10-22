@@ -18,6 +18,7 @@ printf '%s\\n' "$*" >> "$FAKE_DOCKER_CALLS"
 if [[ " $* " == *" build "* && "$FAKE_FAILURE" == build ]]; then exit 1; fi
 if [[ " $* " == *" --no-recreate "* && "$FAKE_FAILURE" == infra ]]; then exit 1; fi
 if [[ " $* " == *" --force-recreate "* && "$FAKE_FAILURE" == startup ]]; then exit 1; fi
+if [[ " $* " == *" logs --follow "* ]]; then kill -INT "$PPID"; fi
 exit 0
 `, { mode: 0o700 });
   try {

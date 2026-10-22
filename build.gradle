@@ -52,6 +52,12 @@ subprojects {
     }
 
     dependencies {
+        // Generate live specifications in runnable services; only the reactive gateway hosts Swagger UI.
+        if (project.name == 'api-gateway') {
+            implementation rootProject.libs.springdoc.webflux.ui
+        } else if (!(project.name in ['platform-starter', 'service-support'])) {
+            implementation rootProject.libs.springdoc.webmvc.api
+        }
         testImplementation libs.archunit.junit5
         testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     }

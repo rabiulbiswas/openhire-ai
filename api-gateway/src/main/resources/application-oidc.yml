@@ -20,6 +20,22 @@ spring:
             user-info-uri: ${CANDIDATE_OIDC_INTERNAL_URL:http://localhost:8180}/realms/openhire-candidate/protocol/openid-connect/userinfo
             user-name-attribute: sub
         registration:
+          openhire-tenant:
+            provider: openhire-staff
+            client-id: openhire-tenant
+            client-secret: ${TENANT_OIDC_CLIENT_SECRET:local-tenant-client-change-me}
+            client-authentication-method: client_secret_basic
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: openid,profile,email
+          openhire-platform:
+            provider: openhire-staff
+            client-id: openhire-platform
+            client-secret: ${PLATFORM_OIDC_CLIENT_SECRET:local-platform-client-change-me}
+            client-authentication-method: client_secret_basic
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: openid,profile,email
           openhire-staff:
             provider: openhire-staff
             client-id: ${STAFF_OIDC_CLIENT_ID:openhire-web}

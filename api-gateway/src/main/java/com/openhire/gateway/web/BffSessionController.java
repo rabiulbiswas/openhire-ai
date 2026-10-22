@@ -27,6 +27,8 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequestMapping("/bff")
 public class BffSessionController {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.openhire.gateway.security.TenantPortalAccess portals;
     private static final Set<String> UI_ROLES = Set.of(
             "recruiter",
             "hr_admin",
@@ -35,7 +37,9 @@ public class BffSessionController {
             "org_admin",
             "compliance",
             "employee",
-            "agency_recruiter");
+            "agency_recruiter",
+            "super_admin",
+            "candidate");
     private final String securityMode;
     private final String defaultTenant;
     private final URI staffLogoutRedirect;
@@ -45,7 +49,7 @@ public class BffSessionController {
             @Value("${openhire.security.mode:local}") String securityMode,
             @Value("${openhire.tenant.default-id:demo-org}") String defaultTenant,
             @Value("${openhire.ui.auth-url:http://localhost:5176/login}") URI staffLogoutRedirect,
-            @Value("${openhire.ui.candidate-auth-url:http://localhost:5176/candidate-sign-in}")
+            @Value("${openhire.ui.candidate-auth-url:http://localhost:5176/login}")
                     URI candidateLogoutRedirect) {
         this.securityMode = securityMode;
         this.defaultTenant = defaultTenant;
@@ -82,6 +86,17 @@ public class BffSessionController {
      * this endpoint cannot be used as an open redirect.
      */
     @GetMapping("/logout")
+    Mono<ResponseEntity<Void>> browserLogout(Mono<Principal> principal, WebSession session,
+            org.springframework.web.server.ServerWebExchange exchange) {
+        if (portals != null && portals.enabled()) {
+            var redirect = portals.loginUri(exchange);
+            return principal.map(value -> providerLogoutUri(value, redirect)).defaultIfEmpty(redirect)
+                    .flatMap(location -> session.invalidate().thenReturn(ResponseEntity.status(HttpStatus.FOUND).location(location).build()));
+        }
+        return browserLogout(principal, session);
+    }
+
+    // Retain the legacy entry point for direct callers; tenant HTTP requests use the mapped method.
     Mono<ResponseEntity<Void>> browserLogout(Mono<Principal> principal, WebSession session) {
         return principal
                 .map(this::providerLogoutUri)
@@ -109,6 +124,14 @@ public class BffSessionController {
                 .build()
                 .encode()
                 .toUri();
+    }
+
+    private URI providerLogoutUri(Principal principal, URI redirect) {
+        if (!(principal instanceof OAuth2AuthenticationToken oauth) || !(oauth.getPrincipal() instanceof OidcUser user)
+                || user.getIssuer() == null) return redirect;
+        return UriComponentsBuilder.fromUriString(user.getIssuer().toString()).path("/protocol/openid-connect/logout")
+                .queryParam("id_token_hint", user.getIdToken().getTokenValue())
+                .queryParam("post_logout_redirect_uri", redirect).build().encode().toUri();
     }
 
     private Map<String, Object> localSession(WebSession session) {
@@ -174,11 +197,19 @@ public class BffSessionController {
                     .filter(UI_ROLES::contains)
                     .forEach(roles::add);
         }
+        if (principal instanceof OAuth2AuthenticationToken oauth
+                && "openhire-candidate".equals(oauth.getAuthorizedClientRegistrationId())) {
+            // Candidate realm identities must never inherit staff UI privileges.
+            roles.clear();
+            roles.add("candidate");
+        }
         response.put("roles", roles);
-        response.put("activeRole", roles.isEmpty() ? "recruiter" : roles.getFirst());
+        response.put("activeRole", List.of("super_admin", "org_admin", "recruiter", "hr_admin", "hiring_manager", "interviewer", "compliance", "employee", "agency_recruiter", "candidate")
+                .stream().filter(roles::contains).findFirst().orElse(""));
         var permissions = new LinkedHashSet<String>();
         if (attributes.get("permissions") instanceof Collection<?> values) {
-            values.stream().map(Object::toString).forEach(permissions::add);
+            if (!roles.contains("candidate"))
+                values.stream().map(Object::toString).forEach(permissions::add);
         }
         roles.forEach(role -> permissions.addAll(rolePermissions(role)));
         response.put("permissions", permissions);
@@ -216,6 +247,7 @@ public class BffSessionController {
 
     private Set<String> rolePermissions(String role) {
         return switch (role) {
+            case "super_admin" -> Set.of("platform:tenants:manage", "platform:break_glass:request");
             case "org_admin" ->
                 Set.of(
                         "admin:users",

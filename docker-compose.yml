@@ -62,8 +62,10 @@ services:
     volumes:
       - kafka-data:/var/lib/kafka/data
     healthcheck:
-      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:29092 --list >/dev/null 2>&1"]
-      interval: 10s
+      # CLI probes otherwise inherit the broker's 256–512 MB heap inside the
+      # same 768 MB cgroup. Keep this JVM small without changing broker sizing.
+      test: ["CMD-SHELL", "KAFKA_HEAP_OPTS='-Xms16m -Xmx64m' /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:29092 --list >/dev/null 2>&1"]
+      interval: 30s
       timeout: 10s
       retries: 20
       start_period: 20s
@@ -81,6 +83,7 @@ services:
     ports:
       - "${IDENTITY_PORT:-8081}:8081"
     environment:
+      OPENHIRE_API_DOCS_ENABLED: ${OPENHIRE_API_DOCS_ENABLED:-false}
       IDENTITY_PORT: 8081
       # MongoDB runs on the host and can be inspected with MongoDB Compass.
       MONGODB_URI: ${MONGODB_URI:-mongodb://host.docker.internal:27017/openhire_identity}
@@ -131,6 +134,7 @@ services:
     ports:
       - "${JOB_SERVICE_PORT:-8082}:8082"
     environment:
+      OPENHIRE_API_DOCS_ENABLED: ${OPENHIRE_API_DOCS_ENABLED:-false}
       JOB_SERVICE_PORT: 8082
       MONGODB_URI: ${JOB_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_job}
       REDIS_HOST: redis
@@ -175,6 +179,7 @@ services:
     ports:
       - "${APPROVAL_SERVICE_PORT:-8083}:8083"
     environment:
+      OPENHIRE_API_DOCS_ENABLED: ${OPENHIRE_API_DOCS_ENABLED:-false}
       APPROVAL_SERVICE_PORT: 8083
       MONGODB_URI: ${APPROVAL_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_approval}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
@@ -214,6 +219,7 @@ services:
     ports:
       - "${APPLICATION_SERVICE_PORT:-8084}:8084"
     environment:
+      OPENHIRE_API_DOCS_ENABLED: ${OPENHIRE_API_DOCS_ENABLED:-false}
       APPLICATION_SERVICE_PORT: 8084
       MONGODB_URI: ${APPLICATION_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_application}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
@@ -256,6 +262,7 @@ services:
     restart: unless-stopped
     ports: ["${CANDIDATE_SERVICE_PORT:-8085}:8085"]
     environment:
+      OPENHIRE_API_DOCS_ENABLED: ${OPENHIRE_API_DOCS_ENABLED:-false}
       SERVICE_PORT: 8085
       APPLICATION_SERVICE_URL: http://application-service:8084
       MONGODB_URI: ${CANDIDATE_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_candidate}
@@ -290,6 +297,7 @@ services:
     restart: unless-stopped
     ports: ["${RESUME_PROCESSOR_PORT:-8086}:8086"]
     environment:
+      OPENHIRE_API_DOCS_ENABLED: ${OPENHIRE_API_DOCS_ENABLED:-false}
       SERVICE_PORT: 8086
       MONGODB_URI: ${RESUME_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_resume}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
@@ -301,6 +309,7 @@ services:
       RESUME_DIRECTORY: /app/resumes
       TIKA_URL: http://tika:9998
       CLAMAV_HOST: clamav
+      RESUME_SCAN_ENABLED: ${RESUME_SCAN_ENABLED:-true}
       CLAMAV_PORT: 3310
     extra_hosts: ["host.docker.internal:host-gateway"]
     volumes: ["resume-data:/app/resumes"]
@@ -334,17 +343,22 @@ services:
   clamav:
     profiles: [phase3]
     image: ${CLAMAV_IMAGE:-clamav/clamav:1.4}
-    # Bounds the signature database load so it cannot starve the other containers.
+    # Per-container ceiling, not a guarantee that the full stack fits host RAM.
     mem_limit: 1800m
     environment:
       # A signature reload otherwise keeps two databases in memory at once and gets the daemon OOM-killed.
       CLAMD_CONF_ConcurrentDatabaseReload: "no"
-      # The signatures baked into the image are enough locally; a background update triggers the reload that gets killed.
+      # Local single-daemon mode; signature updates are a separate maintenance step.
       CLAMAV_NO_FRESHCLAMD: "true"
     # This upstream tag is amd64-only; Docker Desktop emulates it on Apple Silicon.
     platform: ${CLAMAV_PLATFORM:-linux/amd64}
     restart: unless-stopped
-    volumes: ["clamav-data:/var/lib/clamav"]
+    # Upstream default /init leaves tail alive when clamd is killed. Foreground
+    # mode propagates daemon exit to Docker's restart policy instead.
+    entrypoint: ["/bin/sh", "/etc/openhire/start-clamav.sh"]
+    volumes:
+      - clamav-data:/var/lib/clamav
+      - ./infra/clamav/start-local.sh:/etc/openhire/start-clamav.sh:ro
     healthcheck:
       test: ["CMD", "clamdcheck.sh"]
       interval: 10s
@@ -366,6 +380,7 @@ services:
     ports:
       - "${INTERVIEW_SERVICE_PORT:-8087}:8087"
     environment:
+      OPENHIRE_API_DOCS_ENABLED: ${OPENHIRE_API_DOCS_ENABLED:-false}
       INTERVIEW_SERVICE_PORT: 8087
       MONGODB_URI: ${INTERVIEW_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_interview}
       REDIS_HOST: redis
@@ -417,6 +432,7 @@ services:
       # Host side only; containers use offer-service:8090. 8090 is commonly taken by other local tools.
       - "${OFFER_SERVICE_HOST_PORT:-8095}:8090"
     environment:
+      OPENHIRE_API_DOCS_ENABLED: ${OPENHIRE_API_DOCS_ENABLED:-false}
       OFFER_SERVICE_PORT: 8090
       MONGODB_URI: ${OFFER_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_offer}
       REDIS_HOST: redis
@@ -468,6 +484,7 @@ services:
       # Host side only; containers use employee-service:8091.
       - "${EMPLOYEE_SERVICE_HOST_PORT:-8096}:8091"
     environment:
+      OPENHIRE_API_DOCS_ENABLED: ${OPENHIRE_API_DOCS_ENABLED:-false}
       EMPLOYEE_SERVICE_PORT: 8091
       MONGODB_URI: ${EMPLOYEE_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_employee}
       REDIS_HOST: redis
@@ -515,6 +532,7 @@ services:
       # Host side only; containers use ai-gateway:8092.
       - "${AI_GATEWAY_HOST_PORT:-8097}:8092"
     environment:
+      OPENHIRE_API_DOCS_ENABLED: ${OPENHIRE_API_DOCS_ENABLED:-false}
       AI_GATEWAY_PORT: 8092
       MONGODB_URI: ${AI_GATEWAY_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_ai}
       REDIS_HOST: redis
@@ -564,6 +582,7 @@ services:
       # Host side only; containers use ai-workers:8093.
       - "${AI_WORKERS_HOST_PORT:-8098}:8093"
     environment:
+      OPENHIRE_API_DOCS_ENABLED: ${OPENHIRE_API_DOCS_ENABLED:-false}
       AI_WORKERS_PORT: 8093
       MONGODB_URI: ${AI_WORKERS_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_ai}
       REDIS_HOST: redis
@@ -615,6 +634,7 @@ services:
       # Host side only; containers use talent-service:8094.
       - "${TALENT_SERVICE_HOST_PORT:-8099}:8094"
     environment:
+      OPENHIRE_API_DOCS_ENABLED: ${OPENHIRE_API_DOCS_ENABLED:-false}
       TALENT_SERVICE_PORT: 8094
       MONGODB_URI: ${TALENT_SERVICE_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_talent}
       REDIS_HOST: redis
@@ -671,6 +691,7 @@ services:
       # Host side only; containers use compliance-service:8095.
       - "${COMPLIANCE_SERVICE_HOST_PORT:-8105}:8095"
     environment:
+      OPENHIRE_API_DOCS_ENABLED: ${OPENHIRE_API_DOCS_ENABLED:-false}
       JVM_RAM_PERCENT: 55
       COMPLIANCE_SERVICE_PORT: 8095
       MONGODB_URI: ${COMPLIANCE_SERVICE_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_compliance}
@@ -720,6 +741,7 @@ services:
       # Host side only; containers use analytics-service:8096.
       - "${ANALYTICS_SERVICE_HOST_PORT:-8106}:8096"
     environment:
+      OPENHIRE_API_DOCS_ENABLED: ${OPENHIRE_API_DOCS_ENABLED:-false}
       JVM_RAM_PERCENT: 55
       ANALYTICS_SERVICE_PORT: 8096
       MONGODB_URI: ${ANALYTICS_SERVICE_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_analytics}
@@ -768,6 +790,7 @@ services:
     ports:
       - "${COMMUNICATION_SERVICE_PORT:-8088}:8088"
     environment:
+      OPENHIRE_API_DOCS_ENABLED: ${OPENHIRE_API_DOCS_ENABLED:-false}
       COMMUNICATION_SERVICE_PORT: 8088
       MONGODB_URI: ${COMMUNICATION_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_comm}
       REDIS_HOST: redis
@@ -814,6 +837,7 @@ services:
     ports:
       - "${NOTIFICATION_DISPATCHER_PORT:-8089}:8089"
     environment:
+      OPENHIRE_API_DOCS_ENABLED: ${OPENHIRE_API_DOCS_ENABLED:-false}
       NOTIFICATION_DISPATCHER_PORT: 8089
       MONGODB_URI: ${DISPATCH_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_dispatch}
       REDIS_HOST: redis
@@ -875,6 +899,7 @@ services:
     ports:
       - "${GATEWAY_PORT:-8080}:8080"
     environment:
+      OPENHIRE_API_DOCS_ENABLED: ${OPENHIRE_API_DOCS_ENABLED:-false}
       GATEWAY_PORT: 8080
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -901,7 +926,7 @@ services:
       STAFF_UI_URL: ${STAFF_UI_URL:-http://localhost:5173/}
       PARTNER_UI_URL: ${PARTNER_UI_URL:-http://localhost:5174/jobs}
       AUTH_UI_URL: ${AUTH_UI_URL:-http://localhost:5176/login}
-      CANDIDATE_AUTH_UI_URL: ${CANDIDATE_AUTH_UI_URL:-http://localhost:5176/candidate-sign-in}
+      CANDIDATE_AUTH_UI_URL: ${CANDIDATE_AUTH_UI_URL:-http://localhost:5176/login}
       STAFF_OIDC_ISSUER: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
       STAFF_OIDC_INTERNAL_URL: ${STAFF_OIDC_INTERNAL_URL:-http://keycloak:8080}
       STAFF_OIDC_CLIENT_ID: ${STAFF_OIDC_CLIENT_ID:-openhire-web}
@@ -941,6 +966,7 @@ services:
         SERVICE: integration-hub
     mem_limit: 512m
     environment:
+      OPENHIRE_API_DOCS_ENABLED: ${OPENHIRE_API_DOCS_ENABLED:-false}
       JVM_RAM_PERCENT: 55
       INTEGRATION_HUB_PORT: 8097
       INTEGRATION_ENCRYPTION_KEY: ${INTEGRATION_ENCRYPTION_KEY:-}

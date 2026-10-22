@@ -49,11 +49,6 @@ management:
         enabled: true
       show-details: always
 
-springdoc:
-  api-docs:
-    path: /api-docs
-  swagger-ui:
-    path: /swagger-ui
 
 openhire:
   tenant:
@@ -70,3 +65,10 @@ openhire:
   approval:
     base-url: ${APPROVAL_SERVICE_URL:http://localhost:8083}
   internal-secret: ${INTERNAL_SERVICE_SECRET:local-development-secret}
+
+# Opt-in only. UI is hosted centrally by api-gateway.
+springdoc:
+  api-docs:
+    enabled: ${OPENHIRE_API_DOCS_ENABLED:false}
+    path: /api-docs
+  paths-to-exclude: /api/v1/internal/**,/api/v1/jobs/internal/**,/actuator/**,/error

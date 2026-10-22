@@ -46,6 +46,12 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class IdentityApplicationService {
+    @org.springframework.beans.factory.annotation.Value("${openhire.portals.enabled:false}")
+    private boolean tenantPortals;
+    @org.springframework.beans.factory.annotation.Value("${openhire.portals.base-domain:localhost}")
+    private String portalDomain;
+    @org.springframework.beans.factory.annotation.Value("${openhire.portals.scheme:http}")
+    private String portalScheme;
     private static final Duration INVITATION_TTL = Duration.ofDays(7);
     private static final SecureRandom RANDOM = new SecureRandom();
     private final Organizations organizations;
@@ -108,6 +114,35 @@ public class IdentityApplicationService {
         return organizations.findAll();
     }
 
+    public record OnboardedOrganization(Organization organization, IssuedInvitation adminInvitation) {}
+
+    public OnboardedOrganization onboardOrganization(Actor actor, String name, String slug, String adminEmail) {
+        var email = IdentityPolicy.normalizeEmail(adminEmail);
+        var organization = createOrganization(actor, name, slug);
+        return new OnboardedOrganization(organization, inviteOrganizationAdmin(actor, organization.id(), email));
+    }
+
+    public IssuedInvitation inviteOrganizationAdmin(Actor actor, String id, String email) {
+        var issued = invite(id, email, Set.of("ORG_ADMIN"));
+        auditEntry(actor, id, "ORGANIZATION_ADMIN_INVITED", "Invitation", issued.invitation().id()).done();
+        return issued;
+    }
+
+    public Map<String, Object> organizationOverview(String id) {
+        var organization = organizations.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
+        var users = members.findMembers(id);
+        var pending = invitations.findInvitations(id).stream()
+                .filter(i -> i.status() == PENDING && i.expiresAt().isAfter(clock.instant())).count();
+        return Map.of(
+                "organization", organization,
+                "totalUsers", users.size(),
+                "activeUsers", users.stream().filter(u -> u.status() == com.openhire.identity.domain.IdentityModels.MemberStatus.ACTIVE).count(),
+                "administrators", users.stream().filter(u -> u.status() == com.openhire.identity.domain.IdentityModels.MemberStatus.ACTIVE && u.roles().contains("ORG_ADMIN")).count(),
+                "pendingInvitations", pending,
+                "businessPlanStatus", "NOT_IMPLEMENTED");
+    }
+
     public Organization changeOrganizationStatus(Actor actor, String id, OrganizationStatus status) {
         var current =
                 organizations.findById(id).orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
@@ -129,6 +164,7 @@ public class IdentityApplicationService {
         requireRolesExist(organizationId, roleNames);
         var current = members.findMemberById(organizationId, memberId)
                 .orElseThrow(() -> new ResourceNotFoundException("Team member not found"));
+        if (current.roles().contains("SUPER_ADMIN")) throw new IllegalArgumentException("Platform accounts cannot be managed through a tenant");
         identityProvider.updateMemberRoles(current.id(), roleNames);
         var updated = members.save(new Member(
                 current.id(),
@@ -149,6 +185,7 @@ public class IdentityApplicationService {
     public Member disableMember(Actor actor, String organizationId, String memberId) {
         var current = members.findMemberById(organizationId, memberId)
                 .orElseThrow(() -> new ResourceNotFoundException("Team member not found"));
+        if (current.roles().contains("SUPER_ADMIN")) throw new IllegalArgumentException("Platform accounts cannot be managed through a tenant");
         identityProvider.disableMember(current.id());
         var updated = members.save(new Member(
                 current.id(),
@@ -164,10 +201,14 @@ public class IdentityApplicationService {
     }
 
     public List<Role> roles(String organizationId) {
+        if (tenantPortals) seedAdditionalRoles(organizationId);
         return roles.findRoles(organizationId);
     }
 
     public Role createRole(String organizationId, String name, String description, Set<String> permissions) {
+        if ("SUPER_ADMIN".equalsIgnoreCase(name.trim())) {
+            throw new IllegalArgumentException("Platform super administrator is not a tenant role");
+        }
         var role = new Role(
                 UUID.randomUUID().toString(), organizationId, name.trim(), description.trim(), permissions, false);
         roles.save(role);
@@ -192,8 +233,10 @@ public class IdentityApplicationService {
 
     public IssuedInvitation invite(String organizationId, String email, Set<String> roleNames) {
         requireActiveOrganization(organizationId);
+        if (tenantPortals) seedAdditionalRoles(organizationId);
         requireRolesExist(organizationId, roleNames);
         var normalizedEmail = IdentityPolicy.normalizeEmail(email);
+        if (tenantPortals) return provisionInvitedMember(organizationId, normalizedEmail, roleNames);
         if (members.findByEmail(organizationId, normalizedEmail).isPresent()) {
             throw new IllegalArgumentException("A team member with this email already exists");
         }
@@ -208,7 +251,68 @@ public class IdentityApplicationService {
         var current = invitations
                 .findInvitationById(organizationId, invitationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Invitation not found"));
+        if (tenantPortals) return invite(organizationId, current.email(), current.roles());
         return issueInvitation(organizationId, current.email(), current.roles());
+    }
+
+    private String portalOrigin(Organization organization) {
+        return portalScheme + "://" + organization.slug() + "." + portalDomain;
+    }
+
+    private IssuedInvitation provisionInvitedMember(String organizationId, String email, Set<String> roleNames) {
+        var organization = organizations.findById(organizationId).orElseThrow();
+        var existing = members.findByEmail(organizationId, email);
+        if (existing.isPresent() && existing.get().status() != com.openhire.identity.domain.IdentityModels.MemberStatus.INVITED)
+            throw new IllegalArgumentException("Member already exists; use account recovery instead");
+        if (existing.isPresent() && !existing.get().roles().equals(roleNames))
+            throw new IllegalArgumentException("Use the audited role update before resending an invitation with different roles");
+        identityProvider.configureTenantLogin(portalOrigin(organization));
+        var providerId = existing.map(Member::id).orElseGet(() -> identityProvider.provisionMember(organizationId, email, email, roleNames));
+        members.save(new Member(providerId, organizationId, email, email,
+                com.openhire.identity.domain.IdentityModels.MemberStatus.INVITED, roleNames,
+                existing.map(Member::createdAt).orElse(clock.instant())));
+        var issued = issueInvitation(organizationId, email, roleNames);
+        // Fail explicitly if mail delivery fails. The INVITED member can be retried safely.
+        identityProvider.sendActivation(providerId, portalOrigin(organization));
+        return new IssuedInvitation(issued.invitation(), "");
+    }
+
+    public Map<String, Object> tenantAccess(String slug, String subject) {
+        var organization = organizations.findBySlug(slug)
+                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found"));
+        requireActiveOrganization(organization.id());
+        if (subject == null || subject.isBlank()) return Map.of("id", organization.id(), "name", organization.name(), "slug", organization.slug());
+        var member = members.findMemberById(organization.id(), subject)
+                .orElseThrow(() -> new ResourceNotFoundException("Tenant membership not found"));
+        if (member.status() == DISABLED) throw new IllegalArgumentException("Membership is disabled");
+        return Map.of("id", organization.id(), "name", organization.name(), "slug", organization.slug(), "roles", member.roles());
+    }
+
+    /** Called only by the gateway after verified OIDC login and host/role validation. */
+    public void activateTenantMember(String slug, String subject) {
+        var access = tenantAccess(slug, subject);
+        var organizationId = access.get("id").toString();
+        var member = members.findMemberById(organizationId, subject).orElseThrow();
+        if (member.status() == com.openhire.identity.domain.IdentityModels.MemberStatus.INVITED) {
+            members.save(new Member(member.id(), member.organizationId(), member.email(), member.displayName(),
+                    com.openhire.identity.domain.IdentityModels.MemberStatus.ACTIVE, member.roles(), member.createdAt()));
+        }
+        // Retry-safe: a previous login may have activated the member before updating its invitations.
+        for (var invitation : invitations.findInvitations(organizationId)) {
+            if (invitation.status() == PENDING && invitation.email().equals(member.email())) {
+                invitations.save(new Invitation(invitation.id(), invitation.organizationId(), invitation.email(),
+                        invitation.roles(), invitation.tokenHash(), ACCEPTED, invitation.expiresAt(), invitation.createdAt()));
+            }
+        }
+    }
+
+    private void seedAdditionalRoles(String id) {
+        for (var name : Set.of("HR_ADMIN", "COMPLIANCE_OFFICER", "EMPLOYEE", "AGENCY_RECRUITER", "CANDIDATE")) {
+            if (roles.findRoleByName(id, name).isEmpty()) {
+                try { roles.save(new Role(UUID.randomUUID().toString(), id, name, name.replace('_', ' '), Set.of(), true)); }
+                catch (org.springframework.dao.DuplicateKeyException concurrentSeed) { /* Another invite installed it. */ }
+            }
+        }
     }
 
     public InvitationView invitation(String rawToken) {
@@ -228,6 +332,8 @@ public class IdentityApplicationService {
                 .findByTokenHash(hash(rawToken))
                 .orElseThrow(() -> new ResourceNotFoundException("Invitation not found"));
         IdentityPolicy.requireAcceptable(invitation, clock);
+        requireActiveOrganization(invitation.organizationId());
+        requireRolesExist(invitation.organizationId(), invitation.roles());
         var providerId = identityProvider.provisionMember(
                 invitation.organizationId(), invitation.email(), displayName, invitation.roles());
         var member = members.save(new Member(
@@ -475,6 +581,7 @@ public class IdentityApplicationService {
     }
 
     private void seedSystemRoles(String organizationId) {
+        if (tenantPortals) seedAdditionalRoles(organizationId);
         roles.save(new Role(
                 UUID.randomUUID().toString(),
                 organizationId,
@@ -506,6 +613,14 @@ public class IdentityApplicationService {
     }
 
     private void requireRolesExist(String organizationId, Set<String> requested) {
+        if (requested.isEmpty()) throw new IllegalArgumentException("At least one role is required");
+        if (tenantPortals && !Set.of("ORG_ADMIN", "RECRUITER", "HR_ADMIN", "HIRING_MANAGER", "INTERVIEWER",
+                "COMPLIANCE_OFFICER", "EMPLOYEE", "AGENCY_RECRUITER", "CANDIDATE").containsAll(requested)) {
+            throw new IllegalArgumentException("Only supported tenant roles can be assigned through tenant onboarding");
+        }
+        if (requested.stream().anyMatch(r -> "SUPER_ADMIN".equalsIgnoreCase(r))) {
+            throw new IllegalArgumentException("Platform super administrator cannot be assigned through a tenant");
+        }
         var available =
                 roles.findRoles(organizationId).stream().map(Role::name).collect(java.util.stream.Collectors.toSet());
         if (!available.containsAll(requested)) {

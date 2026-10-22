@@ -88,3 +88,10 @@ management:
     health:
       probes:
         enabled: true
+
+# Opt-in only. UI is hosted centrally by api-gateway.
+springdoc:
+  api-docs:
+    enabled: ${OPENHIRE_API_DOCS_ENABLED:false}
+    path: /v3/api-docs
+  paths-to-exclude: /api/v1/internal/**,/api/v1/jobs/internal/**,/actuator/**,/error

@@ -65,6 +65,14 @@ the distinction between local development configuration and future Kubernetes de
 
 ## Architecture
 
+Tenant-specific login and the independent Super Admin portal are being introduced incrementally.
+See [tenant portals and onboarding](docs/TENANT_PORTALS.md) for implemented APIs, local-domain design,
+security requirements and remaining work. Business plans are deferred. Tenant login is opt-in and requires
+operator-managed Keycloak clients, exact callback URLs and email/theme setup. Local addresses use
+`admin.localhost` and `<tenant>.localhost`, with no hosts-file edits needed in modern browsers.
+After that setup, use `./scripts/deployment/deploy-local.sh --tenant-portals identity-service api-gateway`.
+This enables the proxy and tenant checks; it does not perform Keycloak setup or establish runtime acceptance.
+
 The earlier domain modules use ports/adapters. Phase 3 also includes controller/use-case workflow components
 that coordinate Mongo-backed processing records and internal service clients:
 
@@ -81,6 +89,7 @@ use MongoTemplate directly for conditional claims and embedded-outbox updates; t
 ### 1. Prerequisites
 
 - Docker Desktop/Engine running, with Docker Compose v2 supporting `up --wait` and `--wait-timeout`.
+  Local `--no-scan` mode requires Compose 2.24.4+ for the override syntax.
 - MongoDB server running on your host or at a configured reachable URI. Compass is only the GUI client.
 - Internet access for the initial Docker images and Gradle dependency downloads.
 - Available CPU/memory for the selected services. The full stack includes 18 Java applications plus infrastructure;
@@ -126,7 +135,13 @@ From the `openhire-ai` repository root:
 
 ```bash
 # Build all 18 backend applications, start dependencies, verify startup and follow logs
-./run-backend.sh deploy
+./run-backend.sh deploy --follow
+
+# Local trusted-fixture testing: deploy all services without ClamAV and follow combined logs
+./run-backend.sh deploy --no-scan --follow
+
+# Apply no-scan mode only to the resume processor
+./run-backend.sh deploy --no-scan --follow resume-processor
 
 # Rebuild only selected applications; other business dependencies must already be running
 ./run-backend.sh deploy identity-service api-gateway
@@ -138,11 +153,18 @@ From the `openhire-ai` repository root:
 ./run-backend.sh deploy --no-build job-service
 
 # Reattach to logs without deploying
-./run-backend.sh logs job-service api-gateway
+./run-backend.sh deploy --logs-only
+# Or follow only selected applications
+./run-backend.sh deploy --logs-only job-service api-gateway
 ```
 
 The direct entry point is `bash scripts/deployment/deploy-local.sh`. It uses the existing Gradle Dockerfile,
 builds serially and follows timestamped raw logs with stack traces and 200 initial lines per service.
+Logs remain combined in the same console after deployment; no extra terminal windows or tmux are needed.
+The watcher reconnects after three seconds if its stream ends; recent lines may repeat on reconnection.
+`--follow` overrides `OPENHIRE_FOLLOW_LOGS=0`. `--no-follow` disables watching, and `--logs-only`
+watches existing applications without building, restarting or stopping anything. A quiet console can simply
+mean the applications have not emitted new messages.
 Ctrl+C while watching logs leaves the containers running. Set `OPENHIRE_LOG_TAIL`,
 `OPENHIRE_STARTUP_TIMEOUT` or `OPENHIRE_DOCKER_PROJECT` as needed; `--help` lists all options.
 Build failures stop before deployment; startup failures print container status and recent application/infrastructure
@@ -155,6 +177,29 @@ scanner/parser/mail infrastructure are started if needed. Existing infrastructur
 changes to it need a separate reviewed action. Selected application containers are recreated even if their image tag
 is unchanged. Live model-dependent features still need an external configured model; this script does not implement
 a no-LLM feature mode. Running all applications requires sufficient machine resources.
+
+#### Local resume testing without ClamAV
+
+`--no-scan` loads `docker-compose.local-no-scan.yml`, sets `RESUME_SCAN_ENABLED=false` and activates
+the resume processor's `local-no-scan` profile. It skips ClamAV startup and stops the existing ClamAV
+container only after a selected resume-processor deployment passes startup checks. Signature data is retained.
+If resume-processor is not selected, its running configuration and ClamAV are not changed.
+
+Use **trusted synthetic resumes only**. File validation and extraction remain enabled, but malware scanning
+is bypassed and recorded as `SKIPPED_LOCAL_DEV`, never `PASSED`. This mode cannot validate antivirus
+protection and must not be used in shared/production deployments. It does not disable OIDC authentication.
+Existing failed uploads are not automatically retried by this configuration change.
+
+Pass `--no-scan` on every deployment that should retain this mode. To restore normal scanning:
+
+```bash
+./run-backend.sh deploy --follow resume-processor
+```
+
+That starts the scanner dependency and recreates the resume processor with scanning enabled by default
+(remove any separate `RESUME_SCAN_ENABLED=false` environment override). Previously skipped uploads
+are not retroactively scanned. See the [ClamAV guide](infra/clamav/README.md) for direct Compose commands
+and signature maintenance. No extra manual `stop clamav` command is needed when using `--no-scan`.
 
 ### 4. Check startup and open the application
 
@@ -218,10 +263,12 @@ is not a substitute for named volumes or backups; infrastructure recreation must
 | Build fails | Read the first Gradle/compiler error in the build output. No startup is attempted after a failed build. |
 | Mongo connection refused | Confirm the host Mongo server, container-reachable address, authentication and each service URI. Boot 4 uses `spring.mongodb.uri`. |
 | Port already allocated | Identify the existing listener or other Compose project; change the appropriate port and dependent public URLs, or intentionally stop only the conflicting process. |
-| ClamAV unhealthy / exit 137 | Inspect scanner logs and memory pressure; initial signature downloads may delay startup. Reduce simultaneous workloads; never bypass scanning. |
+| ClamAV unhealthy / exit 137 | Inspect scanner logs and memory pressure; initial signature downloads may delay startup. Reduce simultaneous workloads. Only for trusted synthetic local fixtures, use the explicit `--no-scan` mode above; never bypass scanning for real uploads or production. |
 | Startup timeout | Inspect the printed service status and recent logs. Increase timeout only for genuinely slow startup, not persistent failures. |
 | Missing service after selective deployment | Named-service deployment does not start other business services. Start the required phase or full stack first. |
 | Old behavior after source edits | Use `deploy <service>` to rebuild/recreate. `--no-build` intentionally uses the existing image. |
+| Kafka coordinator unavailable / disconnects | Check current consumer lag and broker health before changing timeouts. Rebalances followed by stable groups can be normal recovery. Local Kafka probes use a separate 16–64 MB heap every 30 seconds to avoid inheriting the broker heap within the 768 MB limit. Earlier restart counts do not identify their cause. |
+| Gateway `creationTime key must not be null` | Rebuild/recreate `api-gateway` to load the incomplete-session recovery customizer, then sign in again. Sessions missing required Redis metadata are treated as absent, without restoring their authentication or clearing unrelated Redis data. Do not use `FLUSHALL`/`FLUSHDB`. Redis outages and other corruption still require investigation. |
 | Sign-in/redirect failure | Start the auth UI, check configured UI/issuer URLs and Keycloak client settings, and inspect gateway/identity logs. |
 | AI unavailable | No model is started by this launcher. Manual workflows and fallback behavior need separate validation; do not expect AI drafts without a model. |
 
@@ -385,6 +432,20 @@ defaults are also for local use; changing `.env` does not rotate credentials alr
 Logout uses `/bff/logout`: it revokes the Redis session, closes the Keycloak SSO session, and redirects to the
 configured authentication page. Account profile and session management are available at `/api/v1/me` and
 `/api/v1/me/sessions`.
+
+## Swagger / OpenAPI service dropdown
+
+The gateway provides an opt-in, staff-authenticated, browse-only Swagger portal for all 18 services.
+See the [OpenAPI portal guide](docs/OPENAPI_PORTAL.md) for security, configuration and verification.
+
+```bash
+# Explicit local rebuild/recreate; documentation stays disabled unless enabled
+OPENHIRE_API_DOCS_ENABLED=true ./run-backend.sh deploy
+```
+
+Then open `http://localhost:8080/swagger-ui/index.html` and sign in with a staff account. Keep OIDC mode enabled;
+candidate sessions cannot access the portal. A portal-started login returns to Swagger. Each selected service must
+be running with documentation enabled. Try it out is intentionally disabled. Keep documentation off in production.
 
 ## GitHub CI/CD
 

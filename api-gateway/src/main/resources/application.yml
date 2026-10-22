@@ -301,7 +301,7 @@ openhire:
     staff-url: ${STAFF_UI_URL:http://localhost:5173/}
     partner-url: ${PARTNER_UI_URL:http://localhost:5174/jobs}
     auth-url: ${AUTH_UI_URL:http://localhost:5176/login}
-    candidate-auth-url: ${CANDIDATE_AUTH_UI_URL:http://localhost:5176/candidate-sign-in}
+    candidate-auth-url: ${CANDIDATE_AUTH_UI_URL:http://localhost:5176/login}
   identity-service-url: ${IDENTITY_SERVICE_URL:http://localhost:8081}
   internal-secret: ${INTERNAL_SERVICE_SECRET:local-development-secret}
   security:
@@ -316,3 +316,16 @@ management:
     health:
       probes:
         enabled: true
+
+# Opt-in only. UI is hosted centrally by api-gateway.
+springdoc:
+  api-docs:
+    enabled: ${OPENHIRE_API_DOCS_ENABLED:false}
+    path: /v3/api-docs
+  paths-to-exclude: /api/v1/internal/**,/api/v1/jobs/internal/**,/actuator/**,/error
+  paths-to-match: /bff/**,/api/v1/me,/api/v1/me/**
+  swagger-ui:
+    enabled: ${OPENHIRE_API_DOCS_ENABLED:false}
+    config-url: /openapi/config
+    disable-swagger-default-url: true
+    query-config-enabled: false

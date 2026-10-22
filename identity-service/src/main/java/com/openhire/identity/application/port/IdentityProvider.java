@@ -10,4 +10,12 @@ public interface IdentityProvider {
     void updateMemberRoles(String providerUserId, Set<String> roles);
 
     void disableMember(String providerUserId);
+
+    default void configureTenantLogin(String origin) {
+        throw new IllegalStateException("Tenant login requires the Keycloak identity provider");
+    }
+
+    default void sendActivation(String providerUserId, String origin) {
+        throw new IllegalStateException("Password activation requires the Keycloak identity provider");
+    }
 }

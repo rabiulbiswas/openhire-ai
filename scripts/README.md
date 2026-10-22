@@ -12,6 +12,47 @@ The scripts were reorganized into four folders; use these paths instead of the o
 
 ## Deployment
 
+For local testing without ClamAV, use the explicit `--no-scan` option:
+
+```bash
+# Build/recreate resume processor, stop ClamAV after startup succeeds, follow logs
+./scripts/deployment/deploy-local.sh --no-scan --follow resume-processor
+# Deploy all backend applications in that mode and follow combined logs
+./scripts/deployment/deploy-local.sh --no-scan --follow
+```
+
+This loads `docker-compose.local-no-scan.yml`, skips ClamAV startup, and sets
+`RESUME_SCAN_ENABLED=false` with the local-only profile. Requires Compose 2.24.4+.
+Use trusted synthetic files only. ClamAV is stopped only when resume-processor
+was selected and its deployment passed startup checks. `--logs-only` never
+changes services. Use `--no-scan` on each deployment that should retain the bypass;
+omitting it restores normal scanning when resume-processor is deployed.
+
+
+After all selected applications pass startup checks, deployment follows their
+combined live logs continuously in the same console. No tmux or extra windows
+are needed. If the log stream ends, the watcher retries after three seconds.
+
+```bash
+# Watch already-deployed applications, without a build or restart
+./scripts/deployment/deploy-local.sh --logs-only
+# Deploy and explicitly enable continuous combined logs
+./scripts/deployment/deploy-local.sh --follow
+# Watch only selected services
+./scripts/deployment/deploy-local.sh --logs-only job-service api-gateway
+```
+
+Ctrl+C stops watching without stopping containers. Reconnection can repeat the
+configured last 200 lines. A quiet console means no new application messages;
+the watcher does not invent heartbeat messages. `--no-follow` or
+`OPENHIRE_FOLLOW_LOGS=0` disables following; `--follow` overrides that environment
+setting. Deployment failures still print diagnostics and exit nonzero instead
+of claiming success. Use `--logs-only` to investigate existing containers then.
+The combined stream covers selected application services, not infrastructure.
+
+For local role-based UI logins, see [demo user setup](../docs/LOCAL_DEMO_USERS.md).
+`node scripts/setup/seed-ui-users.mjs` prints the account inventory; `--apply` explicitly provisions them in local Keycloak.
+
 ```bash
 # Existing entry point is unchanged
 ./run-backend.sh deploy --help
@@ -61,3 +102,10 @@ a standalone deployment command.
 
 No scripts were removed from the toolset. `.github/scripts/` remains separate because it contains pipeline-specific
 change detection, release and deployment helpers rather than the operator tools in this directory.
+# Branded login assets
+
+`bash scripts/setup/install-login-theme.sh` copies the OpenHire login theme into the running Keycloak
+container without restarting it. It does not modify clients, users, callback allowlists or credentials.
+An operator selects `openhire` under each tenant/platform client's Login theme setting afterward.
+`deploy-local.sh --tenant-portals` includes this asset installation. See `docs/TENANT_PORTALS.md` for setup.
+

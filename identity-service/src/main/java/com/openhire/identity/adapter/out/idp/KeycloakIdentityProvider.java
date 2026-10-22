@@ -38,6 +38,21 @@ public class KeycloakIdentityProvider implements IdentityProvider {
 
     @Override
     public String provisionMember(String organizationId, String email, String displayName, Set<String> roles) {
+        // Recover safely after a provider success followed by a database/network failure.
+        var found = keycloak.get().uri(builder -> builder.path("/admin/realms/{realm}/users")
+                        .queryParam("username", email).queryParam("exact", true).build(realm))
+                .header("Authorization", "Bearer " + accessToken()).retrieve().body(List.class);
+        if (found != null && !found.isEmpty()) {
+            var user = (Map<?, ?>) found.getFirst();
+            var attributes = user.get("attributes") instanceof Map<?, ?> values ? values : Map.of();
+            if (!(attributes.get("organization_id") instanceof List<?> tenantIds)
+                    || !tenantIds.equals(List.of(organizationId))) {
+                throw new IllegalArgumentException("This email already belongs to another identity; manual membership review is required");
+            }
+            var id = user.get("id").toString();
+            updateMemberRoles(id, roles);
+            return id;
+        }
         var response = keycloak.post()
                 .uri("/admin/realms/{realm}/users", realm)
                 .header("Authorization", "Bearer " + accessToken())
@@ -52,7 +67,7 @@ public class KeycloakIdentityProvider implements IdentityProvider {
                         "enabled",
                         true,
                         "emailVerified",
-                        true,
+                        false,
                         "attributes",
                         Map.of("organization_id", List.of(organizationId))))
                 .retrieve()
@@ -67,8 +82,9 @@ public class KeycloakIdentityProvider implements IdentityProvider {
     @Override
     @SuppressWarnings("unchecked")
     public void updateMemberRoles(String providerUserId, Set<String> roles) {
+        if (roles.contains("SUPER_ADMIN")) throw new IllegalArgumentException("Tenant operations cannot assign SUPER_ADMIN");
         var available = keycloak.get()
-                .uri("/admin/realms/{realm}/users/{id}/role-mappings/realm/available", realm, providerUserId)
+                .uri("/admin/realms/{realm}/roles", realm)
                 .header("Authorization", "Bearer " + accessToken())
                 .retrieve()
                 .body(List.class);
@@ -80,6 +96,17 @@ public class KeycloakIdentityProvider implements IdentityProvider {
                                 .toList();
         if (selected.size() != roles.size()) {
             throw new IllegalStateException("One or more Keycloak realm roles are not configured");
+        }
+        var assigned = keycloak.get().uri("/admin/realms/{realm}/users/{id}/role-mappings/realm", realm, providerUserId)
+                .header("Authorization", "Bearer " + accessToken()).retrieve().body(List.class);
+        if (assigned != null) {
+            var removed = ((List<Map<String, Object>>) assigned).stream()
+                    .filter(role -> java.util.Set.of("ORG_ADMIN", "RECRUITER", "HR_ADMIN", "HIRING_MANAGER", "INTERVIEWER", "COMPLIANCE_OFFICER", "EMPLOYEE", "AGENCY_RECRUITER", "CANDIDATE").contains(String.valueOf(role.get("name"))))
+                    .filter(role -> !roles.contains(String.valueOf(role.get("name")))).toList();
+            if (!removed.isEmpty()) keycloak.method(org.springframework.http.HttpMethod.DELETE)
+                    .uri("/admin/realms/{realm}/users/{id}/role-mappings/realm", realm, providerUserId)
+                    .header("Authorization", "Bearer " + accessToken()).contentType(MediaType.APPLICATION_JSON)
+                    .body(removed).retrieve().toBodilessEntity();
         }
         keycloak.post()
                 .uri("/admin/realms/{realm}/users/{id}/role-mappings/realm", realm, providerUserId)
@@ -99,6 +126,26 @@ public class KeycloakIdentityProvider implements IdentityProvider {
                 .body(Map.of("enabled", false))
                 .retrieve()
                 .toBodilessEntity();
+    }
+
+    @Override
+    public void configureTenantLogin(String origin) {
+        // Exact callback/logout allowlists are managed by a Keycloak operator.
+        // This service deliberately has no client-management privileges.
+        var uri = java.net.URI.create(origin);
+        if (uri.getHost() == null || uri.getUserInfo() != null || uri.getQuery() != null
+                || uri.getFragment() != null || !java.util.Set.of("http", "https").contains(uri.getScheme())) {
+            throw new IllegalArgumentException("Invalid configured tenant origin");
+        }
+    }
+
+    @Override
+    public void sendActivation(String providerUserId, String origin) {
+        keycloak.put().uri(builder -> builder.path("/admin/realms/{realm}/users/{id}/execute-actions-email")
+                        .queryParam("client_id", "openhire-tenant").queryParam("redirect_uri", origin + "/login")
+                        .queryParam("lifespan", 86400).build(realm, providerUserId))
+                .header("Authorization", "Bearer " + accessToken()).contentType(MediaType.APPLICATION_JSON)
+                .body(List.of("VERIFY_EMAIL", "UPDATE_PASSWORD")).retrieve().toBodilessEntity();
     }
 
     @SuppressWarnings("unchecked")

@@ -7,7 +7,7 @@ Start with [end-to-end platform design](END_TO_END_DESIGN.md) and [shared compon
 | Service | Business ownership | Design and components | REST details |
 | --- | --- | --- | --- |
 | identity-service | Organizations, members, policy, SAML and SCIM | [Design](identity-service.md) | [44 operations](identity-service-endpoints.md) |
-| api-gateway | Browser session and external API boundary | [Design](api-gateway.md) | [8 owned operations](api-gateway-endpoints.md) |
+| api-gateway | Browser session and external API boundary | [Design](api-gateway.md) | [9 owned operations](api-gateway-endpoints.md) |
 | job-service | Requisition versions and publication | [Design](job-service.md) | [24 operations](job-service-endpoints.md) |
 | approval-service | Decisions, inbox and delegation | [Design](approval-service.md) | [13 operations](approval-service-endpoints.md) |
 | application-service | Intake, pipeline and human decisions | [Design](application-service.md) | [35 operations](application-service-endpoints.md) |
@@ -25,7 +25,7 @@ Start with [end-to-end platform design](END_TO_END_DESIGN.md) and [shared compon
 | notification-dispatcher | Channel delivery and retries | [Design](notification-dispatcher.md) | [3 operations](notification-dispatcher-endpoints.md) |
 | integration-hub | Calendars, webhooks, MCP and budgets | [Design](integration-hub.md) | [23 operations](integration-hub-endpoints.md) |
 
-Total: **297 directly mapped controller operations**, including staff, public and internal handlers. Actuator endpoints and gateway proxy aliases are additional framework/configuration surfaces, not counted as owned handlers. The separate nineteenth `integrity-worker` from the original plan is not a current executable: integrity processing is within `ai-workers`. `platform-starter` and `service-support` are libraries.
+Total: **298 directly mapped controller operations**, including staff, public and internal handlers. Actuator endpoints and gateway proxy aliases are additional framework/configuration surfaces, not counted as owned handlers. The separate nineteenth `integrity-worker` from the original plan is not a current executable: integrity processing is within `ai-workers`. `platform-starter` and `service-support` are libraries.
 
 ## How to read these documents
 

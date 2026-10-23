@@ -6,11 +6,11 @@ Mapped operations: **19**. Framework-generated Actuator endpoints and gateway-pr
 
 ## ConversationController
 
-Source: [ConversationController](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/ConversationController.java).
+Source: [ConversationController](../../communication-service/src/main/java/com/openhire/communication/controller/ConversationController.java).
 
 ### GET `/api/v1/conversations`
 
-- Handler: `list` ([source](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/ConversationController.java#L35)).
+- Handler: `list` ([source](../../communication-service/src/main/java/com/openhire/communication/controller/ConversationController.java#L35)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.recruiter(auth)`; `viewers.tenant(auth)`.
 - Delegated operations: `communication.conversations`.
@@ -23,7 +23,7 @@ Page<ConversationSummaryView> list(Authentication auth)
 
 ### POST `/api/v1/conversations`
 
-- Handler: `start` ([source](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/ConversationController.java#L41)).
+- Handler: `start` ([source](../../communication-service/src/main/java/com/openhire/communication/controller/ConversationController.java#L41)).
 - Success status: \@ResponseStatus(HttpStatus.CREATED).
 - Controller access/tenant calls: `viewers.recruiter(auth)`; `viewers.tenant(auth)`.
 - Delegated operations: `communication.startConversation`.
@@ -36,7 +36,7 @@ ConversationView start(Authentication auth, @RequestBody StartInput input)
 
 ### GET `/api/v1/conversations/{id}`
 
-- Handler: `get` ([source](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/ConversationController.java#L50)).
+- Handler: `get` ([source](../../communication-service/src/main/java/com/openhire/communication/controller/ConversationController.java#L50)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.recruiter(auth)`; `viewers.tenant(auth)`.
 - Delegated operations: `communication.conversation`.
@@ -49,7 +49,7 @@ ConversationView get(Authentication auth, @PathVariable String id)
 
 ### POST `/api/v1/conversations/{id}/messages`
 
-- Handler: `send` ([source](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/ConversationController.java#L56)).
+- Handler: `send` ([source](../../communication-service/src/main/java/com/openhire/communication/controller/ConversationController.java#L56)).
 - Success status: \@ResponseStatus(HttpStatus.CREATED).
 - Controller access/tenant calls: `viewers.recruiter(auth)`; `viewers.tenant(auth)`.
 - Delegated operations: `communication.send`.
@@ -62,7 +62,7 @@ ChatMessageView send(Authentication auth, @PathVariable String id, @RequestBody 
 
 ### POST `/api/v1/conversations/{id}/ai-draft`
 
-- Handler: `aiDraft` ([source](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/ConversationController.java#L71)).
+- Handler: `aiDraft` ([source](../../communication-service/src/main/java/com/openhire/communication/controller/ConversationController.java#L71)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.recruiter(auth)`; `viewers.tenant(auth)`.
 - Delegated operations: `communication.aiDraft`.
@@ -75,11 +75,11 @@ Map<String, String> aiDraft(Authentication auth, @PathVariable String id)
 
 ## InternalMessageController
 
-Source: [InternalMessageController](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/InternalMessageController.java).
+Source: [InternalMessageController](../../communication-service/src/main/java/com/openhire/communication/controller/InternalMessageController.java).
 
 ### POST `/api/v1/internal/messages/template`
 
-- Handler: `template` ([source](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/InternalMessageController.java#L28)).
+- Handler: `template` ([source](../../communication-service/src/main/java/com/openhire/communication/controller/InternalMessageController.java#L28)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.internal(secret)`.
 - Delegated operations: `communication.sendTemplate`.
@@ -92,11 +92,11 @@ TemplateSend template(@RequestHeader("X-Internal-Service-Secret") String secret,
 
 ## NotificationController
 
-Source: [NotificationController](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/NotificationController.java).
+Source: [NotificationController](../../communication-service/src/main/java/com/openhire/communication/controller/NotificationController.java).
 
 ### GET `/api/v1/notifications`
 
-- Handler: `list` ([source](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/NotificationController.java#L41)).
+- Handler: `list` ([source](../../communication-service/src/main/java/com/openhire/communication/controller/NotificationController.java#L41)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.viewer(auth)`.
 - Delegated operations: `communication.notifications`.
@@ -109,7 +109,7 @@ Page<NotificationView> list( Authentication auth, @RequestParam(defaultValue = "
 
 ### GET `/api/v1/notifications/unread-count`
 
-- Handler: `unread` ([source](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/NotificationController.java#L49)).
+- Handler: `unread` ([source](../../communication-service/src/main/java/com/openhire/communication/controller/NotificationController.java#L49)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.viewer(auth)`.
 - Delegated operations: `communication.unreadCount`.
@@ -122,7 +122,7 @@ Map<String, Long> unread(Authentication auth)
 
 ### PATCH `/api/v1/notifications/{id}`
 
-- Handler: `read` ([source](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/NotificationController.java#L54)).
+- Handler: `read` ([source](../../communication-service/src/main/java/com/openhire/communication/controller/NotificationController.java#L54)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.viewer(auth)`.
 - Delegated operations: `communication.markRead`.
@@ -135,7 +135,7 @@ Map<String, String> read(Authentication auth, @PathVariable String id, @RequestB
 
 ### POST `/api/v1/notifications/read-all`
 
-- Handler: `readAll` ([source](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/NotificationController.java#L61)).
+- Handler: `readAll` ([source](../../communication-service/src/main/java/com/openhire/communication/controller/NotificationController.java#L61)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.viewer(auth)`.
 - Delegated operations: `communication.markAllRead`.
@@ -148,7 +148,7 @@ Map<String, String> readAll(Authentication auth)
 
 ### GET `/api/v1/me/notification-preferences`
 
-- Handler: `preferences` ([source](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/NotificationController.java#L67)).
+- Handler: `preferences` ([source](../../communication-service/src/main/java/com/openhire/communication/controller/NotificationController.java#L67)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.viewer(auth)`.
 - Delegated operations: `communication.preferences`.
@@ -161,7 +161,7 @@ PreferencesView preferences(Authentication auth)
 
 ### PUT `/api/v1/me/notification-preferences`
 
-- Handler: `update` ([source](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/NotificationController.java#L72)).
+- Handler: `update` ([source](../../communication-service/src/main/java/com/openhire/communication/controller/NotificationController.java#L72)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.viewer(auth)`.
 - Delegated operations: `communication.updatePreferences`.
@@ -174,11 +174,11 @@ PreferencesView update(Authentication auth, @RequestBody PreferencesInput input)
 
 ## PublicCandidateController
 
-Source: [PublicCandidateController](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/PublicCandidateController.java).
+Source: [PublicCandidateController](../../communication-service/src/main/java/com/openhire/communication/controller/PublicCandidateController.java).
 
 ### GET `/api/v1/public/applications/{applicationId}/messages`
 
-- Handler: `thread` ([source](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/PublicCandidateController.java#L37)).
+- Handler: `thread` ([source](../../communication-service/src/main/java/com/openhire/communication/controller/PublicCandidateController.java#L37)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `communication.candidateThread`.
@@ -191,7 +191,7 @@ PortalThreadView thread( @PathVariable String applicationId, @RequestParam Strin
 
 ### POST `/api/v1/public/applications/{applicationId}/messages`
 
-- Handler: `reply` ([source](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/PublicCandidateController.java#L45)).
+- Handler: `reply` ([source](../../communication-service/src/main/java/com/openhire/communication/controller/PublicCandidateController.java#L45)).
 - Success status: \@ResponseStatus(HttpStatus.CREATED).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `communication.candidateReply`.
@@ -204,7 +204,7 @@ ChatMessageView reply( @PathVariable String applicationId, @RequestParam String 
 
 ### GET `/api/v1/public/applications/{applicationId}/communication-preferences`
 
-- Handler: `preferences` ([source](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/PublicCandidateController.java#L55)).
+- Handler: `preferences` ([source](../../communication-service/src/main/java/com/openhire/communication/controller/PublicCandidateController.java#L55)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `communication.candidatePreferences`.
@@ -217,7 +217,7 @@ CandidatePreferencesView preferences( @PathVariable String applicationId, @Reque
 
 ### PUT `/api/v1/public/applications/{applicationId}/communication-preferences`
 
-- Handler: `update` ([source](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/PublicCandidateController.java#L63)).
+- Handler: `update` ([source](../../communication-service/src/main/java/com/openhire/communication/controller/PublicCandidateController.java#L63)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `communication.updateCandidatePreferences`.
@@ -230,11 +230,11 @@ CandidatePreferencesView update( @PathVariable String applicationId, @RequestPar
 
 ## TemplateController
 
-Source: [TemplateController](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/TemplateController.java).
+Source: [TemplateController](../../communication-service/src/main/java/com/openhire/communication/controller/TemplateController.java).
 
 ### GET `/api/v1/message-templates`
 
-- Handler: `list` ([source](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/TemplateController.java#L32)).
+- Handler: `list` ([source](../../communication-service/src/main/java/com/openhire/communication/controller/TemplateController.java#L32)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.recruiter(auth)`; `viewers.tenant(auth)`.
 - Delegated operations: `communication.templates`.
@@ -247,7 +247,7 @@ Page<TemplateView> list(Authentication auth)
 
 ### PUT `/api/v1/message-templates/{key}`
 
-- Handler: `update` ([source](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/TemplateController.java#L38)).
+- Handler: `update` ([source](../../communication-service/src/main/java/com/openhire/communication/controller/TemplateController.java#L38)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.recruiter(auth)`; `viewers.tenant(auth)`.
 - Delegated operations: `communication.updateTemplate`.
@@ -260,7 +260,7 @@ TemplateView update(Authentication auth, @PathVariable String key, @RequestBody 
 
 ### POST `/api/v1/message-templates/{key}/preview`
 
-- Handler: `preview` ([source](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/TemplateController.java#L55)).
+- Handler: `preview` ([source](../../communication-service/src/main/java/com/openhire/communication/controller/TemplateController.java#L55)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.recruiter(auth)`; `viewers.tenant(auth)`.
 - Delegated operations: `communication.preview`.
@@ -277,7 +277,7 @@ These are source declarations, including nested DTO records referenced by signat
 
 ### StartInput
 
-[Definition](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/ConversationController.java)
+[Definition](../../communication-service/src/main/java/com/openhire/communication/controller/ConversationController.java)
 
 ```java
 record StartInput(String applicationId)
@@ -285,7 +285,7 @@ record StartInput(String applicationId)
 
 ### SendInput
 
-[Definition](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/ConversationController.java)
+[Definition](../../communication-service/src/main/java/com/openhire/communication/controller/ConversationController.java)
 
 ```java
 record SendInput(String text, String channel)
@@ -293,7 +293,7 @@ record SendInput(String text, String channel)
 
 ### TemplateInput
 
-[Definition](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/InternalMessageController.java)
+[Definition](../../communication-service/src/main/java/com/openhire/communication/controller/InternalMessageController.java)
 
 ```java
 record TemplateInput(
@@ -302,7 +302,7 @@ record TemplateInput(
 
 ### ReadInput
 
-[Definition](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/NotificationController.java)
+[Definition](../../communication-service/src/main/java/com/openhire/communication/controller/NotificationController.java)
 
 ```java
 record ReadInput(Boolean read)
@@ -310,7 +310,7 @@ record ReadInput(Boolean read)
 
 ### PreferencesInput
 
-[Definition](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/NotificationController.java)
+[Definition](../../communication-service/src/main/java/com/openhire/communication/controller/NotificationController.java)
 
 ```java
 record PreferencesInput(Map<String, Map<String, Boolean>> matrix, QuietInput quietHours, String emailDigest)
@@ -318,7 +318,7 @@ record PreferencesInput(Map<String, Map<String, Boolean>> matrix, QuietInput qui
 
 ### ReplyInput
 
-[Definition](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/PublicCandidateController.java)
+[Definition](../../communication-service/src/main/java/com/openhire/communication/controller/PublicCandidateController.java)
 
 ```java
 record ReplyInput(String text)
@@ -326,7 +326,7 @@ record ReplyInput(String text)
 
 ### QuietInput
 
-[Definition](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/PublicCandidateController.java)
+[Definition](../../communication-service/src/main/java/com/openhire/communication/controller/PublicCandidateController.java)
 
 ```java
 record QuietInput(boolean enabled, String from, String to)
@@ -334,7 +334,7 @@ record QuietInput(boolean enabled, String from, String to)
 
 ### PreferencesInput
 
-[Definition](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/PublicCandidateController.java)
+[Definition](../../communication-service/src/main/java/com/openhire/communication/controller/PublicCandidateController.java)
 
 ```java
 record PreferencesInput(String preferredChannel, QuietInput quietHours, String timezone, boolean marketingOptOut)
@@ -342,23 +342,15 @@ record PreferencesInput(String preferredChannel, QuietInput quietHours, String t
 
 ### TemplateInput
 
-[Definition](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/TemplateController.java)
+[Definition](../../communication-service/src/main/java/com/openhire/communication/controller/TemplateController.java)
 
 ```java
 record TemplateInput(List<String> channels, String subject, String body)
 ```
 
-### TemplateSend
-
-[Definition](../../communication-service/src/main/java/com/openhire/communication/application/CommunicationService.java)
-
-```java
-record TemplateSend(boolean sent, String reason)
-```
-
 ### Page
 
-[Definition](../../communication-service/src/main/java/com/openhire/communication/application/CommunicationViews.java)
+[Definition](../../communication-service/src/main/java/com/openhire/communication/dto/CommunicationViews.java)
 
 ```java
 record Page<T>(List<T> data, String nextCursor, boolean hasMore)
@@ -366,7 +358,7 @@ record Page<T>(List<T> data, String nextCursor, boolean hasMore)
 
 ### ConversationSummaryView
 
-[Definition](../../communication-service/src/main/java/com/openhire/communication/application/CommunicationViews.java)
+[Definition](../../communication-service/src/main/java/com/openhire/communication/dto/CommunicationViews.java)
 
 ```java
 record ConversationSummaryView(
@@ -381,7 +373,7 @@ record ConversationSummaryView(
 
 ### ChatMessageView
 
-[Definition](../../communication-service/src/main/java/com/openhire/communication/application/CommunicationViews.java)
+[Definition](../../communication-service/src/main/java/com/openhire/communication/dto/CommunicationViews.java)
 
 ```java
 record ChatMessageView(
@@ -390,7 +382,7 @@ record ChatMessageView(
 
 ### ConversationView
 
-[Definition](../../communication-service/src/main/java/com/openhire/communication/application/CommunicationViews.java)
+[Definition](../../communication-service/src/main/java/com/openhire/communication/dto/CommunicationViews.java)
 
 ```java
 record ConversationView(
@@ -405,7 +397,7 @@ record ConversationView(
 
 ### PortalThreadView
 
-[Definition](../../communication-service/src/main/java/com/openhire/communication/application/CommunicationViews.java)
+[Definition](../../communication-service/src/main/java/com/openhire/communication/dto/CommunicationViews.java)
 
 ```java
 record PortalThreadView(String candidateName, List<ChatMessageView> messages)
@@ -413,7 +405,7 @@ record PortalThreadView(String candidateName, List<ChatMessageView> messages)
 
 ### TemplateView
 
-[Definition](../../communication-service/src/main/java/com/openhire/communication/application/CommunicationViews.java)
+[Definition](../../communication-service/src/main/java/com/openhire/communication/dto/CommunicationViews.java)
 
 ```java
 record TemplateView(
@@ -430,7 +422,7 @@ record TemplateView(
 
 ### PreviewView
 
-[Definition](../../communication-service/src/main/java/com/openhire/communication/application/CommunicationViews.java)
+[Definition](../../communication-service/src/main/java/com/openhire/communication/dto/CommunicationViews.java)
 
 ```java
 record PreviewView(String subject, String body)
@@ -438,7 +430,7 @@ record PreviewView(String subject, String body)
 
 ### NotificationView
 
-[Definition](../../communication-service/src/main/java/com/openhire/communication/application/CommunicationViews.java)
+[Definition](../../communication-service/src/main/java/com/openhire/communication/dto/CommunicationViews.java)
 
 ```java
 record NotificationView(
@@ -454,7 +446,7 @@ record NotificationView(
 
 ### PreferencesView
 
-[Definition](../../communication-service/src/main/java/com/openhire/communication/application/CommunicationViews.java)
+[Definition](../../communication-service/src/main/java/com/openhire/communication/dto/CommunicationViews.java)
 
 ```java
 record PreferencesView(
@@ -463,16 +455,24 @@ record PreferencesView(
 
 ### CandidatePreferencesView
 
-[Definition](../../communication-service/src/main/java/com/openhire/communication/application/CommunicationViews.java)
+[Definition](../../communication-service/src/main/java/com/openhire/communication/dto/CommunicationViews.java)
 
 ```java
 record CandidatePreferencesView(
             String preferredChannel, QuietHoursView quietHours, String timezone, boolean marketingOptOut)
 ```
 
+### TemplateSend
+
+[Definition](../../communication-service/src/main/java/com/openhire/communication/service/CommunicationService.java)
+
+```java
+record TemplateSend(boolean sent, String reason)
+```
+
 ### QuietInput
 
-[Definition](../../communication-service/src/main/java/com/openhire/communication/adapter/in/web/NotificationController.java)
+[Definition](../../communication-service/src/main/java/com/openhire/communication/controller/NotificationController.java)
 
 ```java
 record QuietInput(boolean enabled, String from, String to)
@@ -480,7 +480,7 @@ record QuietInput(boolean enabled, String from, String to)
 
 ### LinkView
 
-[Definition](../../communication-service/src/main/java/com/openhire/communication/application/CommunicationViews.java)
+[Definition](../../communication-service/src/main/java/com/openhire/communication/dto/CommunicationViews.java)
 
 ```java
 record LinkView(String route, Map<String, String> params)
@@ -488,7 +488,7 @@ record LinkView(String route, Map<String, String> params)
 
 ### QuietHoursView
 
-[Definition](../../communication-service/src/main/java/com/openhire/communication/application/CommunicationViews.java)
+[Definition](../../communication-service/src/main/java/com/openhire/communication/dto/CommunicationViews.java)
 
 ```java
 record QuietHoursView(boolean enabled, String from, String to)

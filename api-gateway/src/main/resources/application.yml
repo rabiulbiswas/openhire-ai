@@ -296,7 +296,7 @@ openhire:
   integration:
     public-base-url: ${INTEGRATION_PUBLIC_BASE_URL:http://localhost:8080}
   tenant:
-    default-id: ${DEFAULT_TENANT_ID:demo-org}
+    default-id: ${DEFAULT_TENANT_ID:}
   ui:
     staff-url: ${STAFF_UI_URL:http://localhost:5173/}
     partner-url: ${PARTNER_UI_URL:http://localhost:5174/jobs}

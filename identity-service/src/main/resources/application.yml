@@ -30,15 +30,15 @@ openhire:
   internal:
     secret: ${INTERNAL_SERVICE_SECRET:local-development-secret}
   tenant:
-    default-id: ${DEFAULT_TENANT_ID:demo-org}
+    default-id: ${DEFAULT_TENANT_ID:}
   security:
     mode: ${SECURITY_MODE:local}
   identity:
     provider: ${IDENTITY_PROVIDER:local}
   bootstrap:
     sample-data:
-      enabled: ${SAMPLE_DATA_ENABLED:true}
-      organization-id: ${DEFAULT_TENANT_ID:demo-org}
+      enabled: ${SAMPLE_DATA_ENABLED:false}
+      organization-id: ${DEFAULT_TENANT_ID:}
       organization-name: ${SAMPLE_ORGANIZATION_NAME:Local workspace}
       organization-slug: ${SAMPLE_ORGANIZATION_SLUG:local-workspace}
       admin-email: ${SAMPLE_ADMIN_EMAIL:admin@openhire.local}

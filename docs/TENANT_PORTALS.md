@@ -1,5 +1,10 @@
 # Tenant portals and Super Admin onboarding
 
+**2026-10-23 expansion:** canonical `/api/v1/platform/tenants` APIs coexist with the legacy organization paths.
+The platform UI uses `/tenants`. Claim readers prefer `tenant_id` and reject conflicting legacy claims. See
+[tenant naming migration](TENANT_NAMING_MIGRATION.md) for the passed synthetic Mongo rehearsal, shared
+tenant-scoped collection strategy, and remaining repository/Keycloak cutover work. Live persistence is unchanged.
+
 ## Agreed target
 
 - Independent platform portal: `admin.localhost` locally; production domain undecided.
@@ -137,6 +142,7 @@ role definitions are not automatically converted into Keycloak business roles. B
    Do not recreate a non-persisted Keycloak container to install a theme. The provider URL can still contain its
    realm path; branding removes the chooser/branding, not the OAuth redirect protocol. Keeping the browser on
    the exact portal hostname throughout is not implemented by this theme.
+   See `infra/keycloak/themes/openhire/README.md` for mockup styling, OTP behavior and supported controls.
 7. Start the frontend applications from the frontend repository:
 
    ```bash

@@ -16,17 +16,20 @@ class ArchitectureTest {
             .should()
             .dependOnClassesThat()
             .resideInAnyPackage(
-                    "..communication.application..", "..communication.adapter..", "..communication.config..");
+                    "..communication.service..",
+                    "..communication.controller..",
+                    "..communication.repository..",
+                    "..communication.client..",
+                    "..communication.messaging..",
+                    "..communication.scheduler..",
+                    "..communication.config..");
 
     @ArchTest
-    static final ArchRule applicationDoesNotDependOnAdapters = noClasses()
+    static final ArchRule servicesDoNotDependOnInboundLayers = noClasses()
             .that()
-            .resideInAPackage("..communication.application..")
+            .resideInAPackage("..service..")
             .should()
             .dependOnClassesThat()
             .resideInAnyPackage(
-                    "..communication.adapter..",
-                    "..communication.config..",
-                    "org.springframework.web..",
-                    "org.springframework.kafka..");
+                    "com.openhire..controller..", "com.openhire..scheduler..", "com.openhire..messaging.consumer..");
 }

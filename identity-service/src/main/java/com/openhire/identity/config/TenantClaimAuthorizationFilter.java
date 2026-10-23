@@ -31,9 +31,13 @@ public class TenantClaimAuthorizationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication instanceof JwtAuthenticationToken jwt) {
-            var tokenTenant = jwt.getToken().getClaimAsString("organization_id");
-            if (tokenTenant == null || tokenTenant.isBlank()) {
-                tokenTenant = jwt.getToken().getClaimAsString("tenant_id");
+            String tokenTenant;
+            try {
+                tokenTenant = com.openhire.platform.tenant.TenantClaims.resolve(
+                        jwt.getToken().getClaims());
+            } catch (org.springframework.web.server.ResponseStatusException invalidClaim) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid tenant claims");
+                return;
             }
             var requestedTenant = TenantContext.requiredTenantId();
             if (tokenTenant == null || !requestedTenant.equals(tokenTenant)) {

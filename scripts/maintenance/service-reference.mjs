@@ -110,6 +110,10 @@ if(process.argv.includes('--patch')) {
     }
   }
   console.log(patch+'*** End Patch');
+} else if(process.argv.includes('--write')) {
+  // Generated references only: source-derived paths, signatures and DTO fields.
+  for (const document of documents) fs.writeFileSync(document.file, document.content);
+  console.log(JSON.stringify({ services: documents.length, operations: documents.reduce((n, d) => n + d.count, 0), generated: true }));
 } else if(process.argv.includes('--check')) {
   const stale=documents.filter(d=>!fs.existsSync(d.file)||fs.readFileSync(d.file,'utf8')!==d.content);
   console.log(JSON.stringify({services:documents.length,operations:documents.reduce((n,d)=>n+d.count,0),stale:stale.map(d=>path.basename(d.file))}));

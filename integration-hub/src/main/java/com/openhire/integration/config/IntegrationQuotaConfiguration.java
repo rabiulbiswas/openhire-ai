@@ -1,6 +1,6 @@
 package com.openhire.integration.config;
 
-import com.openhire.integration.adapter.out.mongo.IntegrationBudget;
+import com.openhire.integration.repository.mongo.IntegrationBudget;
 import com.openhire.support.Access;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

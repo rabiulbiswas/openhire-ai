@@ -1,6 +1,6 @@
 package com.openhire.talent.config;
 
-import com.openhire.talent.application.TalentSettings;
+import com.openhire.talent.service.TalentSettings;
 import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

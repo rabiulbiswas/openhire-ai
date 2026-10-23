@@ -6,11 +6,11 @@ Mapped operations: **26**. Framework-generated Actuator endpoints and gateway-pr
 
 ## AuditController
 
-Source: [AuditController](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/AuditController.java).
+Source: [AuditController](../../compliance-service/src/main/java/com/openhire/compliance/controller/AuditController.java).
 
 ### GET `/api/v1/audit-events`
 
-- Handler: `list` ([source](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/AuditController.java#L32)).
+- Handler: `list` ([source](../../compliance-service/src/main/java/com/openhire/compliance/controller/AuditController.java#L32)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.require(auth, Viewers.READERS)`.
 
@@ -22,7 +22,7 @@ AuditLedger.Page list( Authentication auth, @RequestParam(required = false) Stri
 
 ### GET `/api/v1/audit-events/verify`
 
-- Handler: `verify` ([source](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/AuditController.java#L57)).
+- Handler: `verify` ([source](../../compliance-service/src/main/java/com/openhire/compliance/controller/AuditController.java#L57)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.require(auth, Viewers.READERS)`.
 
@@ -34,7 +34,7 @@ AuditChain.Result verify(Authentication auth)
 
 ### GET `/api/v1/audit-events/export`
 
-- Handler: `export` ([source](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/AuditController.java#L62)).
+- Handler: `export` ([source](../../compliance-service/src/main/java/com/openhire/compliance/controller/AuditController.java#L62)).
 - Success status: ResponseEntity chooses status; see handler.
 - Controller access/tenant calls: `viewers.require(auth, Viewers.READERS)`; `viewers.actor(auth)`.
 
@@ -46,11 +46,11 @@ ResponseEntity<StreamingResponseBody> export( Authentication auth, @RequestParam
 
 ## PublicController
 
-Source: [PublicController](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/PublicController.java).
+Source: [PublicController](../../compliance-service/src/main/java/com/openhire/compliance/controller/PublicController.java).
 
 ### POST `/api/v1/public/applications/{applicationId}/privacy-requests`
 
-- Handler: `request` ([source](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/PublicController.java#L43)).
+- Handler: `request` ([source](../../compliance-service/src/main/java/com/openhire/compliance/controller/PublicController.java#L43)).
 - Success status: \@ResponseStatus(HttpStatus.CREATED).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 
@@ -62,7 +62,7 @@ Map<String, Object> request( @PathVariable String applicationId, @RequestParam S
 
 ### GET `/api/v1/public/applications/{applicationId}/privacy-requests`
 
-- Handler: `requests` ([source](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/PublicController.java#L53)).
+- Handler: `requests` ([source](../../compliance-service/src/main/java/com/openhire/compliance/controller/PublicController.java#L53)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 
@@ -74,7 +74,7 @@ List<Map<String, Object>> requests( @PathVariable String applicationId, @Request
 
 ### GET `/api/v1/public/privacy-requests/{id}/export`
 
-- Handler: `export` ([source](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/PublicController.java#L61)).
+- Handler: `export` ([source](../../compliance-service/src/main/java/com/openhire/compliance/controller/PublicController.java#L61)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 
@@ -86,7 +86,7 @@ Map<String, Object> export( @PathVariable String id, @RequestParam String tenant
 
 ### PUT `/api/v1/public/applications/{applicationId}/self-identification`
 
-- Handler: `putSelfIdentification` ([source](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/PublicController.java#L69)).
+- Handler: `putSelfIdentification` ([source](../../compliance-service/src/main/java/com/openhire/compliance/controller/PublicController.java#L69)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 
@@ -98,7 +98,7 @@ Map<String, Object> putSelfIdentification( @PathVariable String applicationId, @
 
 ### GET `/api/v1/public/applications/{applicationId}/self-identification`
 
-- Handler: `getSelfIdentification` ([source](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/PublicController.java#L78)).
+- Handler: `getSelfIdentification` ([source](../../compliance-service/src/main/java/com/openhire/compliance/controller/PublicController.java#L78)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 
@@ -110,7 +110,7 @@ Map<String, Object> getSelfIdentification( @PathVariable String applicationId, @
 
 ### GET `/api/v1/internal/consent/active`
 
-- Handler: `activeConsent` ([source](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/PublicController.java#L86)).
+- Handler: `activeConsent` ([source](../../compliance-service/src/main/java/com/openhire/compliance/controller/PublicController.java#L86)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.internal(secret)`.
 - Delegated operations: `consent.active`.
@@ -123,11 +123,11 @@ Map<String, Object> activeConsent( @RequestHeader("X-Internal-Service-Secret") S
 
 ## StaffController
 
-Source: [StaffController](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/StaffController.java).
+Source: [StaffController](../../compliance-service/src/main/java/com/openhire/compliance/controller/StaffController.java).
 
 ### GET `/api/v1/ai-decisions`
 
-- Handler: `aiDecisions` ([source](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/StaffController.java#L68)).
+- Handler: `aiDecisions` ([source](../../compliance-service/src/main/java/com/openhire/compliance/controller/StaffController.java#L68)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.require(auth, Viewers.READERS)`.
 
@@ -139,7 +139,7 @@ List<Map<String, Object>> aiDecisions( Authentication auth, @RequestParam(requir
 
 ### GET `/api/v1/ai-decisions/{id}`
 
-- Handler: `aiDecision` ([source](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/StaffController.java#L80)).
+- Handler: `aiDecision` ([source](../../compliance-service/src/main/java/com/openhire/compliance/controller/StaffController.java#L80)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.require(auth, Viewers.READERS)`.
 
@@ -151,7 +151,7 @@ Map<String, Object> aiDecision(Authentication auth, @PathVariable String id)
 
 ### GET `/api/v1/trace/applications/{applicationId}`
 
-- Handler: `trace` ([source](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/StaffController.java#L85)).
+- Handler: `trace` ([source](../../compliance-service/src/main/java/com/openhire/compliance/controller/StaffController.java#L85)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.require(auth, Viewers.READERS)`.
 
@@ -163,7 +163,7 @@ List<Map<String, Object>> trace(Authentication auth, @PathVariable String applic
 
 ### GET `/api/v1/consent-texts`
 
-- Handler: `consentTexts` ([source](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/StaffController.java#L92)).
+- Handler: `consentTexts` ([source](../../compliance-service/src/main/java/com/openhire/compliance/controller/StaffController.java#L92)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.require(auth, Viewers.READERS)`.
 - Delegated operations: `consent.texts`.
@@ -176,7 +176,7 @@ List<Map<String, Object>> consentTexts(Authentication auth)
 
 ### POST `/api/v1/consent-texts`
 
-- Handler: `publishConsent` ([source](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/StaffController.java#L97)).
+- Handler: `publishConsent` ([source](../../compliance-service/src/main/java/com/openhire/compliance/controller/StaffController.java#L97)).
 - Success status: \@ResponseStatus(HttpStatus.CREATED).
 - Controller access/tenant calls: `viewers.require(auth, Viewers.MANAGERS)`; `viewers.actor(auth)`.
 - Delegated operations: `consent.publish`.
@@ -189,7 +189,7 @@ Map<String, Object> publishConsent(Authentication auth, @RequestBody ConsentInpu
 
 ### GET `/api/v1/consent-records`
 
-- Handler: `consentRecords` ([source](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/StaffController.java#L104)).
+- Handler: `consentRecords` ([source](../../compliance-service/src/main/java/com/openhire/compliance/controller/StaffController.java#L104)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.require(auth, Viewers.READERS)`.
 - Delegated operations: `consent.records`.
@@ -202,7 +202,7 @@ List<Map<String, Object>> consentRecords(Authentication auth, @RequestParam(requ
 
 ### GET `/api/v1/privacy/requests`
 
-- Handler: `privacyRequests` ([source](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/StaffController.java#L111)).
+- Handler: `privacyRequests` ([source](../../compliance-service/src/main/java/com/openhire/compliance/controller/StaffController.java#L111)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.require(auth, Viewers.MANAGERS)`.
 
@@ -214,7 +214,7 @@ List<Map<String, Object>> privacyRequests(Authentication auth, @RequestParam(req
 
 ### GET `/api/v1/privacy/requests/{id}`
 
-- Handler: `privacyRequest` ([source](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/StaffController.java#L116)).
+- Handler: `privacyRequest` ([source](../../compliance-service/src/main/java/com/openhire/compliance/controller/StaffController.java#L116)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.require(auth, Viewers.MANAGERS)`.
 
@@ -226,7 +226,7 @@ Map<String, Object> privacyRequest(Authentication auth, @PathVariable String id)
 
 ### POST `/api/v1/privacy/requests`
 
-- Handler: `createPrivacyRequest` ([source](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/StaffController.java#L121)).
+- Handler: `createPrivacyRequest` ([source](../../compliance-service/src/main/java/com/openhire/compliance/controller/StaffController.java#L121)).
 - Success status: \@ResponseStatus(HttpStatus.CREATED).
 - Controller access/tenant calls: `viewers.require(auth, Viewers.MANAGERS)`; `viewers.actor(auth)`.
 
@@ -238,7 +238,7 @@ Map<String, Object> createPrivacyRequest(Authentication auth, @RequestBody Priva
 
 ### GET `/api/v1/legal-holds`
 
-- Handler: `legalHolds` ([source](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/StaffController.java#L130)).
+- Handler: `legalHolds` ([source](../../compliance-service/src/main/java/com/openhire/compliance/controller/StaffController.java#L130)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.require(auth, Viewers.MANAGERS)`.
 
@@ -250,7 +250,7 @@ List<Map<String, Object>> legalHolds(Authentication auth, @RequestParam(required
 
 ### POST `/api/v1/legal-holds`
 
-- Handler: `placeHold` ([source](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/StaffController.java#L135)).
+- Handler: `placeHold` ([source](../../compliance-service/src/main/java/com/openhire/compliance/controller/StaffController.java#L135)).
 - Success status: \@ResponseStatus(HttpStatus.CREATED).
 - Controller access/tenant calls: `viewers.require(auth, Viewers.MANAGERS)`; `viewers.actor(auth)`.
 
@@ -262,7 +262,7 @@ Map<String, Object> placeHold(Authentication auth, @RequestBody HoldInput input)
 
 ### POST `/api/v1/legal-holds/{id}/release`
 
-- Handler: `releaseHold` ([source](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/StaffController.java#L143)).
+- Handler: `releaseHold` ([source](../../compliance-service/src/main/java/com/openhire/compliance/controller/StaffController.java#L143)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.require(auth, Viewers.MANAGERS)`; `viewers.actor(auth)`.
 
@@ -274,7 +274,7 @@ Map<String, Object> releaseHold(Authentication auth, @PathVariable String id, @R
 
 ### GET `/api/v1/retention-policies`
 
-- Handler: `retentionPolicies` ([source](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/StaffController.java#L151)).
+- Handler: `retentionPolicies` ([source](../../compliance-service/src/main/java/com/openhire/compliance/controller/StaffController.java#L151)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.require(auth, Viewers.READERS)`.
 
@@ -286,7 +286,7 @@ List<Map<String, Object>> retentionPolicies(Authentication auth)
 
 ### PUT `/api/v1/retention-policies/{key}`
 
-- Handler: `updatePolicy` ([source](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/StaffController.java#L156)).
+- Handler: `updatePolicy` ([source](../../compliance-service/src/main/java/com/openhire/compliance/controller/StaffController.java#L156)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.require(auth, Viewers.MANAGERS)`; `viewers.actor(auth)`.
 
@@ -298,7 +298,7 @@ Map<String, Object> updatePolicy(Authentication auth, @PathVariable String key, 
 
 ### POST `/api/v1/retention-policies/run`
 
-- Handler: `runRetention` ([source](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/StaffController.java#L163)).
+- Handler: `runRetention` ([source](../../compliance-service/src/main/java/com/openhire/compliance/controller/StaffController.java#L163)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.require(auth, Viewers.MANAGERS)`; `viewers.actor(auth)`.
 
@@ -310,7 +310,7 @@ Map<String, Object> runRetention( Authentication auth, @RequestParam(defaultValu
 
 ### GET `/api/v1/reports/fairness`
 
-- Handler: `fairnessReport` ([source](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/StaffController.java#L174)).
+- Handler: `fairnessReport` ([source](../../compliance-service/src/main/java/com/openhire/compliance/controller/StaffController.java#L174)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.require(auth, Viewers.READERS)`.
 
@@ -322,7 +322,7 @@ Map<String, Object> fairnessReport( Authentication auth, @RequestParam(required 
 
 ### GET `/api/v1/compliance/overview`
 
-- Handler: `overview` ([source](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/StaffController.java#L182)).
+- Handler: `overview` ([source](../../compliance-service/src/main/java/com/openhire/compliance/controller/StaffController.java#L182)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.require(auth, Viewers.READERS)`.
 
@@ -338,7 +338,7 @@ These are source declarations, including nested DTO records referenced by signat
 
 ### TypeInput
 
-[Definition](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/PublicController.java)
+[Definition](../../compliance-service/src/main/java/com/openhire/compliance/controller/PublicController.java)
 
 ```java
 record TypeInput(String type)
@@ -346,7 +346,7 @@ record TypeInput(String type)
 
 ### ConsentInput
 
-[Definition](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/StaffController.java)
+[Definition](../../compliance-service/src/main/java/com/openhire/compliance/controller/StaffController.java)
 
 ```java
 record ConsentInput(String purpose, String locale, String text)
@@ -354,7 +354,7 @@ record ConsentInput(String purpose, String locale, String text)
 
 ### PrivacyInput
 
-[Definition](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/StaffController.java)
+[Definition](../../compliance-service/src/main/java/com/openhire/compliance/controller/StaffController.java)
 
 ```java
 record PrivacyInput(String candidateId, String type, String reason)
@@ -362,7 +362,7 @@ record PrivacyInput(String candidateId, String type, String reason)
 
 ### HoldInput
 
-[Definition](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/StaffController.java)
+[Definition](../../compliance-service/src/main/java/com/openhire/compliance/controller/StaffController.java)
 
 ```java
 record HoldInput(String candidateId, String jobId, String reason, String expiresAt)
@@ -370,7 +370,7 @@ record HoldInput(String candidateId, String jobId, String reason, String expires
 
 ### ReasonInput
 
-[Definition](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/StaffController.java)
+[Definition](../../compliance-service/src/main/java/com/openhire/compliance/controller/StaffController.java)
 
 ```java
 record ReasonInput(String reason)
@@ -378,18 +378,10 @@ record ReasonInput(String reason)
 
 ### PolicyInput
 
-[Definition](../../compliance-service/src/main/java/com/openhire/compliance/adapter/in/web/StaffController.java)
+[Definition](../../compliance-service/src/main/java/com/openhire/compliance/controller/StaffController.java)
 
 ```java
 record PolicyInput(Integer retentionMonths, Boolean enabled)
-```
-
-### Page
-
-[Definition](../../compliance-service/src/main/java/com/openhire/compliance/application/AuditLedger.java)
-
-```java
-record Page(List<Map<String, Object>> data, String nextCursor, boolean hasMore)
 ```
 
 ### Result
@@ -398,4 +390,12 @@ record Page(List<Map<String, Object>> data, String nextCursor, boolean hasMore)
 
 ```java
 record Result(boolean valid, long checked, Long brokenAtSeq)
+```
+
+### Page
+
+[Definition](../../compliance-service/src/main/java/com/openhire/compliance/service/AuditLedger.java)
+
+```java
+record Page(List<Map<String, Object>> data, String nextCursor, boolean hasMore)
 ```

@@ -48,7 +48,7 @@ openhire:
   security:
     mode: ${SECURITY_MODE:oidc}
   tenant:
-    default-id: ${DEFAULT_TENANT_ID:demo-org}
+    default-id: ${DEFAULT_TENANT_ID:}
   employee:
     employee-no-prefix: ${EMPLOYEE_NO_PREFIX:EMP}
     saga-delay: ${EMPLOYEE_SAGA_DELAY_MS:5000}

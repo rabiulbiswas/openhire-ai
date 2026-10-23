@@ -47,7 +47,7 @@ openhire:
   security:
     mode: ${SECURITY_MODE:oidc}
   tenant:
-    default-id: ${DEFAULT_TENANT_ID:demo-org}
+    default-id: ${DEFAULT_TENANT_ID:}
   offer:
     token-secret: ${OFFER_TOKEN_SECRET:${INTERNAL_SERVICE_SECRET:local-development-secret}}
     portal-url: ${CANDIDATE_PORTAL_URL:http://localhost:3000}

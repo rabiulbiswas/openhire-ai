@@ -45,7 +45,7 @@ openhire:
   security:
     mode: ${SECURITY_MODE:oidc}
   tenant:
-    default-id: ${DEFAULT_TENANT_ID:demo-org}
+    default-id: ${DEFAULT_TENANT_ID:}
   outbox:
     collection: integration_events
     topic: integration.events.v1

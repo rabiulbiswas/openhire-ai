@@ -2,15 +2,15 @@
 
 Generated from current Java controller annotations. This is a source-level reference, not proof of deployed reachability or live acceptance. See [service design](identity-service.md) for business rules and end-to-end flows, and [shared conventions](END_TO_END_DESIGN.md#api-and-security-conventions).
 
-Mapped operations: **44**. Framework-generated Actuator endpoints and gateway-proxied routes are not duplicated here. Signatures preserve request headers, query defaults, body types, return types and optional bindings. Java types are not JSON field names: request/response record fields are listed below. Controller checks may delegate additional authorization to application services; an empty extracted-check list does not mean public access.
+Mapped operations: **59**. Framework-generated Actuator endpoints and gateway-proxied routes are not duplicated here. Signatures preserve request headers, query defaults, body types, return types and optional bindings. Java types are not JSON field names: request/response record fields are listed below. Controller checks may delegate additional authorization to application services; an empty extracted-check list does not mean public access.
 
 ## IdentityController
 
-Source: [IdentityController](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java).
+Source: [IdentityController](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java).
 
 ### POST `/api/v1/platform/organizations`
 
-- Handler: `createOrganization` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L47)).
+- Handler: `createOrganization` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L47)).
 - Success status: \@ResponseStatus(HttpStatus.CREATED).
 - Controller access/tenant calls: `@PreAuthorize("hasRole('SUPER_ADMIN')")`.
 - Delegated operations: `service.createOrganization`.
@@ -23,7 +23,7 @@ Object createOrganization(@Valid @RequestBody CreateOrganizationRequest request)
 
 ### GET `/api/v1/platform/organizations`
 
-- Handler: `organizations` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L54)).
+- Handler: `organizations` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L54)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasRole('SUPER_ADMIN')")`.
 - Delegated operations: `service.organizations`.
@@ -34,9 +34,48 @@ Request bindings and declared response:
 Object organizations()
 ```
 
+### POST `/api/v1/platform/organizations/onboard`
+
+- Handler: `onboard` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L60)).
+- Success status: ResponseEntity chooses status; see handler.
+- Controller access/tenant calls: `@PreAuthorize("hasRole('SUPER_ADMIN')")`.
+- Delegated operations: `service.onboardOrganization`.
+
+Request bindings and declared response:
+
+```java
+org.springframework.http.ResponseEntity<?> onboard(@Valid @RequestBody OnboardRequest request)
+```
+
+### GET `/api/v1/platform/organizations/{id}`
+
+- Handler: `organizationOverview` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L68)).
+- Success status: 200 (normal return; exceptions may differ).
+- Controller access/tenant calls: `@PreAuthorize("hasRole('SUPER_ADMIN')")`.
+- Delegated operations: `service.organizationOverview`.
+
+Request bindings and declared response:
+
+```java
+Object organizationOverview(@PathVariable String id)
+```
+
+### POST `/api/v1/platform/organizations/{id}/admin-invitations`
+
+- Handler: `adminInvitation` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L74)).
+- Success status: ResponseEntity chooses status; see handler.
+- Controller access/tenant calls: `@PreAuthorize("hasRole('SUPER_ADMIN')")`.
+- Delegated operations: `service.inviteOrganizationAdmin`.
+
+Request bindings and declared response:
+
+```java
+org.springframework.http.ResponseEntity<?> adminInvitation( @PathVariable String id, @Valid @RequestBody AdminInviteRequest request)
+```
+
 ### PATCH `/api/v1/platform/organizations/{id}/status`
 
-- Handler: `organizationStatus` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L60)).
+- Handler: `organizationStatus` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L87)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasRole('SUPER_ADMIN')")`.
 - Delegated operations: `service.changeOrganizationStatus`.
@@ -49,7 +88,7 @@ Object organizationStatus(@PathVariable String id, @Valid @RequestBody StatusReq
 
 ### GET `/api/v1/users`
 
-- Handler: `users` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L66)).
+- Handler: `users` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L93)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasAnyRole('ORG_ADMIN','RECRUITER')")`.
 - Delegated operations: `service.members`.
@@ -62,7 +101,7 @@ Object users()
 
 ### PATCH `/api/v1/users/{id}/roles`
 
-- Handler: `updateRoles` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L72)).
+- Handler: `updateRoles` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L99)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasRole('ORG_ADMIN')")`.
 - Delegated operations: `service.updateMemberRoles`.
@@ -75,7 +114,7 @@ Object updateRoles(@PathVariable String id, @Valid @RequestBody RolesRequest req
 
 ### DELETE `/api/v1/users/{id}`
 
-- Handler: `disableUser` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L78)).
+- Handler: `disableUser` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L105)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasRole('ORG_ADMIN')")`.
 - Delegated operations: `service.disableMember`.
@@ -88,7 +127,7 @@ Object disableUser(@PathVariable String id)
 
 ### GET `/api/v1/roles`
 
-- Handler: `roles` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L84)).
+- Handler: `roles` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L111)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasRole('ORG_ADMIN')")`.
 - Delegated operations: `service.roles`.
@@ -101,7 +140,7 @@ Object roles()
 
 ### POST `/api/v1/roles`
 
-- Handler: `createRole` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L90)).
+- Handler: `createRole` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L117)).
 - Success status: \@ResponseStatus(HttpStatus.CREATED).
 - Controller access/tenant calls: `@PreAuthorize("hasRole('ORG_ADMIN')")`.
 - Delegated operations: `service.createRole`.
@@ -114,7 +153,7 @@ Object createRole(@Valid @RequestBody CreateRoleRequest request)
 
 ### PUT `/api/v1/roles/{id}/permissions`
 
-- Handler: `permissions` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L97)).
+- Handler: `permissions` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L124)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasRole('ORG_ADMIN')")`.
 - Delegated operations: `service.updatePermissions`.
@@ -127,7 +166,7 @@ Object permissions(@PathVariable String id, @Valid @RequestBody PermissionsReque
 
 ### POST `/api/v1/invites`
 
-- Handler: `invite` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L103)).
+- Handler: `invite` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L130)).
 - Success status: \@ResponseStatus(HttpStatus.CREATED).
 - Controller access/tenant calls: `@PreAuthorize("hasRole('ORG_ADMIN')")`.
 - Delegated operations: `service.invite`.
@@ -140,7 +179,7 @@ Object invite(@Valid @RequestBody InviteRequest request)
 
 ### GET `/api/v1/invites`
 
-- Handler: `invites` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L111)).
+- Handler: `invites` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L138)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasRole('ORG_ADMIN')")`.
 - Delegated operations: `service.invitations`.
@@ -153,7 +192,7 @@ Object invites()
 
 ### POST `/api/v1/invites/{id}/resend`
 
-- Handler: `resend` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L119)).
+- Handler: `resend` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L146)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasRole('ORG_ADMIN')")`.
 - Delegated operations: `service.resendInvitation`.
@@ -166,7 +205,7 @@ Object resend(@PathVariable String id)
 
 ### GET `/api/v1/public/invitations/{token}`
 
-- Handler: `invitation` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L126)).
+- Handler: `invitation` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L153)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `service.invitation`.
@@ -179,7 +218,7 @@ Object invitation(@PathVariable String token)
 
 ### POST `/api/v1/public/invitations/{token}/accept`
 
-- Handler: `accept` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L131)).
+- Handler: `accept` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L158)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `service.acceptInvitation`.
@@ -192,7 +231,7 @@ Object accept(@PathVariable String token, @Valid @RequestBody AcceptInviteReques
 
 ### POST `/api/v1/public/verifications/{code}/complete`
 
-- Handler: `completeVerification` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L137)).
+- Handler: `completeVerification` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L164)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 
@@ -204,7 +243,7 @@ Object completeVerification(@PathVariable String code)
 
 ### POST `/api/v1/internal/api-keys/validate`
 
-- Handler: `validateApiKey` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L143)).
+- Handler: `validateApiKey` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L170)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `service.validateApiKey`.
@@ -215,9 +254,35 @@ Request bindings and declared response:
 Object validateApiKey( @RequestHeader("X-Internal-Secret") String suppliedSecret, @Valid @RequestBody ApiKeyValidationRequest request)
 ```
 
+### GET `/api/v1/internal/tenant-access/{slug}`
+
+- Handler: `tenantAccess` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L182)).
+- Success status: 200 (normal return; exceptions may differ).
+- Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
+- Delegated operations: `service.tenantAccess`.
+
+Request bindings and declared response:
+
+```java
+Object tenantAccess( @PathVariable String slug, @org.springframework.web.bind.annotation.RequestParam(required = false) String subject, @RequestHeader("X-Internal-Secret") String suppliedSecret)
+```
+
+### POST `/api/v1/internal/tenant-access/{slug}/activate`
+
+- Handler: `activateTenantMember` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L195)).
+- Success status: 200 (normal return; exceptions may differ).
+- Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
+- Delegated operations: `service.activateTenantMember`.
+
+Request bindings and declared response:
+
+```java
+void activateTenantMember( @PathVariable String slug, @org.springframework.web.bind.annotation.RequestParam String subject, @RequestHeader("X-Internal-Secret") String suppliedSecret)
+```
+
 ### GET `/api/v1/api-keys`
 
-- Handler: `apiKeys` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L155)).
+- Handler: `apiKeys` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L208)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasRole('ORG_ADMIN')")`.
 - Delegated operations: `service.apiKeys`.
@@ -230,7 +295,7 @@ Object apiKeys()
 
 ### POST `/api/v1/api-keys`
 
-- Handler: `createApiKey` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L161)).
+- Handler: `createApiKey` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L214)).
 - Success status: \@ResponseStatus(HttpStatus.CREATED).
 - Controller access/tenant calls: `@PreAuthorize("hasRole('ORG_ADMIN')")`.
 - Delegated operations: `service.createApiKey`.
@@ -243,7 +308,7 @@ Object createApiKey(@Valid @RequestBody ApiKeyRequest request)
 
 ### POST `/api/v1/api-keys/{id}/rotate`
 
-- Handler: `rotateApiKey` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L169)).
+- Handler: `rotateApiKey` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L222)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasRole('ORG_ADMIN')")`.
 - Delegated operations: `service.rotateApiKey`.
@@ -256,7 +321,7 @@ Object rotateApiKey(@PathVariable String id)
 
 ### DELETE `/api/v1/api-keys/{id}`
 
-- Handler: `revokeApiKey` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L176)).
+- Handler: `revokeApiKey` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L229)).
 - Success status: \@ResponseStatus(HttpStatus.NO_CONTENT).
 - Controller access/tenant calls: `@PreAuthorize("hasRole('ORG_ADMIN')")`.
 - Delegated operations: `service.revokeApiKey`.
@@ -269,7 +334,7 @@ void revokeApiKey(@PathVariable String id)
 
 ### GET `/api/v1/setup`
 
-- Handler: `setup` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L183)).
+- Handler: `setup` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L236)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasRole('ORG_ADMIN')")`.
 - Delegated operations: `service.setupProgress`.
@@ -282,7 +347,7 @@ Object setup()
 
 ### PATCH `/api/v1/setup/{step}/complete`
 
-- Handler: `setupStep` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L189)).
+- Handler: `setupStep` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L242)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasRole('ORG_ADMIN')")`.
 - Delegated operations: `service.completeSetupStep`.
@@ -295,7 +360,7 @@ Object setupStep(@PathVariable String step)
 
 ### GET `/api/v1/auth-policy`
 
-- Handler: `authPolicy` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L195)).
+- Handler: `authPolicy` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L248)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasRole('ORG_ADMIN')")`.
 - Delegated operations: `service.securitySettings`.
@@ -308,7 +373,7 @@ Object authPolicy()
 
 ### PUT `/api/v1/auth-policy`
 
-- Handler: `authPolicy` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L201)).
+- Handler: `authPolicy` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L254)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasRole('ORG_ADMIN')")`.
 - Delegated operations: `service.updateAuthPolicy`.
@@ -321,7 +386,7 @@ Object authPolicy(@Valid @RequestBody AuthPolicy policy)
 
 ### GET `/api/v1/sso-config`
 
-- Handler: `sso` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L207)).
+- Handler: `sso` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L260)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasRole('ORG_ADMIN')")`.
 - Delegated operations: `service.securitySettings`.
@@ -334,7 +399,7 @@ Object sso()
 
 ### PUT `/api/v1/sso-config`
 
-- Handler: `sso` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L213)).
+- Handler: `sso` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L266)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasRole('ORG_ADMIN')")`.
 - Delegated operations: `service.updateSso`.
@@ -347,7 +412,7 @@ Object sso(@Valid @RequestBody SsoSettings settings)
 
 ### GET `/api/v1/platform/organizations/{id}/quota`
 
-- Handler: `quota` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L219)).
+- Handler: `quota` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L272)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasRole('SUPER_ADMIN')")`.
 - Delegated operations: `service.securitySettings`.
@@ -360,7 +425,7 @@ Object quota(@PathVariable String id)
 
 ### PUT `/api/v1/platform/organizations/{id}/quota`
 
-- Handler: `quota` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L225)).
+- Handler: `quota` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L278)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasRole('SUPER_ADMIN')")`.
 - Delegated operations: `service.updateQuota`.
@@ -373,7 +438,7 @@ Object quota(@PathVariable String id, @Valid @RequestBody TenantQuota quota)
 
 ### POST `/api/v1/platform/organizations/{id}/break-glass`
 
-- Handler: `breakGlass` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L231)).
+- Handler: `breakGlass` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L284)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasRole('SUPER_ADMIN')")`.
 - Delegated operations: `service.requestBreakGlass`.
@@ -386,7 +451,7 @@ Object breakGlass(@PathVariable String id, @Valid @RequestBody BreakGlassRequest
 
 ### GET `/api/v1/platform/organizations/{id}/break-glass`
 
-- Handler: `breakGlass` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java#L237)).
+- Handler: `breakGlass` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java#L290)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasRole('SUPER_ADMIN')")`.
 - Delegated operations: `service.breakGlassRequests`.
@@ -399,11 +464,11 @@ Object breakGlass(@PathVariable String id)
 
 ## SamlController
 
-Source: [SamlController](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/SamlController.java).
+Source: [SamlController](../../identity-service/src/main/java/com/openhire/identity/controller/SamlController.java).
 
 ### GET `/api/v1/sso-config/saml`
 
-- Handler: `get` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/SamlController.java#L67)).
+- Handler: `get` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/SamlController.java#L68)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `tenant(auth)`.
 
@@ -415,7 +480,7 @@ Object get(Authentication auth)
 
 ### PUT `/api/v1/sso-config/saml`
 
-- Handler: `save` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/SamlController.java#L77)).
+- Handler: `save` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/SamlController.java#L78)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `tenant(auth)`.
 - Delegated operations: `directory.configureSaml`.
@@ -428,7 +493,7 @@ Object save(Authentication auth, @RequestBody Input input)
 
 ### POST `/api/v1/sso-config/saml/links`
 
-- Handler: `link` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/SamlController.java#L134)).
+- Handler: `link` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/SamlController.java#L135)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `tenant(auth)`.
 - Delegated operations: `directory.link`.
@@ -441,11 +506,11 @@ Object link(Authentication auth, @RequestBody Link input)
 
 ## ScimController
 
-Source: [ScimController](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/ScimController.java).
+Source: [ScimController](../../identity-service/src/main/java/com/openhire/identity/controller/ScimController.java).
 
 ### GET `/api/v1/scim/v2/ServiceProviderConfig`
 
-- Handler: `config` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/ScimController.java#L50)).
+- Handler: `config` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/ScimController.java#L51)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `tenant(auth)`.
 
@@ -457,7 +522,7 @@ Map<String, Object> config(Authentication auth)
 
 ### GET `/api/v1/scim/v2/ResourceTypes`
 
-- Handler: `resources` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/ScimController.java#L78)).
+- Handler: `resources` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/ScimController.java#L79)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `tenant(auth)`.
 
@@ -469,7 +534,7 @@ Map<String, Object> resources(Authentication auth)
 
 ### GET `/api/v1/scim/v2/ResourceTypes/User`
 
-- Handler: `userResource` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/ScimController.java#L142)).
+- Handler: `userResource` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/ScimController.java#L143)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `tenant(auth)`.
 
@@ -481,7 +546,7 @@ Object userResource(Authentication auth)
 
 ### GET `/api/v1/scim/v2/Schemas`
 
-- Handler: `schemas` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/ScimController.java#L158)).
+- Handler: `schemas` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/ScimController.java#L159)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `tenant(auth)`.
 
@@ -493,7 +558,7 @@ Object schemas(Authentication auth)
 
 ### GET `/api/v1/scim/v2/Schemas/{id}`
 
-- Handler: `schema` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/ScimController.java#L174)).
+- Handler: `schema` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/ScimController.java#L175)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `tenant(auth)`.
 
@@ -505,7 +570,7 @@ Object schema(Authentication auth, @PathVariable String id)
 
 ### GET `/api/v1/scim/v2/Users`
 
-- Handler: `list` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/ScimController.java#L182)).
+- Handler: `list` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/ScimController.java#L183)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `tenant(auth)`.
 - Delegated operations: `users.list`.
@@ -518,7 +583,7 @@ Object list( Authentication auth, @RequestParam(defaultValue = "1") int startInd
 
 ### GET `/api/v1/scim/v2/Users/{id}`
 
-- Handler: `get` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/ScimController.java#L191)).
+- Handler: `get` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/ScimController.java#L192)).
 - Success status: ResponseEntity chooses status; see handler.
 - Controller access/tenant calls: `tenant(auth)`.
 - Delegated operations: `users.get`.
@@ -531,7 +596,7 @@ ResponseEntity<?> get(Authentication auth, @PathVariable String id)
 
 ### POST `/api/v1/scim/v2/Users`
 
-- Handler: `create` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/ScimController.java#L196)).
+- Handler: `create` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/ScimController.java#L197)).
 - Success status: ResponseEntity chooses status; see handler.
 - Controller access/tenant calls: `tenant(auth)`.
 - Delegated operations: `users.create`.
@@ -544,7 +609,7 @@ ResponseEntity<?> create(Authentication auth, @RequestBody Map<String, Object> b
 
 ### PUT `/api/v1/scim/v2/Users/{id}`
 
-- Handler: `replace` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/ScimController.java#L201)).
+- Handler: `replace` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/ScimController.java#L202)).
 - Success status: ResponseEntity chooses status; see handler.
 - Controller access/tenant calls: `tenant(auth)`.
 - Delegated operations: `users.update`.
@@ -557,7 +622,7 @@ ResponseEntity<?> replace( Authentication auth, @PathVariable String id, @Reques
 
 ### PATCH `/api/v1/scim/v2/Users/{id}`
 
-- Handler: `patch` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/ScimController.java#L210)).
+- Handler: `patch` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/ScimController.java#L211)).
 - Success status: ResponseEntity chooses status; see handler.
 - Controller access/tenant calls: `tenant(auth)`.
 - Delegated operations: `users.get`, `users.update`.
@@ -570,7 +635,7 @@ ResponseEntity<?> patch( Authentication auth, @PathVariable String id, @RequestB
 
 ### DELETE `/api/v1/scim/v2/Users/{id}`
 
-- Handler: `delete` ([source](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/ScimController.java#L255)).
+- Handler: `delete` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/ScimController.java#L256)).
 - Success status: \@ResponseStatus(HttpStatus.NO_CONTENT).
 - Controller access/tenant calls: `tenant(auth)`.
 - Delegated operations: `users.delete`.
@@ -581,13 +646,163 @@ Request bindings and declared response:
 void delete( Authentication auth, @PathVariable String id, @RequestHeader(value = "If-Match", required = false) String etag)
 ```
 
+## TenantPlatformController
+
+Source: [TenantPlatformController](../../identity-service/src/main/java/com/openhire/identity/controller/TenantPlatformController.java).
+
+### GET `/api/v1/platform/tenants`
+
+- Handler: `tenants` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/TenantPlatformController.java#L25)).
+- Success status: 200 (normal return; exceptions may differ).
+- Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
+- Delegated operations: `service.organizations`.
+
+Request bindings and declared response:
+
+```java
+Object tenants()
+```
+
+### POST `/api/v1/platform/tenants`
+
+- Handler: `create` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/TenantPlatformController.java#L30)).
+- Success status: \@ResponseStatus(HttpStatus.CREATED).
+- Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
+- Delegated operations: `service.createOrganization`.
+
+Request bindings and declared response:
+
+```java
+Object create(@Valid @RequestBody IdentityController.CreateOrganizationRequest request)
+```
+
+### POST `/api/v1/platform/tenants/onboard`
+
+- Handler: `onboard` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/TenantPlatformController.java#L38)).
+- Success status: ResponseEntity chooses status; see handler.
+- Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
+- Delegated operations: `service.onboardOrganization`.
+
+Request bindings and declared response:
+
+```java
+ResponseEntity<OnboardedTenant> onboard(@Valid @RequestBody IdentityController.OnboardRequest request)
+```
+
+### GET `/api/v1/platform/tenants/{id}`
+
+- Handler: `overview` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/TenantPlatformController.java#L52)).
+- Success status: 200 (normal return; exceptions may differ).
+- Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
+- Delegated operations: `service.organizationOverview`.
+
+Request bindings and declared response:
+
+```java
+Object overview(@PathVariable String id)
+```
+
+### POST `/api/v1/platform/tenants/{id}/admin-invitations`
+
+- Handler: `invite` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/TenantPlatformController.java#L59)).
+- Success status: ResponseEntity chooses status; see handler.
+- Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
+- Delegated operations: `service.inviteOrganizationAdmin`.
+
+Request bindings and declared response:
+
+```java
+ResponseEntity<IdentityController.InvitationIssuedResponse> invite( @PathVariable String id, @Valid @RequestBody IdentityController.AdminInviteRequest request)
+```
+
+### PATCH `/api/v1/platform/tenants/{id}/status`
+
+- Handler: `status` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/TenantPlatformController.java#L69)).
+- Success status: 200 (normal return; exceptions may differ).
+- Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
+- Delegated operations: `service.changeOrganizationStatus`.
+
+Request bindings and declared response:
+
+```java
+Object status(@PathVariable String id, @Valid @RequestBody IdentityController.StatusRequest request)
+```
+
+### GET `/api/v1/platform/tenants/{id}/quota`
+
+- Handler: `quota` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/TenantPlatformController.java#L74)).
+- Success status: 200 (normal return; exceptions may differ).
+- Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
+- Delegated operations: `service.securitySettings`.
+
+Request bindings and declared response:
+
+```java
+Object quota(@PathVariable String id)
+```
+
+### PUT `/api/v1/platform/tenants/{id}/quota`
+
+- Handler: `quota` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/TenantPlatformController.java#L79)).
+- Success status: 200 (normal return; exceptions may differ).
+- Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
+- Delegated operations: `service.updateQuota`.
+
+Request bindings and declared response:
+
+```java
+Object quota(@PathVariable String id, @Valid @RequestBody TenantQuota request)
+```
+
+### POST `/api/v1/platform/tenants/{id}/break-glass`
+
+- Handler: `requestAccess` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/TenantPlatformController.java#L84)).
+- Success status: 200 (normal return; exceptions may differ).
+- Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
+- Delegated operations: `service.requestBreakGlass`.
+
+Request bindings and declared response:
+
+```java
+Object requestAccess(@PathVariable String id, @Valid @RequestBody IdentityController.BreakGlassRequest request)
+```
+
+### GET `/api/v1/platform/tenants/{id}/break-glass`
+
+- Handler: `accessRequests` ([source](../../identity-service/src/main/java/com/openhire/identity/controller/TenantPlatformController.java#L90)).
+- Success status: 200 (normal return; exceptions may differ).
+- Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
+- Delegated operations: `service.breakGlassRequests`.
+
+Request bindings and declared response:
+
+```java
+Object accessRequests(@PathVariable String id)
+```
+
 ## Request and response record fields
 
 These are source declarations, including nested DTO records referenced by signatures. Same-named records in different files are scoped to their linked owner. Constructor/domain validation and enum values remain in the linked source; `Map` responses are deliberately not assigned an invented schema.
 
+### OnboardRequest
+
+[Definition](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java)
+
+```java
+record OnboardRequest(@NotBlank String name, @NotBlank String slug, @NotBlank @Email String adminEmail)
+```
+
+### AdminInviteRequest
+
+[Definition](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java)
+
+```java
+record AdminInviteRequest(@NotBlank @Email String email)
+```
+
 ### CreateOrganizationRequest
 
-[Definition](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java)
+[Definition](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java)
 
 ```java
 record CreateOrganizationRequest(@NotBlank String name, @NotBlank String slug)
@@ -595,7 +810,7 @@ record CreateOrganizationRequest(@NotBlank String name, @NotBlank String slug)
 
 ### StatusRequest
 
-[Definition](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java)
+[Definition](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java)
 
 ```java
 record StatusRequest(OrganizationStatus status)
@@ -603,7 +818,7 @@ record StatusRequest(OrganizationStatus status)
 
 ### RolesRequest
 
-[Definition](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java)
+[Definition](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java)
 
 ```java
 record RolesRequest(@NotEmpty Set<String> roles)
@@ -611,7 +826,7 @@ record RolesRequest(@NotEmpty Set<String> roles)
 
 ### CreateRoleRequest
 
-[Definition](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java)
+[Definition](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java)
 
 ```java
 record CreateRoleRequest(
@@ -620,7 +835,7 @@ record CreateRoleRequest(
 
 ### PermissionsRequest
 
-[Definition](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java)
+[Definition](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java)
 
 ```java
 record PermissionsRequest(@NotEmpty Set<String> permissions)
@@ -628,7 +843,7 @@ record PermissionsRequest(@NotEmpty Set<String> permissions)
 
 ### InviteRequest
 
-[Definition](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java)
+[Definition](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java)
 
 ```java
 record InviteRequest(@Email @NotBlank String email, @NotEmpty Set<String> roles)
@@ -636,7 +851,7 @@ record InviteRequest(@Email @NotBlank String email, @NotEmpty Set<String> roles)
 
 ### AcceptInviteRequest
 
-[Definition](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java)
+[Definition](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java)
 
 ```java
 record AcceptInviteRequest(@NotBlank String displayName)
@@ -644,7 +859,7 @@ record AcceptInviteRequest(@NotBlank String displayName)
 
 ### ApiKeyRequest
 
-[Definition](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java)
+[Definition](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java)
 
 ```java
 record ApiKeyRequest(@NotBlank String name, @NotEmpty Set<String> scopes)
@@ -652,7 +867,7 @@ record ApiKeyRequest(@NotBlank String name, @NotEmpty Set<String> scopes)
 
 ### ApiKeyValidationRequest
 
-[Definition](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java)
+[Definition](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java)
 
 ```java
 record ApiKeyValidationRequest(@NotBlank String apiKey)
@@ -660,15 +875,31 @@ record ApiKeyValidationRequest(@NotBlank String apiKey)
 
 ### BreakGlassRequest
 
-[Definition](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/IdentityController.java)
+[Definition](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java)
 
 ```java
 record BreakGlassRequest(@NotBlank String requestedBy, @NotBlank String reason)
 ```
 
+### InvitationIssuedResponse
+
+[Definition](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java)
+
+```java
+record InvitationIssuedResponse(InvitationResponse invitation, String token)
+```
+
+### InvitationResponse
+
+[Definition](../../identity-service/src/main/java/com/openhire/identity/controller/IdentityController.java)
+
+```java
+record InvitationResponse(String id, String email, Set<String> roles, String status, Instant expiresAt)
+```
+
 ### Input
 
-[Definition](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/SamlController.java)
+[Definition](../../identity-service/src/main/java/com/openhire/identity/controller/SamlController.java)
 
 ```java
 record Input(long version, SamlConnection connection)
@@ -676,18 +907,26 @@ record Input(long version, SamlConnection connection)
 
 ### Link
 
-[Definition](../../identity-service/src/main/java/com/openhire/identity/adapter/in/web/SamlController.java)
+[Definition](../../identity-service/src/main/java/com/openhire/identity/controller/SamlController.java)
 
 ```java
 record Link(String memberId, String subject)
 ```
 
-### Input
+### OnboardedTenant
 
-[Definition](../../identity-service/src/main/java/com/openhire/identity/application/ScimUsers.java)
+[Definition](../../identity-service/src/main/java/com/openhire/identity/controller/TenantPlatformController.java)
 
 ```java
-record Input(String userName, String displayName, String externalId, boolean active)
+record OnboardedTenant(Organization tenant, IdentityController.InvitationIssuedResponse adminInvitation)
+```
+
+### Organization
+
+[Definition](../../identity-service/src/main/java/com/openhire/identity/domain/IdentityModels.java)
+
+```java
+record Organization(String id, String name, String slug, OrganizationStatus status, Instant createdAt)
 ```
 
 ### AuthPolicy
@@ -737,4 +976,12 @@ record BreakGlassRequest(
 
 ```java
 record SamlConnection(boolean enabled, String entityId, String ssoUrl, String signingCertificate)
+```
+
+### Input
+
+[Definition](../../identity-service/src/main/java/com/openhire/identity/service/ScimUsers.java)
+
+```java
+record Input(String userName, String displayName, String externalId, boolean active)
 ```

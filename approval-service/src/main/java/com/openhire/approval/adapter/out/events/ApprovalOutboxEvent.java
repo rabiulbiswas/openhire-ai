@@ -20,7 +20,7 @@ public class ApprovalOutboxEvent {
 
     protected ApprovalOutboxEvent() {}
 
-    ApprovalOutboxEvent(String topic, DomainEventEnvelope event) {
+    public ApprovalOutboxEvent(String topic, DomainEventEnvelope event) {
         this.id = event.eventId().toString();
         this.topic = topic;
         this.aggregateId = event.aggregateId();

@@ -1,7 +1,7 @@
 package com.openhire.interview.config;
 
-import com.openhire.interview.application.InterviewSettings;
 import com.openhire.interview.domain.SlotFinder;
+import com.openhire.interview.service.InterviewSettings;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.time.ZoneId;

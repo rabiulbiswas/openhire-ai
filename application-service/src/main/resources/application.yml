@@ -50,7 +50,7 @@ openhire:
   security:
     mode: ${SECURITY_MODE:oidc}
   tenant:
-    default-id: ${DEFAULT_TENANT_ID:demo-org}
+    default-id: ${DEFAULT_TENANT_ID:}
   job:
     base-url: ${JOB_SERVICE_URL:http://localhost:8082}
   application:

@@ -15,20 +15,28 @@ class ArchitectureTest {
             .resideInAPackage("..compliance.domain..")
             .should()
             .dependOnClassesThat()
-            .resideInAnyPackage("..compliance.application..", "..compliance.adapter..", "..compliance.config..");
+            .resideInAnyPackage(
+                    "..compliance.service..",
+                    "..compliance.controller..",
+                    "..compliance.repository..",
+                    "..compliance.client..",
+                    "..compliance.messaging..",
+                    "..compliance.scheduler..",
+                    "..compliance.config..");
 
     @ArchTest
-    static final ArchRule applicationDoesNotDependOnAdapters = noClasses()
+    static final ArchRule servicesDoNotDependOnInboundLayers = noClasses()
             .that()
-            .resideInAPackage("..compliance.application..")
+            .resideInAPackage("..service..")
             .should()
             .dependOnClassesThat()
-            .resideInAnyPackage("..compliance.adapter..", "..compliance.config..");
+            .resideInAnyPackage(
+                    "com.openhire..controller..", "com.openhire..scheduler..", "com.openhire..messaging.consumer..");
 
     @ArchTest
     static final ArchRule applicationDoesNotUseWebOrKafkaOrRedis = noClasses()
             .that()
-            .resideInAPackage("..compliance.application..")
+            .resideInAPackage("..compliance.service..")
             .should()
             .dependOnClassesThat()
             .resideInAnyPackage(

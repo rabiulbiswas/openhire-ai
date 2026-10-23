@@ -6,11 +6,11 @@ Mapped operations: **13**. Framework-generated Actuator endpoints and gateway-pr
 
 ## ApprovalController
 
-Source: [ApprovalController](../../approval-service/src/main/java/com/openhire/approval/api/ApprovalController.java).
+Source: [ApprovalController](../../approval-service/src/main/java/com/openhire/approval/controller/ApprovalController.java).
 
 ### POST `/api/v1/approvals`
 
-- Handler: `create` ([source](../../approval-service/src/main/java/com/openhire/approval/api/ApprovalController.java#L37)).
+- Handler: `create` ([source](../../approval-service/src/main/java/com/openhire/approval/controller/ApprovalController.java#L37)).
 - Success status: \@ResponseStatus(HttpStatus.CREATED).
 - Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER')")`.
 - Delegated operations: `service.create`.
@@ -23,7 +23,7 @@ Object create( @RequestHeader(name = "X-Actor-Id", defaultValue = "local-admin")
 
 ### POST `/api/v1/internal/approvals`
 
-- Handler: `createInternal` ([source](../../approval-service/src/main/java/com/openhire/approval/api/ApprovalController.java#L46)).
+- Handler: `createInternal` ([source](../../approval-service/src/main/java/com/openhire/approval/controller/ApprovalController.java#L46)).
 - Success status: \@ResponseStatus(HttpStatus.CREATED).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `service.create`.
@@ -36,7 +36,7 @@ Object createInternal( @RequestHeader("X-Internal-Service-Secret") String secret
 
 ### GET `/api/v1/approvals`
 
-- Handler: `list` ([source](../../approval-service/src/main/java/com/openhire/approval/api/ApprovalController.java#L57)).
+- Handler: `list` ([source](../../approval-service/src/main/java/com/openhire/approval/controller/ApprovalController.java#L57)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER','HIRING_MANAGER')")`.
 - Delegated operations: `service.list`.
@@ -49,7 +49,7 @@ Object list( @RequestHeader(name = "X-Actor-Id", defaultValue = "local-admin") S
 
 ### GET `/api/v1/approvals/counts`
 
-- Handler: `counts` ([source](../../approval-service/src/main/java/com/openhire/approval/api/ApprovalController.java#L68)).
+- Handler: `counts` ([source](../../approval-service/src/main/java/com/openhire/approval/controller/ApprovalController.java#L68)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER','HIRING_MANAGER')")`.
 - Delegated operations: `service.counts`.
@@ -62,7 +62,7 @@ Object counts(@RequestHeader(name = "X-Actor-Id", defaultValue = "local-admin") 
 
 ### GET `/api/v1/approvals/sla-overdue`
 
-- Handler: `overdue` ([source](../../approval-service/src/main/java/com/openhire/approval/api/ApprovalController.java#L74)).
+- Handler: `overdue` ([source](../../approval-service/src/main/java/com/openhire/approval/controller/ApprovalController.java#L74)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN')")`.
 - Delegated operations: `service.overdue`.
@@ -75,7 +75,7 @@ Object overdue()
 
 ### GET `/api/v1/approvals/{id}`
 
-- Handler: `get` ([source](../../approval-service/src/main/java/com/openhire/approval/api/ApprovalController.java#L80)).
+- Handler: `get` ([source](../../approval-service/src/main/java/com/openhire/approval/controller/ApprovalController.java#L80)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER','HIRING_MANAGER')")`.
 - Delegated operations: `service.get`.
@@ -88,7 +88,7 @@ Object get(@PathVariable String id)
 
 ### POST `/api/v1/approvals/{id}/approve`
 
-- Handler: `approve` ([source](../../approval-service/src/main/java/com/openhire/approval/api/ApprovalController.java#L86)).
+- Handler: `approve` ([source](../../approval-service/src/main/java/com/openhire/approval/controller/ApprovalController.java#L86)).
 - Success status: \@ResponseStatus(HttpStatus.NO_CONTENT).
 - Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER','HIRING_MANAGER')")`.
 - Delegated operations: `service.approve`.
@@ -101,7 +101,7 @@ void approve( @PathVariable String id, @RequestHeader(name = "X-Actor-Id", defau
 
 ### POST `/api/v1/approvals/{id}/reject`
 
-- Handler: `reject` ([source](../../approval-service/src/main/java/com/openhire/approval/api/ApprovalController.java#L94)).
+- Handler: `reject` ([source](../../approval-service/src/main/java/com/openhire/approval/controller/ApprovalController.java#L94)).
 - Success status: \@ResponseStatus(HttpStatus.NO_CONTENT).
 - Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER','HIRING_MANAGER')")`.
 - Delegated operations: `service.reject`.
@@ -114,7 +114,7 @@ void reject( @PathVariable String id, @RequestHeader(name = "X-Actor-Id", defaul
 
 ### POST `/api/v1/approvals/{id}/request-changes`
 
-- Handler: `requestChanges` ([source](../../approval-service/src/main/java/com/openhire/approval/api/ApprovalController.java#L104)).
+- Handler: `requestChanges` ([source](../../approval-service/src/main/java/com/openhire/approval/controller/ApprovalController.java#L104)).
 - Success status: \@ResponseStatus(HttpStatus.NO_CONTENT).
 - Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER','HIRING_MANAGER')")`.
 - Delegated operations: `service.requestChanges`.
@@ -127,7 +127,7 @@ void requestChanges( @PathVariable String id, @RequestHeader(name = "X-Actor-Id"
 
 ### POST `/api/v1/approvals/{id}/undo`
 
-- Handler: `undo` ([source](../../approval-service/src/main/java/com/openhire/approval/api/ApprovalController.java#L114)).
+- Handler: `undo` ([source](../../approval-service/src/main/java/com/openhire/approval/controller/ApprovalController.java#L114)).
 - Success status: \@ResponseStatus(HttpStatus.NO_CONTENT).
 - Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER','HIRING_MANAGER')")`.
 - Delegated operations: `service.undo`.
@@ -140,7 +140,7 @@ void undo(@PathVariable String id)
 
 ### POST `/api/v1/approval-delegations`
 
-- Handler: `delegate` ([source](../../approval-service/src/main/java/com/openhire/approval/api/ApprovalController.java#L121)).
+- Handler: `delegate` ([source](../../approval-service/src/main/java/com/openhire/approval/controller/ApprovalController.java#L121)).
 - Success status: \@ResponseStatus(HttpStatus.NO_CONTENT).
 - Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER','HIRING_MANAGER')")`.
 - Delegated operations: `service.delegate`.
@@ -153,11 +153,11 @@ void delegate( @RequestHeader(name = "X-Actor-Id", defaultValue = "local-admin")
 
 ## DelegationPeriodController
 
-Source: [DelegationPeriodController](../../approval-service/src/main/java/com/openhire/approval/api/DelegationPeriodController.java).
+Source: [DelegationPeriodController](../../approval-service/src/main/java/com/openhire/approval/controller/DelegationPeriodController.java).
 
 ### GET `/api/v1/approval-delegation-periods`
 
-- Handler: `list` ([source](../../approval-service/src/main/java/com/openhire/approval/api/DelegationPeriodController.java#L30)).
+- Handler: `list` ([source](../../approval-service/src/main/java/com/openhire/approval/controller/DelegationPeriodController.java#L30)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER','HIRING_MANAGER')")`.
 
@@ -169,7 +169,7 @@ List<DelegationPeriod> list(@RequestHeader(name = "X-Actor-Id", defaultValue = "
 
 ### POST `/api/v1/approval-delegation-periods`
 
-- Handler: `create` ([source](../../approval-service/src/main/java/com/openhire/approval/api/DelegationPeriodController.java#L36)).
+- Handler: `create` ([source](../../approval-service/src/main/java/com/openhire/approval/controller/DelegationPeriodController.java#L36)).
 - Success status: \@ResponseStatus(HttpStatus.CREATED).
 - Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER','HIRING_MANAGER')")`.
 
@@ -183,73 +183,9 @@ DelegationPeriod create( @RequestHeader(name = "X-Actor-Id", defaultValue = "loc
 
 These are source declarations, including nested DTO records referenced by signatures. Same-named records in different files are scoped to their linked owner. Constructor/domain validation and enum values remain in the linked source; `Map` responses are deliberately not assigned an invented schema.
 
-### CreateApprovalRequest
-
-[Definition](../../approval-service/src/main/java/com/openhire/approval/api/ApprovalDtos.java)
-
-```java
-record CreateApprovalRequest(
-            @NotBlank String type,
-            @NotBlank String subjectId,
-            @NotBlank String title,
-            @NotEmpty List<@Valid StepInput> steps,
-            List<@Valid FieldChangeInput> diff,
-            ImpactInput impact,
-            List<@Valid TermInput> terms)
-```
-
-### StepInput
-
-[Definition](../../approval-service/src/main/java/com/openhire/approval/api/ApprovalDtos.java)
-
-```java
-record StepInput(
-            @NotBlank String id, @NotBlank String approver, @NotBlank String role, Integer group, Integer slaHours)
-```
-
-### FieldChangeInput
-
-[Definition](../../approval-service/src/main/java/com/openhire/approval/api/ApprovalDtos.java)
-
-```java
-record FieldChangeInput(@NotBlank String field, @NotBlank String before, @NotBlank String after)
-```
-
-### ImpactInput
-
-[Definition](../../approval-service/src/main/java/com/openhire/approval/api/ApprovalDtos.java)
-
-```java
-record ImpactInput(int rescoredApplicants)
-```
-
-### TermInput
-
-[Definition](../../approval-service/src/main/java/com/openhire/approval/api/ApprovalDtos.java)
-
-```java
-record TermInput(@NotBlank String label, @NotBlank String value)
-```
-
-### ReasonRequest
-
-[Definition](../../approval-service/src/main/java/com/openhire/approval/api/ApprovalDtos.java)
-
-```java
-record ReasonRequest(@NotBlank String reason)
-```
-
-### DelegationRequest
-
-[Definition](../../approval-service/src/main/java/com/openhire/approval/api/ApprovalDtos.java)
-
-```java
-record DelegationRequest(@NotBlank String id, @NotBlank String toUser, Instant until)
-```
-
 ### Request
 
-[Definition](../../approval-service/src/main/java/com/openhire/approval/api/DelegationPeriodController.java)
+[Definition](../../approval-service/src/main/java/com/openhire/approval/controller/DelegationPeriodController.java)
 
 ```java
 record Request(@NotBlank String delegateId, @NotNull Instant startsAt, @NotNull Instant endsAt)
@@ -268,4 +204,68 @@ record DelegationPeriod(
         Instant startsAt,
         Instant endsAt,
         Instant createdAt)
+```
+
+### CreateApprovalRequest
+
+[Definition](../../approval-service/src/main/java/com/openhire/approval/dto/ApprovalDtos.java)
+
+```java
+record CreateApprovalRequest(
+            @NotBlank String type,
+            @NotBlank String subjectId,
+            @NotBlank String title,
+            @NotEmpty List<@Valid StepInput> steps,
+            List<@Valid FieldChangeInput> diff,
+            ImpactInput impact,
+            List<@Valid TermInput> terms)
+```
+
+### StepInput
+
+[Definition](../../approval-service/src/main/java/com/openhire/approval/dto/ApprovalDtos.java)
+
+```java
+record StepInput(
+            @NotBlank String id, @NotBlank String approver, @NotBlank String role, Integer group, Integer slaHours)
+```
+
+### FieldChangeInput
+
+[Definition](../../approval-service/src/main/java/com/openhire/approval/dto/ApprovalDtos.java)
+
+```java
+record FieldChangeInput(@NotBlank String field, @NotBlank String before, @NotBlank String after)
+```
+
+### ImpactInput
+
+[Definition](../../approval-service/src/main/java/com/openhire/approval/dto/ApprovalDtos.java)
+
+```java
+record ImpactInput(int rescoredApplicants)
+```
+
+### TermInput
+
+[Definition](../../approval-service/src/main/java/com/openhire/approval/dto/ApprovalDtos.java)
+
+```java
+record TermInput(@NotBlank String label, @NotBlank String value)
+```
+
+### ReasonRequest
+
+[Definition](../../approval-service/src/main/java/com/openhire/approval/dto/ApprovalDtos.java)
+
+```java
+record ReasonRequest(@NotBlank String reason)
+```
+
+### DelegationRequest
+
+[Definition](../../approval-service/src/main/java/com/openhire/approval/dto/ApprovalDtos.java)
+
+```java
+record DelegationRequest(@NotBlank String id, @NotBlank String toUser, Instant until)
 ```

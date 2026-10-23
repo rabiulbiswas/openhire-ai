@@ -1,6 +1,6 @@
 package com.openhire.dispatch.config;
 
-import com.openhire.dispatch.application.DispatchService;
+import com.openhire.dispatch.service.DispatchService;
 import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

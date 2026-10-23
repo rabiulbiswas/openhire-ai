@@ -65,7 +65,14 @@ the distinction between local development configuration and future Kubernetes de
 
 ## Architecture
 
+All 18 runnable services now use the standardized [backend package layout](docs/BACKEND_PACKAGE_ARCHITECTURE.md).
+The guide explains layer responsibilities, deliberate MongoDB class-name compatibility exceptions, checks,
+and remaining legacy dependency cleanup. Package moves do not migrate tenant data or deploy services.
+
 Tenant-specific login and the independent Super Admin portal are being introduced incrementally.
+The [tenant naming migration](docs/TENANT_NAMING_MIGRATION.md) records the additive `/platform/tenants` APIs,
+canonical signed-claim handling, shared-collection design and completed isolated Mongo rehearsal. Live schema
+cutover is **not** complete; do not run its migration against the application database with the legacy repository.
 See [tenant portals and onboarding](docs/TENANT_PORTALS.md) for implemented APIs, local-domain design,
 security requirements and remaining work. Business plans are deferred. Tenant login is opt-in and requires
 operator-managed Keycloak clients, exact callback URLs and email/theme setup. Local addresses use
@@ -416,10 +423,19 @@ same ports as their Docker equivalents. These examples are not a complete stack 
 
 ## Local demonstration accounts
 
-At identity-service startup, the application idempotently creates the `demo-org` workspace, `ORG_ADMIN` and
-`RECRUITER` roles, and sample users `admin@openhire.local` and `recruiter@openhire.local`. Set
-`SAMPLE_DATA_ENABLED=false` to disable this outside local development. These are identity records, not password
-credentials; matching interactive demo accounts are imported into Keycloak for local use:
+Automatic sample seeding is disabled by default. All service application configurations and Compose use an
+empty tenant fallback; none automatically selects `demo-org` (or `demo-tenant`). OIDC requests derive the
+tenant from verified identity/portal context, and onboarding generates each real tenant's stable ID.
+
+For an explicitly selected local fixture mode only, supply `DEFAULT_TENANT_ID` (use `OPENHIRE_DEFAULT_TENANT`
+for job-service when running it outside Compose). Without an explicit tenant, local BFF fixture sessions remain
+unauthenticated and tenant-required requests are rejected. Anonymous `/api/v1/public/consent` requests must
+supply `tenantId`; authenticated requests use the verified token tenant. There is no automatic demo fallback.
+Tenant-specific Prometheus samples require an explicit `PROMETHEUS_TENANTS` list; global samples remain enabled.
+
+To deliberately enable the old identity fixtures, set `SAMPLE_DATA_ENABLED=true` and an explicit
+`DEFAULT_TENANT_ID`; identity-service then idempotently creates fixture roles and users. This does not provision
+real tenant login credentials. Legacy matching accounts in the local Keycloak realm import are fixture-only:
 
 - `admin@openhire.local` / `OpenHire-Admin-2026!`
 - `recruiter@openhire.local` / `OpenHire-Recruiter-2026!`

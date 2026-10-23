@@ -16,7 +16,7 @@ public record ApplicationDocument(
         Instant submittedAt,
         @Version Long revision,
         ApplicationRecord data) {
-    static ApplicationDocument from(ApplicationRecord record) {
+    public static ApplicationDocument from(ApplicationRecord record) {
         return new ApplicationDocument(
                 record.id(),
                 record.tenantId(),
@@ -26,7 +26,7 @@ public record ApplicationDocument(
                 record);
     }
 
-    ApplicationRecord toDomain() {
+    public ApplicationRecord toDomain() {
         return new ApplicationRecord(
                 id,
                 tenantId,

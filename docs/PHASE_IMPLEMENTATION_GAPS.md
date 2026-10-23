@@ -57,7 +57,7 @@ Dependencies: SAML/SCIM completion belongs to Phase 8. Normal staff login does n
 
 ## Phase 2 — jobs, approvals and hiring configuration
 
-- [ ] **BUILD — real approval routing.** [HttpApprovalClient](../job-service/src/main/java/com/openhire/jobservice/adapter/out/approval/HttpApprovalClient.java) still sends `"approver": "me"`. Replace this development simplification with an explicit job/tenant approval policy and authorized named approvers or defined role groups. Test requester exclusion where required, delegation, missing approver and parallel/sequential outcomes.
+- [ ] **BUILD — real approval routing.** [HttpApprovalClient](../job-service/src/main/java/com/openhire/jobservice/client/approval/HttpApprovalClient.java) still sends `"approver": "me"`. Replace this development simplification with an explicit job/tenant approval policy and authorized named approvers or defined role groups. Test requester exclusion where required, delegation, missing approver and parallel/sequential outcomes.
 - [ ] **BUILD — explicit hiring-manager ownership.** Phase 4/5 notes identify the missing hiring-manager field/default. Connect the job model, UI and approval routing, and use it for offer reporting-line defaults. Preserve existing immutable version and concurrency rules.
 - [ ] **VERIFY — regression after routing changes.** Repeat create → edit → submit → approve → publish with distinct requester/approver identities and tenant isolation; verify later edits invalidate approval as intended.
 - [ ] **RECONCILE — old LLM blocker.** The Phase 2 note says no model was installed; Phase 6 records later real-model job-draft testing. That historical blocker is superseded. Current no-LLM operation still needs a dedicated acceptance check, not another drafting implementation.
@@ -95,7 +95,7 @@ Dependencies: reporting-line defaults depend on Phase 2 ownership; HRIS/e-sign r
 
 ## Phase 6 — AI matching, talent and integrity
 
-- [ ] **BUILD — atomic invitation cooldown.** [InvitationService](../talent-service/src/main/java/com/openhire/talent/application/InvitationService.java) reads the previous invite, sends, then saves. Concurrent requests can both pass the check. Add durable atomic admission/idempotency and recovery for send/save failures, plus a competing-request test.
+- [ ] **BUILD — atomic invitation cooldown.** [InvitationService](../talent-service/src/main/java/com/openhire/talent/service/InvitationService.java) reads the previous invite, sends, then saves. Concurrent requests can both pass the check. Add durable atomic admission/idempotency and recovery for send/save failures, plus a competing-request test.
 - [ ] **BUILD/DECIDE — scalable talent-vector retrieval.** Current exact in-memory cosine search is documented as unsuitable for the large sample scenario. Benchmark and choose indexed/vector retrieval when required, preserving tenant/consent filtering. Do not add a new database solely to match a diagram.
 - [ ] **BUILD — bounded AI operations aggregation.** Request-log queries currently permit up to 100,000 rows for operations reporting. Replace or constrain expensive in-memory reporting with indexed aggregations/materialized metrics and load tests.
 - [ ] **VERIFY — approved evaluation data and capacity.** Obtain representative, sanitized examples and review quality, grounding, bias/counterfactual behavior, concurrency and latency. The historical small golden-set pass is not production model approval.

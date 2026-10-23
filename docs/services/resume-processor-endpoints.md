@@ -6,11 +6,11 @@ Mapped operations: **4**. Framework-generated Actuator endpoints and gateway-pro
 
 ## ResumeController
 
-Source: [ResumeController](../../resume-processor/src/main/java/com/openhire/resumeprocessor/ResumeController.java).
+Source: [ResumeController](../../resume-processor/src/main/java/com/openhire/resumeprocessor/controller/ResumeController.java).
 
 ### POST `/api/v1/internal/resumes`
 
-- Handler: `upload` ([source](../../resume-processor/src/main/java/com/openhire/resumeprocessor/ResumeController.java#L21)).
+- Handler: `upload` ([source](../../resume-processor/src/main/java/com/openhire/resumeprocessor/controller/ResumeController.java#L22)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.internal(secret)`.
 
@@ -22,7 +22,7 @@ public Document upload( @RequestHeader("X-Internal-Service-Secret") String secre
 
 ### GET `/api/v1/internal/resumes/{id}`
 
-- Handler: `result` ([source](../../resume-processor/src/main/java/com/openhire/resumeprocessor/ResumeController.java#L32)).
+- Handler: `result` ([source](../../resume-processor/src/main/java/com/openhire/resumeprocessor/controller/ResumeController.java#L33)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.internal(secret)`.
 
@@ -34,7 +34,7 @@ public Document result( @RequestHeader("X-Internal-Service-Secret") String secre
 
 ### POST `/api/v1/internal/resumes/{id}/retry`
 
-- Handler: `retry` ([source](../../resume-processor/src/main/java/com/openhire/resumeprocessor/ResumeController.java#L41)).
+- Handler: `retry` ([source](../../resume-processor/src/main/java/com/openhire/resumeprocessor/controller/ResumeController.java#L42)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.internal(secret)`.
 
@@ -46,7 +46,7 @@ public Document retry( @RequestHeader("X-Internal-Service-Secret") String secret
 
 ### GET `/api/v1/resumes/{id}/download`
 
-- Handler: `download` ([source](../../resume-processor/src/main/java/com/openhire/resumeprocessor/ResumeController.java#L51)).
+- Handler: `download` ([source](../../resume-processor/src/main/java/com/openhire/resumeprocessor/controller/ResumeController.java#L52)).
 - Success status: ResponseEntity chooses status; see handler.
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`.
 

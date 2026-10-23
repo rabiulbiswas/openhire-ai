@@ -1,6 +1,6 @@
 package com.openhire.offer.config;
 
-import com.openhire.offer.application.OfferSettings;
+import com.openhire.offer.service.OfferSettings;
 import java.time.Duration;
 import java.time.ZoneId;
 import org.springframework.beans.factory.annotation.Value;

@@ -4,69 +4,13 @@ Generated from current Java controller annotations. This is a source-level refer
 
 Mapped operations: **35**. Framework-generated Actuator endpoints and gateway-proxied routes are not duplicated here. Signatures preserve request headers, query defaults, body types, return types and optional bindings. Java types are not JSON field names: request/response record fields are listed below. Controller checks may delegate additional authorization to application services; an empty extracted-check list does not mean public access.
 
-## IntakeController
-
-Source: [IntakeController](../../application-service/src/main/java/com/openhire/applicationservice/adapter/in/web/IntakeController.java).
-
-### POST `/api/v1/intake/applications`
-
-- Handler: `submit` ([source](../../application-service/src/main/java/com/openhire/applicationservice/adapter/in/web/IntakeController.java#L38)).
-- Success status: ResponseEntity chooses status; see handler.
-- Controller access/tenant calls: `tenant(auth)`.
-- Delegated operations: `service.submit`.
-
-Request bindings and declared response:
-
-```java
-ResponseEntity<ApplicationView> submit( Authentication auth, @RequestHeader("Idempotency-Key") String key, @RequestBody IntakeCommand command)
-```
-
-### GET `/api/v1/intake/applications/{id}`
-
-- Handler: `get` ([source](../../application-service/src/main/java/com/openhire/applicationservice/adapter/in/web/IntakeController.java#L50)).
-- Success status: ResponseEntity chooses status; see handler.
-- Controller access/tenant calls: `tenant(auth)`.
-- Delegated operations: `service.get`.
-
-Request bindings and declared response:
-
-```java
-ResponseEntity<ApplicationView> get(Authentication auth, @PathVariable String id)
-```
-
-### GET `/api/v1/intake/applications`
-
-- Handler: `list` ([source](../../application-service/src/main/java/com/openhire/applicationservice/adapter/in/web/IntakeController.java#L56)).
-- Success status: 200 (normal return; exceptions may differ).
-- Controller access/tenant calls: `tenant(auth)`.
-- Delegated operations: `service.list`.
-
-Request bindings and declared response:
-
-```java
-Page list( Authentication auth, @RequestParam(required = false) String jobId, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "50") int size)
-```
-
-### PATCH `/api/v1/intake/applications/{id}/stage`
-
-- Handler: `transition` ([source](../../application-service/src/main/java/com/openhire/applicationservice/adapter/in/web/IntakeController.java#L70)).
-- Success status: ResponseEntity chooses status; see handler.
-- Controller access/tenant calls: `tenant(auth)`.
-- Delegated operations: `service.transition`.
-
-Request bindings and declared response:
-
-```java
-ResponseEntity<ApplicationView> transition( Authentication auth, @PathVariable String id, @RequestHeader("If-Match") String ifMatch, @Valid @RequestBody StageChange request)
-```
-
 ## ApiIntakeController
 
-Source: [ApiIntakeController](../../application-service/src/main/java/com/openhire/applicationservice/workflow/ApiIntakeController.java).
+Source: [ApiIntakeController](../../application-service/src/main/java/com/openhire/applicationservice/controller/ApiIntakeController.java).
 
 ### POST `/api/v1/public/api-applications`
 
-- Handler: `json` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/ApiIntakeController.java#L56)).
+- Handler: `json` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/ApiIntakeController.java#L58)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `service.submit`.
@@ -79,7 +23,7 @@ public Object json( @RequestHeader("X-API-Key") String apiKey, @RequestHeader("I
 
 ### POST `/api/v1/public/api-applications`
 
-- Handler: `multipart` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/ApiIntakeController.java#L70)).
+- Handler: `multipart` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/ApiIntakeController.java#L72)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `service.submit`.
@@ -92,11 +36,11 @@ public Object multipart( @RequestHeader("X-API-Key") String apiKey, @RequestHead
 
 ## BulkImportController
 
-Source: [BulkImportController](../../application-service/src/main/java/com/openhire/applicationservice/workflow/BulkImportController.java).
+Source: [BulkImportController](../../application-service/src/main/java/com/openhire/applicationservice/controller/BulkImportController.java).
 
 ### POST `/api/v1/imports`
 
-- Handler: `start` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/BulkImportController.java#L39)).
+- Handler: `start` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/BulkImportController.java#L40)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`; `access.actor(auth)`.
 - Delegated operations: `service.consentVersion`, `service.store`, `service.job`.
@@ -109,7 +53,7 @@ public Object start( Authentication auth, @RequestHeader("Idempotency-Key") Stri
 
 ### GET `/api/v1/imports/{id}`
 
-- Handler: `get` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/BulkImportController.java#L148)).
+- Handler: `get` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/BulkImportController.java#L149)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`.
 
@@ -119,13 +63,69 @@ Request bindings and declared response:
 public Object get(Authentication auth, @PathVariable String id)
 ```
 
+## IntakeController
+
+Source: [IntakeController](../../application-service/src/main/java/com/openhire/applicationservice/controller/IntakeController.java).
+
+### POST `/api/v1/intake/applications`
+
+- Handler: `submit` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/IntakeController.java#L38)).
+- Success status: ResponseEntity chooses status; see handler.
+- Controller access/tenant calls: `tenant(auth)`.
+- Delegated operations: `service.submit`.
+
+Request bindings and declared response:
+
+```java
+ResponseEntity<ApplicationView> submit( Authentication auth, @RequestHeader("Idempotency-Key") String key, @RequestBody IntakeCommand command)
+```
+
+### GET `/api/v1/intake/applications/{id}`
+
+- Handler: `get` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/IntakeController.java#L50)).
+- Success status: ResponseEntity chooses status; see handler.
+- Controller access/tenant calls: `tenant(auth)`.
+- Delegated operations: `service.get`.
+
+Request bindings and declared response:
+
+```java
+ResponseEntity<ApplicationView> get(Authentication auth, @PathVariable String id)
+```
+
+### GET `/api/v1/intake/applications`
+
+- Handler: `list` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/IntakeController.java#L56)).
+- Success status: 200 (normal return; exceptions may differ).
+- Controller access/tenant calls: `tenant(auth)`.
+- Delegated operations: `service.list`.
+
+Request bindings and declared response:
+
+```java
+Page list( Authentication auth, @RequestParam(required = false) String jobId, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "50") int size)
+```
+
+### PATCH `/api/v1/intake/applications/{id}/stage`
+
+- Handler: `transition` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/IntakeController.java#L70)).
+- Success status: ResponseEntity chooses status; see handler.
+- Controller access/tenant calls: `tenant(auth)`.
+- Delegated operations: `service.transition`.
+
+Request bindings and declared response:
+
+```java
+ResponseEntity<ApplicationView> transition( Authentication auth, @PathVariable String id, @RequestHeader("If-Match") String ifMatch, @Valid @RequestBody StageChange request)
+```
+
 ## PrivacyLookupController
 
-Source: [PrivacyLookupController](../../application-service/src/main/java/com/openhire/applicationservice/workflow/PrivacyLookupController.java).
+Source: [PrivacyLookupController](../../application-service/src/main/java/com/openhire/applicationservice/controller/PrivacyLookupController.java).
 
 ### GET `/api/v1/internal/candidates/{candidateId}/application-ids`
 
-- Handler: `applicationIds` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/PrivacyLookupController.java#L25)).
+- Handler: `applicationIds` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/PrivacyLookupController.java#L26)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.internal(secret)`.
 
@@ -137,11 +137,11 @@ Map<String, List<String>> applicationIds( @RequestHeader("X-Internal-Service-Sec
 
 ## SubmissionController
 
-Source: [SubmissionController](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java).
+Source: [SubmissionController](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java).
 
 ### GET `/api/v1/internal/applications/{id}/projection`
 
-- Handler: `projection` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java#L26)).
+- Handler: `projection` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java#L29)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.internal(secret)`.
 - Delegated operations: `service.get`.
@@ -154,7 +154,7 @@ public Document projection( @RequestHeader("X-Internal-Service-Secret") String s
 
 ### POST `/api/v1/internal/applications/{id}/receipt-check`
 
-- Handler: `receiptCheck` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java#L53)).
+- Handler: `receiptCheck` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java#L56)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.internal(secret)`.
 
@@ -166,7 +166,7 @@ public Document receiptCheck( @RequestHeader("X-Internal-Service-Secret") String
 
 ### GET `/api/v1/applications/{id}/decision`
 
-- Handler: `decision` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java#L65)).
+- Handler: `decision` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java#L68)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.tenant(auth)`.
 - Delegated operations: `service.decision`.
@@ -179,7 +179,7 @@ public Document decision(Authentication auth, @PathVariable String id)
 
 ### POST `/api/v1/applications/{id}/decision`
 
-- Handler: `decide` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java#L71)).
+- Handler: `decide` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java#L74)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.tenant(auth)`; `access.actor(auth)`.
 - Delegated operations: `service.decide`, `service.decision`.
@@ -192,20 +192,20 @@ public Document decide(Authentication auth, @PathVariable String id, @RequestBod
 
 ### GET `/api/v1/public/consent`
 
-- Handler: `consent` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java#L99)).
+- Handler: `consent` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java#L102)).
 - Success status: 200 (normal return; exceptions may differ).
-- Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
+- Controller access/tenant calls: `access.tenant(auth)`.
 - Delegated operations: `service.consent`.
 
 Request bindings and declared response:
 
 ```java
-public Object consent(@RequestParam(required = false) String tenantId)
+public Object consent(Authentication auth, @RequestParam(required = false) String tenantId)
 ```
 
 ### POST `/api/v1/applications`
 
-- Handler: `submit` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java#L105)).
+- Handler: `submit` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java#L116)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.tenant(auth)`; `access.actor(auth)`.
 - Delegated operations: `service.submit`.
@@ -218,7 +218,7 @@ public Object submit( Authentication auth, @RequestHeader("Idempotency-Key") Str
 
 ### POST `/api/v1/applications`
 
-- Handler: `json` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java#L121)).
+- Handler: `json` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java#L132)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.tenant(auth)`; `access.actor(auth)`.
 - Delegated operations: `service.submit`.
@@ -231,7 +231,7 @@ public Object json(Authentication auth, @RequestHeader("Idempotency-Key") String
 
 ### POST `/api/v1/public/applications`
 
-- Handler: `career` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java#L166)).
+- Handler: `career` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java#L177)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `service.submit`.
@@ -244,7 +244,7 @@ public Object career( @RequestHeader("Idempotency-Key") String key, @RequestPara
 
 ### GET `/api/v1/public/applications/{id}`
 
-- Handler: `status` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java#L196)).
+- Handler: `status` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java#L207)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 
@@ -256,7 +256,7 @@ public Object status( @PathVariable String id, @RequestParam String tenantId, @R
 
 ### POST `/api/v1/public/applications/{id}/withdraw`
 
-- Handler: `withdraw` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java#L213)).
+- Handler: `withdraw` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java#L224)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `service.withdraw`.
@@ -269,7 +269,7 @@ public Object withdraw( @PathVariable String id, @RequestParam String tenantId, 
 
 ### GET `/api/v1/applications`
 
-- Handler: `list` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java#L223)).
+- Handler: `list` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java#L234)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`.
 - Delegated operations: `service.list`.
@@ -282,7 +282,7 @@ public Object list( Authentication auth, @RequestParam(required = false) String 
 
 ### GET `/api/v1/jobs/{id}/applications`
 
-- Handler: `byJob` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java#L257)).
+- Handler: `byJob` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java#L268)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`.
 - Delegated operations: `service.list`.
@@ -295,7 +295,7 @@ public Object byJob( Authentication auth, @PathVariable String id, @RequestParam
 
 ### GET `/api/v1/jobs/{id}/pipeline`
 
-- Handler: `pipeline` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java#L271)).
+- Handler: `pipeline` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java#L282)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`.
 - Delegated operations: `service.list`, `service.job`.
@@ -308,7 +308,7 @@ public Object pipeline(Authentication auth, @PathVariable String id, @RequestPar
 
 ### GET `/api/v1/applications/{id}/assessment`
 
-- Handler: `assessment` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java#L299)).
+- Handler: `assessment` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java#L310)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`.
 - Delegated operations: `service.get`.
@@ -321,7 +321,7 @@ public Object assessment(Authentication auth, @PathVariable String id)
 
 ### PATCH `/api/v1/applications/{id}/stage`
 
-- Handler: `stage` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java#L307)).
+- Handler: `stage` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java#L318)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`; `access.actor(auth)`.
 - Delegated operations: `service.card`, `service.move`.
@@ -334,7 +334,7 @@ public Object stage(Authentication auth, @PathVariable String id, @RequestBody D
 
 ### POST `/api/v1/applications/{id}/shortlist`
 
-- Handler: `shortlist` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java#L319)).
+- Handler: `shortlist` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java#L330)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`; `access.actor(auth)`.
 - Delegated operations: `service.card`, `service.move`.
@@ -347,7 +347,7 @@ public Object shortlist(Authentication auth, @PathVariable String id)
 
 ### POST `/api/v1/applications/{id}/reject`
 
-- Handler: `reject` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java#L326)).
+- Handler: `reject` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java#L337)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`; `access.actor(auth)`.
 - Delegated operations: `service.card`, `service.move`.
@@ -360,7 +360,7 @@ public Object reject(Authentication auth, @PathVariable String id, @RequestBody 
 
 ### POST `/api/v1/applications/{id}/undo-decision`
 
-- Handler: `undo` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java#L346)).
+- Handler: `undo` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java#L357)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`; `access.actor(auth)`.
 - Delegated operations: `service.undo`.
@@ -373,7 +373,7 @@ public Object undo(Authentication auth, @PathVariable String id)
 
 ### POST `/api/v1/applications/{id}/retry`
 
-- Handler: `retry` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java#L353)).
+- Handler: `retry` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java#L364)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`.
 - Delegated operations: `service.retry`.
@@ -386,7 +386,7 @@ public Object retry(Authentication auth, @PathVariable String id)
 
 ### POST `/api/v1/applications/{id}/eligibility`
 
-- Handler: `eligibility` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java#L360)).
+- Handler: `eligibility` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java#L371)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`; `access.actor(auth)`.
 - Delegated operations: `service.reviewEligibility`.
@@ -399,7 +399,7 @@ public Object eligibility(Authentication auth, @PathVariable String id, @Request
 
 ### POST `/api/v1/applications/{id}/resume`
 
-- Handler: `replace` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java#L367)).
+- Handler: `replace` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java#L378)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`.
 - Delegated operations: `service.replaceResume`.
@@ -412,7 +412,7 @@ public Object replace(Authentication auth, @PathVariable String id, @RequestPart
 
 ### POST `/api/v1/assessments/{id}/override`
 
-- Handler: `override` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java#L375)).
+- Handler: `override` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java#L386)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`; `access.actor(auth)`.
 - Delegated operations: `service.overrideScore`.
@@ -425,7 +425,7 @@ public Object override(Authentication auth, @PathVariable String id, @RequestBod
 
 ### PUT `/api/v1/partner-assignments/{actorId}/{jobId}`
 
-- Handler: `assignment` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java#L387)).
+- Handler: `assignment` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java#L398)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`.
 - Delegated operations: `service.job`, `service.store`.
@@ -438,7 +438,7 @@ public Object assignment( Authentication auth, @PathVariable String actorId, @Pa
 
 ### GET `/api/v1/partner/jobs`
 
-- Handler: `assigned` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java#L408)).
+- Handler: `assigned` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java#L419)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.tenant(auth)`; `access.actor(auth)`; `access.role(auth, "AGENCY_RECRUITER")`; `access.staff(auth)`.
 - Delegated operations: `service.store`, `service.job`.
@@ -451,7 +451,7 @@ public Object assigned(Authentication auth)
 
 ### GET `/api/v1/partner/submissions`
 
-- Handler: `mySubmissions` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java#L434)).
+- Handler: `mySubmissions` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java#L445)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.staff(auth)`; `access.role(auth, "AGENCY_RECRUITER")`; `access.role(auth, "EMPLOYEE")`; `access.tenant(auth)`; `access.actor(auth)`.
 - Delegated operations: `service.list`.
@@ -464,7 +464,7 @@ public Object mySubmissions(Authentication auth)
 
 ### GET `/api/v1/me/referrals`
 
-- Handler: `mySubmissions` ([source](../../application-service/src/main/java/com/openhire/applicationservice/workflow/SubmissionController.java#L434)).
+- Handler: `mySubmissions` ([source](../../application-service/src/main/java/com/openhire/applicationservice/controller/SubmissionController.java#L445)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.staff(auth)`; `access.role(auth, "AGENCY_RECRUITER")`; `access.role(auth, "EMPLOYEE")`; `access.tenant(auth)`; `access.actor(auth)`.
 - Delegated operations: `service.list`.
@@ -481,7 +481,7 @@ These are source declarations, including nested DTO records referenced by signat
 
 ### StageChange
 
-[Definition](../../application-service/src/main/java/com/openhire/applicationservice/adapter/in/web/IntakeController.java)
+[Definition](../../application-service/src/main/java/com/openhire/applicationservice/controller/IntakeController.java)
 
 ```java
 record StageChange(@NotNull ApplicationStage stage, String reason)
@@ -489,7 +489,7 @@ record StageChange(@NotNull ApplicationStage stage, String reason)
 
 ### Page
 
-[Definition](../../application-service/src/main/java/com/openhire/applicationservice/adapter/in/web/IntakeController.java)
+[Definition](../../application-service/src/main/java/com/openhire/applicationservice/controller/IntakeController.java)
 
 ```java
 record Page(List<ApplicationView> data, int page, int size)
@@ -497,7 +497,7 @@ record Page(List<ApplicationView> data, int page, int size)
 
 ### ApplicationView
 
-[Definition](../../application-service/src/main/java/com/openhire/applicationservice/adapter/in/web/IntakeController.java)
+[Definition](../../application-service/src/main/java/com/openhire/applicationservice/controller/IntakeController.java)
 
 ```java
 record ApplicationView(

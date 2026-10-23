@@ -6,11 +6,11 @@ Mapped operations: **14**. Framework-generated Actuator endpoints and gateway-pr
 
 ## AnalyticsController
 
-Source: [AnalyticsController](../../analytics-service/src/main/java/com/openhire/analytics/adapter/in/web/AnalyticsController.java).
+Source: [AnalyticsController](../../analytics-service/src/main/java/com/openhire/analytics/controller/AnalyticsController.java).
 
 ### GET `/api/v1/analytics/kpis`
 
-- Handler: `kpis` ([source](../../analytics-service/src/main/java/com/openhire/analytics/adapter/in/web/AnalyticsController.java#L28)).
+- Handler: `kpis` ([source](../../analytics-service/src/main/java/com/openhire/analytics/controller/AnalyticsController.java#L28)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.analyticsTenant(auth)`.
 
@@ -22,7 +22,7 @@ AnalyticsKpis kpis( Authentication auth, @RequestParam(defaultValue = "30d") Str
 
 ### GET `/api/v1/analytics/funnel`
 
-- Handler: `funnel` ([source](../../analytics-service/src/main/java/com/openhire/analytics/adapter/in/web/AnalyticsController.java#L36)).
+- Handler: `funnel` ([source](../../analytics-service/src/main/java/com/openhire/analytics/controller/AnalyticsController.java#L36)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.analyticsTenant(auth)`.
 
@@ -34,7 +34,7 @@ FunnelResult funnel( Authentication auth, @RequestParam(required = false) String
 
 ### GET `/api/v1/analytics/time-to-hire`
 
-- Handler: `timeToHire` ([source](../../analytics-service/src/main/java/com/openhire/analytics/adapter/in/web/AnalyticsController.java#L44)).
+- Handler: `timeToHire` ([source](../../analytics-service/src/main/java/com/openhire/analytics/controller/AnalyticsController.java#L44)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.analyticsTenant(auth)`.
 
@@ -46,7 +46,7 @@ List<TimeToHirePoint> timeToHire( Authentication auth, @RequestParam(defaultValu
 
 ### GET `/api/v1/analytics/sources`
 
-- Handler: `sources` ([source](../../analytics-service/src/main/java/com/openhire/analytics/adapter/in/web/AnalyticsController.java#L52)).
+- Handler: `sources` ([source](../../analytics-service/src/main/java/com/openhire/analytics/controller/AnalyticsController.java#L52)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.analyticsTenant(auth)`.
 
@@ -58,7 +58,7 @@ List<SourceQuality> sources( Authentication auth, @RequestParam(defaultValue = "
 
 ### GET `/api/v1/analytics/ai-overrides`
 
-- Handler: `aiOverrides` ([source](../../analytics-service/src/main/java/com/openhire/analytics/adapter/in/web/AnalyticsController.java#L60)).
+- Handler: `aiOverrides` ([source](../../analytics-service/src/main/java/com/openhire/analytics/controller/AnalyticsController.java#L60)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.analyticsTenant(auth)`.
 
@@ -70,7 +70,7 @@ List<OverrideReason> aiOverrides( Authentication auth, @RequestParam(defaultValu
 
 ### GET `/api/v1/analytics/stage-latency`
 
-- Handler: `stageLatency` ([source](../../analytics-service/src/main/java/com/openhire/analytics/adapter/in/web/AnalyticsController.java#L68)).
+- Handler: `stageLatency` ([source](../../analytics-service/src/main/java/com/openhire/analytics/controller/AnalyticsController.java#L68)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.analyticsTenant(auth)`.
 
@@ -82,11 +82,11 @@ List<StageLatency> stageLatency( Authentication auth, @RequestParam(defaultValue
 
 ## DeadLetterController
 
-Source: [DeadLetterController](../../analytics-service/src/main/java/com/openhire/analytics/adapter/in/web/DeadLetterController.java).
+Source: [DeadLetterController](../../analytics-service/src/main/java/com/openhire/analytics/controller/DeadLetterController.java).
 
 ### GET `/api/v1/admin/dlq`
 
-- Handler: `list` ([source](../../analytics-service/src/main/java/com/openhire/analytics/adapter/in/web/DeadLetterController.java#L33)).
+- Handler: `list` ([source](../../analytics-service/src/main/java/com/openhire/analytics/controller/DeadLetterController.java#L33)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.operator(auth)`.
 
@@ -98,7 +98,7 @@ List<DeadLetter> list(Authentication auth, @RequestParam(defaultValue = "50") in
 
 ### GET `/api/v1/admin/dlq/{id}`
 
-- Handler: `detail` ([source](../../analytics-service/src/main/java/com/openhire/analytics/adapter/in/web/DeadLetterController.java#L38)).
+- Handler: `detail` ([source](../../analytics-service/src/main/java/com/openhire/analytics/controller/DeadLetterController.java#L38)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.operator(auth)`.
 
@@ -110,7 +110,7 @@ DeadLetterDetail detail(Authentication auth, @PathVariable String id)
 
 ### POST `/api/v1/admin/dlq/{id}/replay`
 
-- Handler: `replay` ([source](../../analytics-service/src/main/java/com/openhire/analytics/adapter/in/web/DeadLetterController.java#L43)).
+- Handler: `replay` ([source](../../analytics-service/src/main/java/com/openhire/analytics/controller/DeadLetterController.java#L43)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.operator(auth)`.
 
@@ -122,7 +122,7 @@ ReplayResult replay( Authentication auth, @PathVariable String id, @RequestParam
 
 ### POST `/api/v1/admin/dlq/replay`
 
-- Handler: `replayBatch` ([source](../../analytics-service/src/main/java/com/openhire/analytics/adapter/in/web/DeadLetterController.java#L52)).
+- Handler: `replayBatch` ([source](../../analytics-service/src/main/java/com/openhire/analytics/controller/DeadLetterController.java#L52)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.operator(auth)`.
 
@@ -134,11 +134,11 @@ BatchResult replayBatch(Authentication auth, @RequestBody BatchInput input)
 
 ## PlatformController
 
-Source: [PlatformController](../../analytics-service/src/main/java/com/openhire/analytics/adapter/in/web/PlatformController.java).
+Source: [PlatformController](../../analytics-service/src/main/java/com/openhire/analytics/controller/PlatformController.java).
 
 ### GET `/api/v1/platform/services`
 
-- Handler: `services` ([source](../../analytics-service/src/main/java/com/openhire/analytics/adapter/in/web/PlatformController.java#L27)).
+- Handler: `services` ([source](../../analytics-service/src/main/java/com/openhire/analytics/controller/PlatformController.java#L27)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.requireSuperAdmin(auth)`.
 
@@ -150,7 +150,7 @@ List<PlatformService> services(Authentication auth)
 
 ### GET `/api/v1/platform/slo`
 
-- Handler: `slo` ([source](../../analytics-service/src/main/java/com/openhire/analytics/adapter/in/web/PlatformController.java#L33)).
+- Handler: `slo` ([source](../../analytics-service/src/main/java/com/openhire/analytics/controller/PlatformController.java#L33)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.sloTenant(auth)`.
 
@@ -162,7 +162,7 @@ List<Slo> slo(Authentication auth)
 
 ### GET `/api/v1/platform/consumers`
 
-- Handler: `consumers` ([source](../../analytics-service/src/main/java/com/openhire/analytics/adapter/in/web/PlatformController.java#L38)).
+- Handler: `consumers` ([source](../../analytics-service/src/main/java/com/openhire/analytics/controller/PlatformController.java#L38)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.requireSuperAdmin(auth)`.
 
@@ -174,11 +174,11 @@ List<ConsumerLag> consumers(Authentication auth)
 
 ## SloMetricsController
 
-Source: [SloMetricsController](../../analytics-service/src/main/java/com/openhire/analytics/adapter/in/web/SloMetricsController.java).
+Source: [SloMetricsController](../../analytics-service/src/main/java/com/openhire/analytics/controller/SloMetricsController.java).
 
 ### GET `/api/v1/internal/platform/metrics`
 
-- Handler: `metrics` ([source](../../analytics-service/src/main/java/com/openhire/analytics/adapter/in/web/SloMetricsController.java#L33)).
+- Handler: `metrics` ([source](../../analytics-service/src/main/java/com/openhire/analytics/controller/SloMetricsController.java#L33)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.internal(secret)`.
 
@@ -194,7 +194,7 @@ These are source declarations, including nested DTO records referenced by signat
 
 ### ReplayInput
 
-[Definition](../../analytics-service/src/main/java/com/openhire/analytics/adapter/in/web/DeadLetterController.java)
+[Definition](../../analytics-service/src/main/java/com/openhire/analytics/controller/DeadLetterController.java)
 
 ```java
 record ReplayInput(String reason)
@@ -202,7 +202,7 @@ record ReplayInput(String reason)
 
 ### BatchInput
 
-[Definition](../../analytics-service/src/main/java/com/openhire/analytics/adapter/in/web/DeadLetterController.java)
+[Definition](../../analytics-service/src/main/java/com/openhire/analytics/controller/DeadLetterController.java)
 
 ```java
 record BatchInput(String reason, String topic, Integer limit, Boolean dryRun)
@@ -210,7 +210,7 @@ record BatchInput(String reason, String topic, Integer limit, Boolean dryRun)
 
 ### AnalyticsKpis
 
-[Definition](../../analytics-service/src/main/java/com/openhire/analytics/application/AnalyticsViews.java)
+[Definition](../../analytics-service/src/main/java/com/openhire/analytics/dto/AnalyticsViews.java)
 
 ```java
 record AnalyticsKpis(
@@ -227,7 +227,7 @@ record AnalyticsKpis(
 
 ### FunnelResult
 
-[Definition](../../analytics-service/src/main/java/com/openhire/analytics/application/AnalyticsViews.java)
+[Definition](../../analytics-service/src/main/java/com/openhire/analytics/dto/AnalyticsViews.java)
 
 ```java
 record FunnelResult(String jobTitle, List<FunnelStage> stages)
@@ -235,7 +235,7 @@ record FunnelResult(String jobTitle, List<FunnelStage> stages)
 
 ### TimeToHirePoint
 
-[Definition](../../analytics-service/src/main/java/com/openhire/analytics/application/AnalyticsViews.java)
+[Definition](../../analytics-service/src/main/java/com/openhire/analytics/dto/AnalyticsViews.java)
 
 ```java
 record TimeToHirePoint(String x, double y)
@@ -243,7 +243,7 @@ record TimeToHirePoint(String x, double y)
 
 ### SourceQuality
 
-[Definition](../../analytics-service/src/main/java/com/openhire/analytics/application/AnalyticsViews.java)
+[Definition](../../analytics-service/src/main/java/com/openhire/analytics/dto/AnalyticsViews.java)
 
 ```java
 record SourceQuality(String source, long applicants, double shortlistRatePct, long hires)
@@ -251,7 +251,7 @@ record SourceQuality(String source, long applicants, double shortlistRatePct, lo
 
 ### OverrideReason
 
-[Definition](../../analytics-service/src/main/java/com/openhire/analytics/application/AnalyticsViews.java)
+[Definition](../../analytics-service/src/main/java/com/openhire/analytics/dto/AnalyticsViews.java)
 
 ```java
 record OverrideReason(String label, long value)
@@ -259,7 +259,7 @@ record OverrideReason(String label, long value)
 
 ### StageLatency
 
-[Definition](../../analytics-service/src/main/java/com/openhire/analytics/application/AnalyticsViews.java)
+[Definition](../../analytics-service/src/main/java/com/openhire/analytics/dto/AnalyticsViews.java)
 
 ```java
 record StageLatency(String stage, double medianHours, double p90Hours)
@@ -267,7 +267,7 @@ record StageLatency(String stage, double medianHours, double p90Hours)
 
 ### DeadLetter
 
-[Definition](../../analytics-service/src/main/java/com/openhire/analytics/application/DeadLetterViews.java)
+[Definition](../../analytics-service/src/main/java/com/openhire/analytics/dto/DeadLetterViews.java)
 
 ```java
 record DeadLetter(
@@ -286,7 +286,7 @@ record DeadLetter(
 
 ### DeadLetterDetail
 
-[Definition](../../analytics-service/src/main/java/com/openhire/analytics/application/DeadLetterViews.java)
+[Definition](../../analytics-service/src/main/java/com/openhire/analytics/dto/DeadLetterViews.java)
 
 ```java
 record DeadLetterDetail(
@@ -311,7 +311,7 @@ record DeadLetterDetail(
 
 ### ReplayResult
 
-[Definition](../../analytics-service/src/main/java/com/openhire/analytics/application/DeadLetterViews.java)
+[Definition](../../analytics-service/src/main/java/com/openhire/analytics/dto/DeadLetterViews.java)
 
 ```java
 record ReplayResult(String id, String replayedAt, String replayedBy, int replayCount)
@@ -319,7 +319,7 @@ record ReplayResult(String id, String replayedAt, String replayedBy, int replayC
 
 ### BatchResult
 
-[Definition](../../analytics-service/src/main/java/com/openhire/analytics/application/DeadLetterViews.java)
+[Definition](../../analytics-service/src/main/java/com/openhire/analytics/dto/DeadLetterViews.java)
 
 ```java
 record BatchResult(boolean dryRun, int matched, int replayed)
@@ -327,7 +327,7 @@ record BatchResult(boolean dryRun, int matched, int replayed)
 
 ### PlatformService
 
-[Definition](../../analytics-service/src/main/java/com/openhire/analytics/application/PlatformViews.java)
+[Definition](../../analytics-service/src/main/java/com/openhire/analytics/dto/PlatformViews.java)
 
 ```java
 record PlatformService(
@@ -342,7 +342,7 @@ record PlatformService(
 
 ### Slo
 
-[Definition](../../analytics-service/src/main/java/com/openhire/analytics/application/PlatformViews.java)
+[Definition](../../analytics-service/src/main/java/com/openhire/analytics/dto/PlatformViews.java)
 
 ```java
 record Slo(
@@ -360,7 +360,7 @@ record Slo(
 
 ### ConsumerLag
 
-[Definition](../../analytics-service/src/main/java/com/openhire/analytics/application/PlatformViews.java)
+[Definition](../../analytics-service/src/main/java/com/openhire/analytics/dto/PlatformViews.java)
 
 ```java
 record ConsumerLag(String group, String topic, long lag, String status)
@@ -368,7 +368,7 @@ record ConsumerLag(String group, String topic, long lag, String status)
 
 ### FunnelStage
 
-[Definition](../../analytics-service/src/main/java/com/openhire/analytics/application/AnalyticsViews.java)
+[Definition](../../analytics-service/src/main/java/com/openhire/analytics/dto/AnalyticsViews.java)
 
 ```java
 record FunnelStage(String label, long value)

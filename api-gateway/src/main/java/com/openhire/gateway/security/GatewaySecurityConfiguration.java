@@ -17,6 +17,7 @@ import org.springframework.security.web.server.util.matcher.ServerWebExchangeMat
 public class GatewaySecurityConfiguration {
     @org.springframework.beans.factory.annotation.Autowired
     private TenantPortalAccess portals;
+
     @Bean
     @org.springframework.core.annotation.Order(2)
     @ConditionalOnProperty(name = "openhire.security.mode", havingValue = "oidc")
@@ -95,8 +96,11 @@ public class GatewaySecurityConfiguration {
                     if (portals != null && portals.enabled()) {
                         return portals.completeLogin(filter.getExchange(), authentication)
                                 .then(MonoRedirect.redirect(filter.getExchange(), portals.landing(authentication)))
-                                .onErrorResume(org.springframework.web.server.ResponseStatusException.class, error ->
-                                        filter.getExchange().getSession().flatMap(session -> session.invalidate())
+                                .onErrorResume(
+                                        org.springframework.web.server.ResponseStatusException.class,
+                                        error -> filter.getExchange()
+                                                .getSession()
+                                                .flatMap(session -> session.invalidate())
                                                 .then(MonoRedirect.denied(filter.getExchange())));
                     }
                     String applicationUrl = staffUiUrl;
@@ -117,7 +121,9 @@ public class GatewaySecurityConfiguration {
                         applicationUrl = candidateUiUrl;
                     return DocumentationAccess.afterLogin(filter, authentication, applicationUrl);
                 };
-        var authorizationRequests = new org.springframework.security.oauth2.client.web.server.DefaultServerOAuth2AuthorizationRequestResolver(registrations);
+        var authorizationRequests =
+                new org.springframework.security.oauth2.client.web.server
+                        .DefaultServerOAuth2AuthorizationRequestResolver(registrations);
         authorizationRequests.setAuthorizationRequestCustomizer(
                 org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestCustomizers.withPkce());
         return http.csrf(csrf -> csrf.csrfTokenRepository(CookieServerCsrfTokenRepository.withHttpOnlyFalse())
@@ -151,24 +157,31 @@ public class GatewaySecurityConfiguration {
                         .permitAll()
                         .anyExchange()
                         .authenticated())
-                .oauth2Login(login -> login.authorizationRequestResolver(authorizationRequests).authenticationSuccessHandler(loginSuccessHandler))
+                .oauth2Login(login -> login.authorizationRequestResolver(authorizationRequests)
+                        .authenticationSuccessHandler(loginSuccessHandler))
                 .oauth2ResourceServer(resourceServer -> resourceServer.jwt(jwt -> {}))
                 .build();
     }
 
     private static final class MonoRedirect {
-        static reactor.core.publisher.Mono<Void> redirect(org.springframework.web.server.ServerWebExchange exchange, String path) {
+        static reactor.core.publisher.Mono<Void> redirect(
+                org.springframework.web.server.ServerWebExchange exchange, String path) {
             return reactor.core.publisher.Mono.defer(() -> {
                 exchange.getResponse().setStatusCode(org.springframework.http.HttpStatus.FOUND);
                 exchange.getResponse().getHeaders().setLocation(java.net.URI.create(path));
                 return exchange.getResponse().setComplete();
             });
         }
+
         static reactor.core.publisher.Mono<Void> denied(org.springframework.web.server.ServerWebExchange exchange) {
             return reactor.core.publisher.Mono.defer(() -> {
                 exchange.getResponse().setStatusCode(org.springframework.http.HttpStatus.FORBIDDEN);
-                return exchange.getResponse().writeWith(reactor.core.publisher.Mono.just(exchange.getResponse().bufferFactory()
-                        .wrap("This account cannot access this organisation. Sign out of the identity provider and use the correct account.".getBytes(java.nio.charset.StandardCharsets.UTF_8))));
+                return exchange.getResponse()
+                        .writeWith(reactor.core.publisher.Mono.just(exchange.getResponse()
+                                .bufferFactory()
+                                .wrap(
+                                        "This account cannot access this organisation. Sign out of the identity provider and use the correct account."
+                                                .getBytes(java.nio.charset.StandardCharsets.UTF_8))));
             });
         }
     }

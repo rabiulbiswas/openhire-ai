@@ -1,6 +1,6 @@
 package com.openhire.communication.config;
 
-import com.openhire.communication.application.CommunicationService;
+import com.openhire.communication.service.CommunicationService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

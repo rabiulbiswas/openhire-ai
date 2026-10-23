@@ -1,13 +1,13 @@
 package com.openhire.identity.config;
 
-import com.openhire.identity.application.port.IdentityRepositories.Members;
-import com.openhire.identity.application.port.IdentityRepositories.Organizations;
-import com.openhire.identity.application.port.IdentityRepositories.Roles;
 import com.openhire.identity.domain.IdentityModels.Member;
 import com.openhire.identity.domain.IdentityModels.MemberStatus;
 import com.openhire.identity.domain.IdentityModels.Organization;
 import com.openhire.identity.domain.IdentityModels.OrganizationStatus;
 import com.openhire.identity.domain.IdentityModels.Role;
+import com.openhire.identity.service.port.IdentityRepositories.Members;
+import com.openhire.identity.service.port.IdentityRepositories.Organizations;
+import com.openhire.identity.service.port.IdentityRepositories.Roles;
 import java.time.Clock;
 import java.util.Set;
 import org.slf4j.Logger;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
  * Every lookup uses a tenant-scoped natural key, so application restarts are safe.
  */
 @Component
-@ConditionalOnProperty(name = "openhire.bootstrap.sample-data.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = "openhire.bootstrap.sample-data.enabled", havingValue = "true")
 public class SampleIdentityDataSeeder implements ApplicationRunner {
     private static final Logger LOG = LoggerFactory.getLogger(SampleIdentityDataSeeder.class);
     private static final String ADMIN_ROLE = "ORG_ADMIN";
@@ -45,12 +45,15 @@ public class SampleIdentityDataSeeder implements ApplicationRunner {
             Roles roles,
             Members members,
             Clock clock,
-            @Value("${openhire.bootstrap.sample-data.organization-id:demo-org}") String organizationId,
+            @Value("${openhire.bootstrap.sample-data.organization-id:}") String organizationId,
             @Value("${openhire.bootstrap.sample-data.organization-name:Local workspace}") String organizationName,
             @Value("${openhire.bootstrap.sample-data.organization-slug:local-workspace}") String organizationSlug,
             @Value("${openhire.bootstrap.sample-data.admin-email:admin@openhire.local}") String adminEmail,
             @Value("${openhire.bootstrap.sample-data.recruiter-email:recruiter@openhire.local}")
                     String recruiterEmail) {
+        if (organizationId == null || organizationId.isBlank()) {
+            throw new IllegalArgumentException("Sample seeding requires an explicit sample tenant ID");
+        }
         this.organizations = organizations;
         this.roles = roles;
         this.members = members;

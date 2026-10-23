@@ -100,9 +100,9 @@ services:
       KEYCLOAK_REALM: openhire-staff
       KEYCLOAK_ADMIN_CLIENT_ID: ${KEYCLOAK_ADMIN_CLIENT_ID:-openhire-service}
       KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET:-replace-before-use}
-      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-}
       INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
-      SAMPLE_DATA_ENABLED: ${SAMPLE_DATA_ENABLED:-true}
+      SAMPLE_DATA_ENABLED: ${SAMPLE_DATA_ENABLED:-false}
       SAMPLE_ADMIN_EMAIL: ${SAMPLE_ADMIN_EMAIL:-admin@openhire.local}
       SAMPLE_RECRUITER_EMAIL: ${SAMPLE_RECRUITER_EMAIL:-recruiter@openhire.local}
     extra_hosts:
@@ -140,7 +140,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      OPENHIRE_DEFAULT_TENANT: ${DEFAULT_TENANT_ID:-demo-org}
+      OPENHIRE_DEFAULT_TENANT: ${DEFAULT_TENANT_ID:-}
       OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
       OPENHIRE_LLM_BASE_URL: ${OPENHIRE_LLM_BASE_URL:-http://host.docker.internal:11434}
       OPENHIRE_LLM_MODEL: ${OPENHIRE_LLM_MODEL:-qwen3:8b}
@@ -185,7 +185,7 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       EVENT_PUBLISHER: kafka
       OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
-      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-}
       JOB_SERVICE_URL: http://job-service:8082
       INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
       SECURITY_MODE: ${SECURITY_MODE:-oidc}
@@ -224,7 +224,7 @@ services:
       MONGODB_URI: ${APPLICATION_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_application}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
-      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-}
       JOB_SERVICE_URL: http://job-service:8082
       CANDIDATE_SERVICE_URL: http://candidate-service:8085
       RESUME_PROCESSOR_URL: http://resume-processor:8086
@@ -268,7 +268,7 @@ services:
       MONGODB_URI: ${CANDIDATE_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_candidate}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
-      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-}
       SECURITY_MODE: ${SECURITY_MODE:-oidc}
       OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
       OIDC_JWK_SET_URI: http://keycloak:8080/realms/openhire-staff/protocol/openid-connect/certs
@@ -302,7 +302,7 @@ services:
       MONGODB_URI: ${RESUME_MONGODB_URI:-mongodb://host.docker.internal:27017/oh_resume}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
-      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-}
       SECURITY_MODE: ${SECURITY_MODE:-oidc}
       OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
       OIDC_JWK_SET_URI: http://keycloak:8080/realms/openhire-staff/protocol/openid-connect/certs
@@ -387,7 +387,7 @@ services:
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
-      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-}
       INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
       SECURITY_MODE: ${SECURITY_MODE:-oidc}
       OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
@@ -439,7 +439,7 @@ services:
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
-      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-}
       INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
       SECURITY_MODE: ${SECURITY_MODE:-oidc}
       OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
@@ -491,7 +491,7 @@ services:
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
-      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-}
       INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
       SECURITY_MODE: ${SECURITY_MODE:-oidc}
       OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
@@ -539,7 +539,7 @@ services:
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
-      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-}
       INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
       SECURITY_MODE: ${SECURITY_MODE:-oidc}
       OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
@@ -589,7 +589,7 @@ services:
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
-      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-}
       INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
       SECURITY_MODE: ${SECURITY_MODE:-oidc}
       OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
@@ -641,7 +641,7 @@ services:
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
-      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-}
       INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
       SECURITY_MODE: ${SECURITY_MODE:-oidc}
       OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
@@ -699,7 +699,7 @@ services:
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
-      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-}
       INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
       SECURITY_MODE: ${SECURITY_MODE:-oidc}
       OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
@@ -749,7 +749,7 @@ services:
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
-      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-}
       INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
       SECURITY_MODE: ${SECURITY_MODE:-oidc}
       OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
@@ -757,7 +757,7 @@ services:
       APPLICATION_SERVICE_URL: http://application-service:8084
       ANALYTICS_POLL_SECONDS: ${ANALYTICS_POLL_SECONDS:-15}
       OPENHIRE_ANALYTICS_PROMETHEUS_URL: ${PROMETHEUS_URL:-http://prometheus:9090}
-      OPENHIRE_ANALYTICS_METRICS_TENANTS: ${PROMETHEUS_TENANTS:-demo-org,second-org}
+      OPENHIRE_ANALYTICS_METRICS_TENANTS: ${PROMETHEUS_TENANTS:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -797,7 +797,7 @@ services:
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
-      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-}
       INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
       SECURITY_MODE: ${SECURITY_MODE:-oidc}
       OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
@@ -844,7 +844,7 @@ services:
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       OPENHIRE_OUTBOX_RELAY_ENABLED: "true"
-      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-}
       INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
       SECURITY_MODE: ${SECURITY_MODE:-oidc}
       OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
@@ -935,7 +935,7 @@ services:
       CANDIDATE_OIDC_INTERNAL_URL: ${CANDIDATE_OIDC_INTERNAL_URL:-http://keycloak:8080}
       CANDIDATE_OIDC_CLIENT_ID: ${CANDIDATE_OIDC_CLIENT_ID:-openhire-candidate-web}
       CANDIDATE_OIDC_CLIENT_SECRET: ${CANDIDATE_OIDC_CLIENT_SECRET:-replace-before-use}
-      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-demo-org}
+      DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-}
       INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
       SESSION_COOKIE_SECURE: "false"
     depends_on:

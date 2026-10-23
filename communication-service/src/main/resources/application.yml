@@ -48,7 +48,7 @@ openhire:
   security:
     mode: ${SECURITY_MODE:oidc}
   tenant:
-    default-id: ${DEFAULT_TENANT_ID:demo-org}
+    default-id: ${DEFAULT_TENANT_ID:}
   communication:
     company-name: ${COMPANY_NAME:Northwind Payments}
     default-timezone: ${COMMUNICATION_DEFAULT_TIMEZONE:Asia/Kolkata}

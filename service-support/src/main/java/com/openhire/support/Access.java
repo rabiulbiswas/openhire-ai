@@ -17,7 +17,7 @@ public class Access {
 
     public Access(
             @Value("${openhire.security.mode:oidc}") String mode,
-            @Value("${openhire.tenant.default-id:demo-org}") String tenant,
+            @Value("${openhire.tenant.default-id:}") String tenant,
             @Value("${openhire.internal-secret}") String secret) {
         this.mode = mode;
         this.tenant = tenant;
@@ -27,12 +27,13 @@ public class Access {
 
     public String tenant(Authentication auth) {
         if (auth instanceof JwtAuthenticationToken jwt) {
-            var result = jwt.getToken().getClaimAsString("organization_id");
-            if (result == null) result = jwt.getToken().getClaimAsString("tenant_id");
+            var result = com.openhire.platform.tenant.TenantClaims.resolve(
+                    jwt.getToken().getClaims());
             if (result != null && !result.isBlank()) return result;
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tenant claim is required");
         }
-        if ("local".equals(mode)) return tenant;
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Organization claim is required");
+        if ("local".equals(mode) && tenant != null && !tenant.isBlank()) return tenant;
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tenant claim is required");
     }
 
     public String actor(Authentication auth) {

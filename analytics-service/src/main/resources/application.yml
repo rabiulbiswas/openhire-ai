@@ -47,7 +47,7 @@ openhire:
   security:
     mode: ${SECURITY_MODE:oidc}
   tenant:
-    default-id: ${DEFAULT_TENANT_ID:demo-org}
+    default-id: ${DEFAULT_TENANT_ID:}
   analytics:
     poll-seconds: ${ANALYTICS_POLL_SECONDS:15}
     targets: ${ANALYTICS_TARGETS:identity-service=http://identity-service:8081,job-service=http://job-service:8082,approval-service=http://approval-service:8083,application-service=http://application-service:8084,candidate-service=http://candidate-service:8085,resume-processor=http://resume-processor:8086,interview-service=http://interview-service:8087,communication-service=http://communication-service:8088,notification-dispatcher=http://notification-dispatcher:8089,offer-service=http://offer-service:8090,employee-service=http://employee-service:8091,ai-gateway=http://ai-gateway:8092,ai-workers=http://ai-workers:8093,talent-service=http://talent-service:8094,compliance-service=http://compliance-service:8095,analytics-service=http://localhost:8096}

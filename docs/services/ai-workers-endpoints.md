@@ -6,11 +6,11 @@ Mapped operations: **2**. Framework-generated Actuator endpoints and gateway-pro
 
 ## IntegrityController
 
-Source: [IntegrityController](../../ai-workers/src/main/java/com/openhire/aiworkers/integrity/adapter/in/web/IntegrityController.java).
+Source: [IntegrityController](../../ai-workers/src/main/java/com/openhire/aiworkers/integrity/controller/IntegrityController.java).
 
 ### GET `/api/v1/integrity/signals`
 
-- Handler: `list` ([source](../../ai-workers/src/main/java/com/openhire/aiworkers/integrity/adapter/in/web/IntegrityController.java#L31)).
+- Handler: `list` ([source](../../ai-workers/src/main/java/com/openhire/aiworkers/integrity/controller/IntegrityController.java#L31)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`.
 - Delegated operations: `integrity.signals`.
@@ -23,7 +23,7 @@ List<Map<String, Object>> list(Authentication auth, @RequestParam String applica
 
 ### POST `/api/v1/integrity/signals/{id}/dismiss`
 
-- Handler: `dismiss` ([source](../../ai-workers/src/main/java/com/openhire/aiworkers/integrity/adapter/in/web/IntegrityController.java#L39)).
+- Handler: `dismiss` ([source](../../ai-workers/src/main/java/com/openhire/aiworkers/integrity/controller/IntegrityController.java#L39)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`; `access.actor(auth)`.
 - Delegated operations: `integrity.dismiss`.
@@ -40,7 +40,7 @@ These are source declarations, including nested DTO records referenced by signat
 
 ### DismissInput
 
-[Definition](../../ai-workers/src/main/java/com/openhire/aiworkers/integrity/adapter/in/web/IntegrityController.java)
+[Definition](../../ai-workers/src/main/java/com/openhire/aiworkers/integrity/controller/IntegrityController.java)
 
 ```java
 record DismissInput(String reason)

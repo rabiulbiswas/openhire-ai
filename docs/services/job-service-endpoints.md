@@ -4,13 +4,82 @@ Generated from current Java controller annotations. This is a source-level refer
 
 Mapped operations: **24**. Framework-generated Actuator endpoints and gateway-proxied routes are not duplicated here. Signatures preserve request headers, query defaults, body types, return types and optional bindings. Java types are not JSON field names: request/response record fields are listed below. Controller checks may delegate additional authorization to application services; an empty extracted-check list does not mean public access.
 
+## HiringConfigurationController
+
+Source: [HiringConfigurationController](../../job-service/src/main/java/com/openhire/jobservice/controller/HiringConfigurationController.java).
+
+### GET `/api/v1/hiring-stages`
+
+- Handler: `stages` ([source](../../job-service/src/main/java/com/openhire/jobservice/controller/HiringConfigurationController.java#L28)).
+- Success status: 200 (normal return; exceptions may differ).
+- Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER')")`.
+- Delegated operations: `service.stages`.
+
+Request bindings and declared response:
+
+```java
+List<HiringStageSet> stages()
+```
+
+### PUT `/api/v1/hiring-stages`
+
+- Handler: `saveStages` ([source](../../job-service/src/main/java/com/openhire/jobservice/controller/HiringConfigurationController.java#L34)).
+- Success status: 200 (normal return; exceptions may differ).
+- Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN')")`.
+- Delegated operations: `service.saveStages`.
+
+Request bindings and declared response:
+
+```java
+HiringStageSet saveStages(@Valid @RequestBody StageSetRequest request)
+```
+
+### GET `/api/v1/pipeline-templates`
+
+- Handler: `templates` ([source](../../job-service/src/main/java/com/openhire/jobservice/controller/HiringConfigurationController.java#L40)).
+- Success status: 200 (normal return; exceptions may differ).
+- Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER')")`.
+- Delegated operations: `service.templates`.
+
+Request bindings and declared response:
+
+```java
+List<PipelineTemplate> templates()
+```
+
+### PUT `/api/v1/pipeline-templates`
+
+- Handler: `saveTemplate` ([source](../../job-service/src/main/java/com/openhire/jobservice/controller/HiringConfigurationController.java#L46)).
+- Success status: 200 (normal return; exceptions may differ).
+- Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN')")`.
+- Delegated operations: `service.saveTemplate`.
+
+Request bindings and declared response:
+
+```java
+PipelineTemplate saveTemplate(@Valid @RequestBody TemplateRequest request)
+```
+
+### GET `/api/v1/pipeline-templates/resolve`
+
+- Handler: `resolve` ([source](../../job-service/src/main/java/com/openhire/jobservice/controller/HiringConfigurationController.java#L52)).
+- Success status: 200 (normal return; exceptions may differ).
+- Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER')")`.
+- Delegated operations: `service.resolve`.
+
+Request bindings and declared response:
+
+```java
+PipelineTemplate resolve(@RequestParam String key)
+```
+
 ## JobController
 
-Source: [JobController](../../job-service/src/main/java/com/openhire/jobservice/api/JobController.java).
+Source: [JobController](../../job-service/src/main/java/com/openhire/jobservice/controller/JobController.java).
 
 ### GET `/api/v1/jobs`
 
-- Handler: `list` ([source](../../job-service/src/main/java/com/openhire/jobservice/api/JobController.java#L39)).
+- Handler: `list` ([source](../../job-service/src/main/java/com/openhire/jobservice/controller/JobController.java#L45)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER','HIRING_MANAGER','INTERVIEWER')")`.
 - Delegated operations: `service.list`.
@@ -23,7 +92,7 @@ PageResponse<JobSummaryResponse> list(@RequestParam(required = false) String sta
 
 ### POST `/api/v1/jobs/ai-draft`
 
-- Handler: `draftBeforeCreate` ([source](../../job-service/src/main/java/com/openhire/jobservice/api/JobController.java#L45)).
+- Handler: `draftBeforeCreate` ([source](../../job-service/src/main/java/com/openhire/jobservice/controller/JobController.java#L51)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER')")`.
 - Delegated operations: `service.draft`.
@@ -36,7 +105,7 @@ AiJobDraftResponse draftBeforeCreate(@Valid @RequestBody AiJobDraftRequest reque
 
 ### GET `/api/v1/jobs/{id}`
 
-- Handler: `get` ([source](../../job-service/src/main/java/com/openhire/jobservice/api/JobController.java#L51)).
+- Handler: `get` ([source](../../job-service/src/main/java/com/openhire/jobservice/controller/JobController.java#L57)).
 - Success status: ResponseEntity chooses status; see handler.
 - Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER','HIRING_MANAGER','INTERVIEWER')")`.
 - Delegated operations: `service.get`.
@@ -49,7 +118,7 @@ ResponseEntity<JobResponse> get(@PathVariable String id)
 
 ### POST `/api/v1/jobs`
 
-- Handler: `create` ([source](../../job-service/src/main/java/com/openhire/jobservice/api/JobController.java#L57)).
+- Handler: `create` ([source](../../job-service/src/main/java/com/openhire/jobservice/controller/JobController.java#L63)).
 - Success status: ResponseEntity chooses status; see handler.
 - Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER')")`.
 - Delegated operations: `service.create`.
@@ -62,7 +131,7 @@ ResponseEntity<JobResponse> create( @RequestHeader(value = "X-Actor-Id", default
 
 ### PATCH `/api/v1/jobs/{id}`
 
-- Handler: `update` ([source](../../job-service/src/main/java/com/openhire/jobservice/api/JobController.java#L69)).
+- Handler: `update` ([source](../../job-service/src/main/java/com/openhire/jobservice/controller/JobController.java#L75)).
 - Success status: ResponseEntity chooses status; see handler.
 - Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER')")`.
 - Delegated operations: `service.update`.
@@ -75,7 +144,7 @@ ResponseEntity<JobResponse> update( @PathVariable String id, @RequestHeader("If-
 
 ### PUT `/api/v1/jobs/{id}/hiring-team`
 
-- Handler: `updateHiringTeam` ([source](../../job-service/src/main/java/com/openhire/jobservice/api/JobController.java#L79)).
+- Handler: `updateHiringTeam` ([source](../../job-service/src/main/java/com/openhire/jobservice/controller/JobController.java#L85)).
 - Success status: ResponseEntity chooses status; see handler.
 - Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER')")`.
 - Delegated operations: `service.updateHiringTeam`.
@@ -88,7 +157,7 @@ ResponseEntity<JobResponse> updateHiringTeam( @PathVariable String id, @RequestH
 
 ### PUT `/api/v1/jobs/{id}/versions/{version}/interview-plan`
 
-- Handler: `updateInterviewPlan` ([source](../../job-service/src/main/java/com/openhire/jobservice/api/JobController.java#L89)).
+- Handler: `updateInterviewPlan` ([source](../../job-service/src/main/java/com/openhire/jobservice/controller/JobController.java#L95)).
 - Success status: ResponseEntity chooses status; see handler.
 - Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER')")`.
 - Delegated operations: `service.updateInterviewPlan`.
@@ -101,7 +170,7 @@ ResponseEntity<JobResponse> updateInterviewPlan( @PathVariable String id, @PathV
 
 ### POST `/api/v1/jobs/{id}/submit`
 
-- Handler: `submit` ([source](../../job-service/src/main/java/com/openhire/jobservice/api/JobController.java#L99)).
+- Handler: `submit` ([source](../../job-service/src/main/java/com/openhire/jobservice/controller/JobController.java#L105)).
 - Success status: ResponseEntity chooses status; see handler.
 - Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER')")`.
 - Delegated operations: `service.submit`.
@@ -114,7 +183,7 @@ ResponseEntity<JobResponse> submit( @PathVariable String id, @RequestHeader(valu
 
 ### POST `/api/v1/jobs/{id}/publish`
 
-- Handler: `publish` ([source](../../job-service/src/main/java/com/openhire/jobservice/api/JobController.java#L106)).
+- Handler: `publish` ([source](../../job-service/src/main/java/com/openhire/jobservice/controller/JobController.java#L112)).
 - Success status: ResponseEntity chooses status; see handler.
 - Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER')")`.
 - Delegated operations: `service.publish`.
@@ -127,7 +196,7 @@ ResponseEntity<JobResponse> publish( @PathVariable String id, @RequestHeader(val
 
 ### POST `/api/v1/jobs/{id}/pause`
 
-- Handler: `pause` ([source](../../job-service/src/main/java/com/openhire/jobservice/api/JobController.java#L113)).
+- Handler: `pause` ([source](../../job-service/src/main/java/com/openhire/jobservice/controller/JobController.java#L119)).
 - Success status: ResponseEntity chooses status; see handler.
 - Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER')")`.
 - Delegated operations: `service.pause`.
@@ -140,7 +209,7 @@ ResponseEntity<JobResponse> pause( @PathVariable String id, @RequestHeader(value
 
 ### POST `/api/v1/jobs/{id}/close`
 
-- Handler: `close` ([source](../../job-service/src/main/java/com/openhire/jobservice/api/JobController.java#L120)).
+- Handler: `close` ([source](../../job-service/src/main/java/com/openhire/jobservice/controller/JobController.java#L126)).
 - Success status: ResponseEntity chooses status; see handler.
 - Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER')")`.
 - Delegated operations: `service.close`.
@@ -153,7 +222,7 @@ ResponseEntity<JobResponse> close( @PathVariable String id, @RequestHeader(value
 
 ### POST `/api/v1/jobs/{id}/reopen`
 
-- Handler: `reopen` ([source](../../job-service/src/main/java/com/openhire/jobservice/api/JobController.java#L127)).
+- Handler: `reopen` ([source](../../job-service/src/main/java/com/openhire/jobservice/controller/JobController.java#L133)).
 - Success status: ResponseEntity chooses status; see handler.
 - Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER')")`.
 - Delegated operations: `service.reopen`.
@@ -166,7 +235,7 @@ ResponseEntity<JobResponse> reopen( @PathVariable String id, @RequestHeader(valu
 
 ### POST `/api/v1/jobs/{id}/versions/{version}/ai-draft`
 
-- Handler: `draft` ([source](../../job-service/src/main/java/com/openhire/jobservice/api/JobController.java#L134)).
+- Handler: `draft` ([source](../../job-service/src/main/java/com/openhire/jobservice/controller/JobController.java#L140)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER')")`.
 - Delegated operations: `service.draft`.
@@ -179,7 +248,7 @@ AiJobDraftResponse draft( @PathVariable String id, @PathVariable int version, @R
 
 ### POST `/api/v1/jobs/internal/{id}/approval-decision`
 
-- Handler: `approvalDecision` ([source](../../job-service/src/main/java/com/openhire/jobservice/api/JobController.java#L146)).
+- Handler: `approvalDecision` ([source](../../job-service/src/main/java/com/openhire/jobservice/controller/JobController.java#L152)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `service.decision`.
@@ -192,7 +261,7 @@ JobResponse approvalDecision( @PathVariable String id, @RequestHeader("X-Interna
 
 ### GET `/api/v1/jobs/internal/{id}/intake`
 
-- Handler: `intakeSnapshot` ([source](../../job-service/src/main/java/com/openhire/jobservice/api/JobController.java#L155)).
+- Handler: `intakeSnapshot` ([source](../../job-service/src/main/java/com/openhire/jobservice/controller/JobController.java#L161)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `service.get`.
@@ -205,11 +274,11 @@ JobResponse intakeSnapshot(@PathVariable String id, @RequestHeader("X-Internal-S
 
 ## JobProjectionController
 
-Source: [JobProjectionController](../../job-service/src/main/java/com/openhire/jobservice/api/JobProjectionController.java).
+Source: [JobProjectionController](../../job-service/src/main/java/com/openhire/jobservice/controller/JobProjectionController.java).
 
 ### GET `/api/v1/public/jobs`
 
-- Handler: `publicJobs` ([source](../../job-service/src/main/java/com/openhire/jobservice/api/JobProjectionController.java#L23)).
+- Handler: `publicJobs` ([source](../../job-service/src/main/java/com/openhire/jobservice/controller/JobProjectionController.java#L23)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 
@@ -221,7 +290,7 @@ Object publicJobs(@RequestParam String tenantId)
 
 ### GET `/api/v1/public/jobs/{id}`
 
-- Handler: `publicJob` ([source](../../job-service/src/main/java/com/openhire/jobservice/api/JobProjectionController.java#L28)).
+- Handler: `publicJob` ([source](../../job-service/src/main/java/com/openhire/jobservice/controller/JobProjectionController.java#L28)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 
@@ -233,7 +302,7 @@ Object publicJob(@RequestParam String tenantId, @PathVariable String id)
 
 ### GET `/api/v1/internal-jobs`
 
-- Handler: `internalJobs` ([source](../../job-service/src/main/java/com/openhire/jobservice/api/JobProjectionController.java#L50)).
+- Handler: `internalJobs` ([source](../../job-service/src/main/java/com/openhire/jobservice/controller/JobProjectionController.java#L50)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 
@@ -245,7 +314,7 @@ Object internalJobs()
 
 ### GET `/api/v1/me/inbox`
 
-- Handler: `today` ([source](../../job-service/src/main/java/com/openhire/jobservice/api/JobProjectionController.java#L55)).
+- Handler: `today` ([source](../../job-service/src/main/java/com/openhire/jobservice/controller/JobProjectionController.java#L55)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 
@@ -255,307 +324,9 @@ Request bindings and declared response:
 Map<String, Object> today()
 ```
 
-## HiringConfigurationController
-
-Source: [HiringConfigurationController](../../job-service/src/main/java/com/openhire/jobservice/configuration/HiringConfigurationController.java).
-
-### GET `/api/v1/hiring-stages`
-
-- Handler: `stages` ([source](../../job-service/src/main/java/com/openhire/jobservice/configuration/HiringConfigurationController.java#L31)).
-- Success status: 200 (normal return; exceptions may differ).
-- Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER')")`.
-
-Request bindings and declared response:
-
-```java
-List<HiringStageSet> stages()
-```
-
-### PUT `/api/v1/hiring-stages`
-
-- Handler: `saveStages` ([source](../../job-service/src/main/java/com/openhire/jobservice/configuration/HiringConfigurationController.java#L37)).
-- Success status: 200 (normal return; exceptions may differ).
-- Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN')")`.
-
-Request bindings and declared response:
-
-```java
-HiringStageSet saveStages(@Valid @RequestBody StageSetRequest request)
-```
-
-### GET `/api/v1/pipeline-templates`
-
-- Handler: `templates` ([source](../../job-service/src/main/java/com/openhire/jobservice/configuration/HiringConfigurationController.java#L50)).
-- Success status: 200 (normal return; exceptions may differ).
-- Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER')")`.
-
-Request bindings and declared response:
-
-```java
-List<PipelineTemplate> templates()
-```
-
-### PUT `/api/v1/pipeline-templates`
-
-- Handler: `saveTemplate` ([source](../../job-service/src/main/java/com/openhire/jobservice/configuration/HiringConfigurationController.java#L56)).
-- Success status: 200 (normal return; exceptions may differ).
-- Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN')")`.
-
-Request bindings and declared response:
-
-```java
-PipelineTemplate saveTemplate(@Valid @RequestBody TemplateRequest request)
-```
-
-### GET `/api/v1/pipeline-templates/resolve`
-
-- Handler: `resolve` ([source](../../job-service/src/main/java/com/openhire/jobservice/configuration/HiringConfigurationController.java#L69)).
-- Success status: 200 (normal return; exceptions may differ).
-- Controller access/tenant calls: `@PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER')")`.
-
-Request bindings and declared response:
-
-```java
-PipelineTemplate resolve(@RequestParam String key)
-```
-
 ## Request and response record fields
 
 These are source declarations, including nested DTO records referenced by signatures. Same-named records in different files are scoped to their linked owner. Constructor/domain validation and enum values remain in the linked source; `Map` responses are deliberately not assigned an invented schema.
-
-### AiJobDraftRequest
-
-[Definition](../../job-service/src/main/java/com/openhire/jobservice/api/AiJobDraftRequest.java)
-
-```java
-record AiJobDraftRequest(
-        @NotBlank String title, String team, String level, List<String> mustHaveSkills, String tone)
-```
-
-### AiJobDraftResponse
-
-[Definition](../../job-service/src/main/java/com/openhire/jobservice/api/AiJobDraftResponse.java)
-
-```java
-record AiJobDraftResponse(
-        String description, List<String> biasFlags, List<InterviewRound> suggestedInterviewPlan, String model)
-```
-
-### InterviewRound
-
-[Definition](../../job-service/src/main/java/com/openhire/jobservice/api/AiJobDraftResponse.java)
-
-```java
-record InterviewRound(String id, String name, int durationMin, List<String> interviewerNames)
-```
-
-### CreateJobRequest
-
-[Definition](../../job-service/src/main/java/com/openhire/jobservice/api/CreateJobRequest.java)
-
-```java
-record CreateJobRequest(
-        @NotBlank String title,
-        @NotBlank String team,
-        @NotBlank String level,
-        @NotBlank String location,
-        SalaryBand salaryBand,
-        @NotEmpty List<@NotBlank String> mustHaveSkills,
-        List<KnockoutQuestion> knockoutQuestions,
-        List<RubricCriterion> rubric,
-        @NotBlank String description,
-        String status)
-```
-
-### SalaryBand
-
-[Definition](../../job-service/src/main/java/com/openhire/jobservice/api/CreateJobRequest.java)
-
-```java
-record SalaryBand(@NotBlank String currency, BigDecimal min, BigDecimal max)
-```
-
-### KnockoutQuestion
-
-[Definition](../../job-service/src/main/java/com/openhire/jobservice/api/CreateJobRequest.java)
-
-```java
-record KnockoutQuestion(@NotBlank String id, @NotBlank String question, @NotBlank String requiredAnswer)
-```
-
-### RubricCriterion
-
-[Definition](../../job-service/src/main/java/com/openhire/jobservice/api/CreateJobRequest.java)
-
-```java
-record RubricCriterion(@NotBlank String id, @NotBlank String label, int weight)
-```
-
-### HiringTeamRequest
-
-[Definition](../../job-service/src/main/java/com/openhire/jobservice/api/JobCommands.java)
-
-```java
-record HiringTeamRequest(List<@Valid HiringTeamMember> hiringTeam)
-```
-
-### HiringTeamMember
-
-[Definition](../../job-service/src/main/java/com/openhire/jobservice/api/JobCommands.java)
-
-```java
-record HiringTeamMember(@NotBlank String userId, @NotBlank String name, @NotBlank String role)
-```
-
-### InterviewPlanRequest
-
-[Definition](../../job-service/src/main/java/com/openhire/jobservice/api/JobCommands.java)
-
-```java
-record InterviewPlanRequest(List<@Valid InterviewRound> interviewPlan)
-```
-
-### InterviewRound
-
-[Definition](../../job-service/src/main/java/com/openhire/jobservice/api/JobCommands.java)
-
-```java
-record InterviewRound(
-            @NotBlank String id, @NotBlank String name, int durationMin, List<@NotBlank String> interviewerNames)
-```
-
-### DecisionRequest
-
-[Definition](../../job-service/src/main/java/com/openhire/jobservice/api/JobCommands.java)
-
-```java
-record DecisionRequest(@NotBlank String decision, String reason, String actorId)
-```
-
-### JobResponse
-
-[Definition](../../job-service/src/main/java/com/openhire/jobservice/api/JobResponse.java)
-
-```java
-record JobResponse(
-        String id,
-        String code,
-        String title,
-        String team,
-        String location,
-        JobStatus status,
-        int applicants,
-        int shortlisted,
-        int daysOpen,
-        String hiringManager,
-        Funnel funnel,
-        long revision,
-        int approvedVersion,
-        String level,
-        SalaryBand salaryBand,
-        JobVersion currentVersion,
-        List<HiringTeamMember> hiringTeam,
-        List<Object> channels,
-        List<Activity> activity)
-```
-
-### Funnel
-
-[Definition](../../job-service/src/main/java/com/openhire/jobservice/api/JobResponse.java)
-
-```java
-record Funnel(int applied, int screened, int shortlisted, int interviewing, int offer, int hired)
-```
-
-### SalaryBand
-
-[Definition](../../job-service/src/main/java/com/openhire/jobservice/api/JobResponse.java)
-
-```java
-record SalaryBand(String currency, BigDecimal min, BigDecimal max)
-```
-
-### KnockoutQuestion
-
-[Definition](../../job-service/src/main/java/com/openhire/jobservice/api/JobResponse.java)
-
-```java
-record KnockoutQuestion(String id, String question, String requiredAnswer)
-```
-
-### RubricCriterion
-
-[Definition](../../job-service/src/main/java/com/openhire/jobservice/api/JobResponse.java)
-
-```java
-record RubricCriterion(String id, String label, int weight)
-```
-
-### InterviewRound
-
-[Definition](../../job-service/src/main/java/com/openhire/jobservice/api/JobResponse.java)
-
-```java
-record InterviewRound(String id, String name, int durationMin, List<String> interviewerNames)
-```
-
-### HiringTeamMember
-
-[Definition](../../job-service/src/main/java/com/openhire/jobservice/api/JobResponse.java)
-
-```java
-record HiringTeamMember(String userId, String name, String role)
-```
-
-### JobVersion
-
-[Definition](../../job-service/src/main/java/com/openhire/jobservice/api/JobResponse.java)
-
-```java
-record JobVersion(
-            int version,
-            String status,
-            String description,
-            List<String> mustHaveSkills,
-            List<KnockoutQuestion> knockoutQuestions,
-            List<RubricCriterion> rubric,
-            List<InterviewRound> interviewPlan)
-```
-
-### Activity
-
-[Definition](../../job-service/src/main/java/com/openhire/jobservice/api/JobResponse.java)
-
-```java
-record Activity(String id, Instant at, String actor, String text)
-```
-
-### JobSummaryResponse
-
-[Definition](../../job-service/src/main/java/com/openhire/jobservice/api/JobSummaryResponse.java)
-
-```java
-record JobSummaryResponse(
-        String id,
-        String code,
-        String title,
-        String team,
-        String location,
-        JobStatus status,
-        int applicants,
-        int shortlisted,
-        int daysOpen,
-        String hiringManager,
-        JobResponse.Funnel funnel)
-```
-
-### PageResponse
-
-[Definition](../../job-service/src/main/java/com/openhire/jobservice/api/PageResponse.java)
-
-```java
-record PageResponse<T>(List<T> data, String nextCursor, boolean hasMore)
-```
 
 ### HiringStageSet
 
@@ -583,9 +354,101 @@ record PipelineTemplate(
             @Id String id, String tenantId, String key, String name, List<String> stageIds, Instant updatedAt)
 ```
 
+### AiJobDraftRequest
+
+[Definition](../../job-service/src/main/java/com/openhire/jobservice/dto/request/AiJobDraftRequest.java)
+
+```java
+record AiJobDraftRequest(
+        @NotBlank String title, String team, String level, List<String> mustHaveSkills, String tone)
+```
+
+### CreateJobRequest
+
+[Definition](../../job-service/src/main/java/com/openhire/jobservice/dto/request/CreateJobRequest.java)
+
+```java
+record CreateJobRequest(
+        @NotBlank String title,
+        @NotBlank String team,
+        @NotBlank String level,
+        @NotBlank String location,
+        SalaryBand salaryBand,
+        @NotEmpty List<@NotBlank String> mustHaveSkills,
+        List<KnockoutQuestion> knockoutQuestions,
+        List<RubricCriterion> rubric,
+        @NotBlank String description,
+        String status)
+```
+
+### SalaryBand
+
+[Definition](../../job-service/src/main/java/com/openhire/jobservice/dto/request/CreateJobRequest.java)
+
+```java
+record SalaryBand(@NotBlank String currency, BigDecimal min, BigDecimal max)
+```
+
+### KnockoutQuestion
+
+[Definition](../../job-service/src/main/java/com/openhire/jobservice/dto/request/CreateJobRequest.java)
+
+```java
+record KnockoutQuestion(@NotBlank String id, @NotBlank String question, @NotBlank String requiredAnswer)
+```
+
+### RubricCriterion
+
+[Definition](../../job-service/src/main/java/com/openhire/jobservice/dto/request/CreateJobRequest.java)
+
+```java
+record RubricCriterion(@NotBlank String id, @NotBlank String label, int weight)
+```
+
+### HiringTeamRequest
+
+[Definition](../../job-service/src/main/java/com/openhire/jobservice/dto/request/JobCommands.java)
+
+```java
+record HiringTeamRequest(List<@Valid HiringTeamMember> hiringTeam)
+```
+
+### HiringTeamMember
+
+[Definition](../../job-service/src/main/java/com/openhire/jobservice/dto/request/JobCommands.java)
+
+```java
+record HiringTeamMember(@NotBlank String userId, @NotBlank String name, @NotBlank String role)
+```
+
+### InterviewPlanRequest
+
+[Definition](../../job-service/src/main/java/com/openhire/jobservice/dto/request/JobCommands.java)
+
+```java
+record InterviewPlanRequest(List<@Valid InterviewRound> interviewPlan)
+```
+
+### InterviewRound
+
+[Definition](../../job-service/src/main/java/com/openhire/jobservice/dto/request/JobCommands.java)
+
+```java
+record InterviewRound(
+            @NotBlank String id, @NotBlank String name, int durationMin, List<@NotBlank String> interviewerNames)
+```
+
+### DecisionRequest
+
+[Definition](../../job-service/src/main/java/com/openhire/jobservice/dto/request/JobCommands.java)
+
+```java
+record DecisionRequest(@NotBlank String decision, String reason, String actorId)
+```
+
 ### StageSetRequest
 
-[Definition](../../job-service/src/main/java/com/openhire/jobservice/configuration/HiringConfigurationController.java)
+[Definition](../../job-service/src/main/java/com/openhire/jobservice/dto/request/StageSetRequest.java)
 
 ```java
 record StageSetRequest(@NotBlank String key, @NotBlank String name, List<@Valid Stage> stages)
@@ -593,10 +456,152 @@ record StageSetRequest(@NotBlank String key, @NotBlank String name, List<@Valid 
 
 ### TemplateRequest
 
-[Definition](../../job-service/src/main/java/com/openhire/jobservice/configuration/HiringConfigurationController.java)
+[Definition](../../job-service/src/main/java/com/openhire/jobservice/dto/request/TemplateRequest.java)
 
 ```java
 record TemplateRequest(@NotBlank String key, @NotBlank String name, List<@NotBlank String> stageIds)
+```
+
+### AiJobDraftResponse
+
+[Definition](../../job-service/src/main/java/com/openhire/jobservice/dto/response/AiJobDraftResponse.java)
+
+```java
+record AiJobDraftResponse(
+        String description, List<String> biasFlags, List<InterviewRound> suggestedInterviewPlan, String model)
+```
+
+### InterviewRound
+
+[Definition](../../job-service/src/main/java/com/openhire/jobservice/dto/response/AiJobDraftResponse.java)
+
+```java
+record InterviewRound(String id, String name, int durationMin, List<String> interviewerNames)
+```
+
+### JobResponse
+
+[Definition](../../job-service/src/main/java/com/openhire/jobservice/dto/response/JobResponse.java)
+
+```java
+record JobResponse(
+        String id,
+        String code,
+        String title,
+        String team,
+        String location,
+        JobStatus status,
+        int applicants,
+        int shortlisted,
+        int daysOpen,
+        String hiringManager,
+        Funnel funnel,
+        long revision,
+        int approvedVersion,
+        String level,
+        SalaryBand salaryBand,
+        JobVersion currentVersion,
+        List<HiringTeamMember> hiringTeam,
+        List<Object> channels,
+        List<Activity> activity)
+```
+
+### Funnel
+
+[Definition](../../job-service/src/main/java/com/openhire/jobservice/dto/response/JobResponse.java)
+
+```java
+record Funnel(int applied, int screened, int shortlisted, int interviewing, int offer, int hired)
+```
+
+### SalaryBand
+
+[Definition](../../job-service/src/main/java/com/openhire/jobservice/dto/response/JobResponse.java)
+
+```java
+record SalaryBand(String currency, BigDecimal min, BigDecimal max)
+```
+
+### KnockoutQuestion
+
+[Definition](../../job-service/src/main/java/com/openhire/jobservice/dto/response/JobResponse.java)
+
+```java
+record KnockoutQuestion(String id, String question, String requiredAnswer)
+```
+
+### RubricCriterion
+
+[Definition](../../job-service/src/main/java/com/openhire/jobservice/dto/response/JobResponse.java)
+
+```java
+record RubricCriterion(String id, String label, int weight)
+```
+
+### InterviewRound
+
+[Definition](../../job-service/src/main/java/com/openhire/jobservice/dto/response/JobResponse.java)
+
+```java
+record InterviewRound(String id, String name, int durationMin, List<String> interviewerNames)
+```
+
+### HiringTeamMember
+
+[Definition](../../job-service/src/main/java/com/openhire/jobservice/dto/response/JobResponse.java)
+
+```java
+record HiringTeamMember(String userId, String name, String role)
+```
+
+### JobVersion
+
+[Definition](../../job-service/src/main/java/com/openhire/jobservice/dto/response/JobResponse.java)
+
+```java
+record JobVersion(
+            int version,
+            String status,
+            String description,
+            List<String> mustHaveSkills,
+            List<KnockoutQuestion> knockoutQuestions,
+            List<RubricCriterion> rubric,
+            List<InterviewRound> interviewPlan)
+```
+
+### Activity
+
+[Definition](../../job-service/src/main/java/com/openhire/jobservice/dto/response/JobResponse.java)
+
+```java
+record Activity(String id, Instant at, String actor, String text)
+```
+
+### JobSummaryResponse
+
+[Definition](../../job-service/src/main/java/com/openhire/jobservice/dto/response/JobSummaryResponse.java)
+
+```java
+record JobSummaryResponse(
+        String id,
+        String code,
+        String title,
+        String team,
+        String location,
+        JobStatus status,
+        int applicants,
+        int shortlisted,
+        int daysOpen,
+        String hiringManager,
+        JobResponse.Funnel funnel)
+```
+
+### PageResponse
+
+[Definition](../../job-service/src/main/java/com/openhire/jobservice/dto/response/PageResponse.java)
+
+```java
+record PageResponse<T>(List<T> data, String nextCursor, boolean hasMore)
 ```
 
 ### JobVersion

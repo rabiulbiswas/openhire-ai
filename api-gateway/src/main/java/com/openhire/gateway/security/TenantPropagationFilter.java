@@ -1,6 +1,5 @@
 package com.openhire.gateway.security;
 
-import java.util.Optional;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -19,12 +18,10 @@ public class TenantPropagationFilter implements GlobalFilter, Ordered {
                     String tenant = null;
                     String actor = principal.getName();
                     if (principal instanceof JwtAuthenticationToken jwt) {
-                        tenant = Optional.ofNullable(jwt.getToken().getClaimAsString("organization_id"))
-                                .orElse(jwt.getToken().getClaimAsString("tenant_id"));
+                        tenant = TenantClaims.resolve(jwt.getToken().getClaims());
                         actor = jwt.getToken().getSubject();
                     } else if (principal instanceof OAuth2AuthenticationToken oauth) {
-                        tenant = claim(oauth.getPrincipal().getAttributes(), "organization_id");
-                        if (tenant == null) tenant = claim(oauth.getPrincipal().getAttributes(), "tenant_id");
+                        tenant = TenantClaims.resolve(oauth.getPrincipal().getAttributes());
                         actor = claim(oauth.getPrincipal().getAttributes(), "sub");
                     }
                     if (tenant != null && !tenant.isBlank()) {

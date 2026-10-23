@@ -6,11 +6,11 @@ Mapped operations: **19**. Framework-generated Actuator endpoints and gateway-pr
 
 ## OfferController
 
-Source: [OfferController](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/OfferController.java).
+Source: [OfferController](../../offer-service/src/main/java/com/openhire/offer/controller/OfferController.java).
 
 ### GET `/api/v1/offers`
 
-- Handler: `list` ([source](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/OfferController.java#L45)).
+- Handler: `list` ([source](../../offer-service/src/main/java/com/openhire/offer/controller/OfferController.java#L45)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.viewer(auth)`.
 - Delegated operations: `offers.list`.
@@ -23,7 +23,7 @@ Page<OfferSummary> list(Authentication auth, @RequestParam(required = false) Str
 
 ### GET `/api/v1/offers/{id}`
 
-- Handler: `get` ([source](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/OfferController.java#L50)).
+- Handler: `get` ([source](../../offer-service/src/main/java/com/openhire/offer/controller/OfferController.java#L50)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.viewer(auth)`.
 - Delegated operations: `offers.get`.
@@ -36,7 +36,7 @@ OfferDetail get(Authentication auth, @PathVariable String id)
 
 ### POST `/api/v1/applications/{applicationId}/offer`
 
-- Handler: `create` ([source](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/OfferController.java#L55)).
+- Handler: `create` ([source](../../offer-service/src/main/java/com/openhire/offer/controller/OfferController.java#L55)).
 - Success status: \@ResponseStatus(HttpStatus.CREATED).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.viewer(auth)`.
 - Delegated operations: `offers.create`.
@@ -49,7 +49,7 @@ OfferDetail create( Authentication auth, @PathVariable String applicationId, @Re
 
 ### GET `/api/v1/applications/{applicationId}/offer`
 
-- Handler: `forApplication` ([source](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/OfferController.java#L69)).
+- Handler: `forApplication` ([source](../../offer-service/src/main/java/com/openhire/offer/controller/OfferController.java#L69)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.viewer(auth)`.
 - Delegated operations: `offers.forApplication`.
@@ -62,7 +62,7 @@ OfferDetail forApplication(Authentication auth, @PathVariable String application
 
 ### PATCH `/api/v1/offers/{id}`
 
-- Handler: `update` ([source](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/OfferController.java#L74)).
+- Handler: `update` ([source](../../offer-service/src/main/java/com/openhire/offer/controller/OfferController.java#L74)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.viewer(auth)`.
 - Delegated operations: `offers.update`.
@@ -75,7 +75,7 @@ OfferDetail update(Authentication auth, @PathVariable String id, @RequestBody Up
 
 ### POST `/api/v1/offers/{id}/submit`
 
-- Handler: `submit` ([source](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/OfferController.java#L79)).
+- Handler: `submit` ([source](../../offer-service/src/main/java/com/openhire/offer/controller/OfferController.java#L79)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.viewer(auth)`.
 - Delegated operations: `offers.submit`.
@@ -88,7 +88,7 @@ OfferDetail submit(Authentication auth, @PathVariable String id)
 
 ### POST `/api/v1/offers/{id}/approvals/{stepId}/approve`
 
-- Handler: `approve` ([source](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/OfferController.java#L84)).
+- Handler: `approve` ([source](../../offer-service/src/main/java/com/openhire/offer/controller/OfferController.java#L84)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.viewer(auth)`.
 - Delegated operations: `offers.approve`.
@@ -101,7 +101,7 @@ OfferDetail approve(Authentication auth, @PathVariable String id, @PathVariable 
 
 ### POST `/api/v1/offers/{id}/approvals/{stepId}/reject`
 
-- Handler: `reject` ([source](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/OfferController.java#L89)).
+- Handler: `reject` ([source](../../offer-service/src/main/java/com/openhire/offer/controller/OfferController.java#L89)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.viewer(auth)`.
 - Delegated operations: `offers.reject`.
@@ -114,7 +114,7 @@ OfferDetail reject( Authentication auth, @PathVariable String id, @PathVariable 
 
 ### POST `/api/v1/offers/{id}/send`
 
-- Handler: `send` ([source](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/OfferController.java#L99)).
+- Handler: `send` ([source](../../offer-service/src/main/java/com/openhire/offer/controller/OfferController.java#L99)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.viewer(auth)`.
 - Delegated operations: `offers.send`.
@@ -127,7 +127,7 @@ OfferDetail send(Authentication auth, @PathVariable String id)
 
 ### POST `/api/v1/offers/{id}/rescind`
 
-- Handler: `rescind` ([source](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/OfferController.java#L104)).
+- Handler: `rescind` ([source](../../offer-service/src/main/java/com/openhire/offer/controller/OfferController.java#L104)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.viewer(auth)`.
 - Delegated operations: `offers.rescind`.
@@ -140,7 +140,7 @@ OfferDetail rescind( Authentication auth, @PathVariable String id, @RequestBody(
 
 ### GET `/api/v1/offer-templates`
 
-- Handler: `templates` ([source](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/OfferController.java#L110)).
+- Handler: `templates` ([source](../../offer-service/src/main/java/com/openhire/offer/controller/OfferController.java#L110)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.viewer(auth)`.
 - Delegated operations: `offers.templates`.
@@ -153,7 +153,7 @@ Page<TemplateView> templates(Authentication auth)
 
 ### PUT `/api/v1/offer-templates/{key}`
 
-- Handler: `saveTemplate` ([source](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/OfferController.java#L115)).
+- Handler: `saveTemplate` ([source](../../offer-service/src/main/java/com/openhire/offer/controller/OfferController.java#L115)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.viewer(auth)`.
 - Delegated operations: `offers.saveTemplate`.
@@ -166,7 +166,7 @@ TemplateView saveTemplate(Authentication auth, @PathVariable String key, @Reques
 
 ### GET `/api/v1/offer-clauses`
 
-- Handler: `clauses` ([source](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/OfferController.java#L121)).
+- Handler: `clauses` ([source](../../offer-service/src/main/java/com/openhire/offer/controller/OfferController.java#L121)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.viewer(auth)`.
 - Delegated operations: `offers.clauses`.
@@ -179,7 +179,7 @@ Page<ClauseView> clauses(Authentication auth)
 
 ### PUT `/api/v1/offer-clauses/{key}`
 
-- Handler: `saveClause` ([source](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/OfferController.java#L126)).
+- Handler: `saveClause` ([source](../../offer-service/src/main/java/com/openhire/offer/controller/OfferController.java#L126)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.viewer(auth)`.
 - Delegated operations: `offers.saveClause`.
@@ -192,11 +192,11 @@ ClauseView saveClause(Authentication auth, @PathVariable String key, @RequestBod
 
 ## PublicOfferController
 
-Source: [PublicOfferController](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/PublicOfferController.java).
+Source: [PublicOfferController](../../offer-service/src/main/java/com/openhire/offer/controller/PublicOfferController.java).
 
 ### GET `/api/v1/public/offers`
 
-- Handler: `view` ([source](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/PublicOfferController.java#L34)).
+- Handler: `view` ([source](../../offer-service/src/main/java/com/openhire/offer/controller/PublicOfferController.java#L34)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `offers.publicView`.
@@ -209,7 +209,7 @@ PublicOfferView view(@RequestHeader("X-Offer-Token") String token)
 
 ### POST `/api/v1/public/offers/accept`
 
-- Handler: `accept` ([source](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/PublicOfferController.java#L39)).
+- Handler: `accept` ([source](../../offer-service/src/main/java/com/openhire/offer/controller/PublicOfferController.java#L39)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `offers.publicAccept`.
@@ -222,7 +222,7 @@ PublicOfferView accept(@RequestHeader("X-Offer-Token") String token, @RequestBod
 
 ### POST `/api/v1/public/offers/decline`
 
-- Handler: `decline` ([source](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/PublicOfferController.java#L44)).
+- Handler: `decline` ([source](../../offer-service/src/main/java/com/openhire/offer/controller/PublicOfferController.java#L44)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `offers.publicDecline`.
@@ -235,7 +235,7 @@ PublicOfferView decline( @RequestHeader("X-Offer-Token") String token, @RequestB
 
 ### POST `/api/v1/public/offers/negotiate`
 
-- Handler: `negotiate` ([source](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/PublicOfferController.java#L50)).
+- Handler: `negotiate` ([source](../../offer-service/src/main/java/com/openhire/offer/controller/PublicOfferController.java#L50)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `offers.publicNegotiate`.
@@ -248,7 +248,7 @@ PublicOfferView negotiate(@RequestHeader("X-Offer-Token") String token, @Request
 
 ### GET `/api/v1/public/applications/{applicationId}/offer`
 
-- Handler: `byReceipt` ([source](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/PublicOfferController.java#L55)).
+- Handler: `byReceipt` ([source](../../offer-service/src/main/java/com/openhire/offer/controller/PublicOfferController.java#L55)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `offers.receiptStatus`.
@@ -265,7 +265,7 @@ These are source declarations, including nested DTO records referenced by signat
 
 ### CreateInput
 
-[Definition](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/OfferController.java)
+[Definition](../../offer-service/src/main/java/com/openhire/offer/controller/OfferController.java)
 
 ```java
 record CreateInput(String templateKey, TermsInput terms, String coverNote)
@@ -273,7 +273,7 @@ record CreateInput(String templateKey, TermsInput terms, String coverNote)
 
 ### UpdateInput
 
-[Definition](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/OfferController.java)
+[Definition](../../offer-service/src/main/java/com/openhire/offer/controller/OfferController.java)
 
 ```java
 record UpdateInput(TermsInput terms, String coverNote)
@@ -281,7 +281,7 @@ record UpdateInput(TermsInput terms, String coverNote)
 
 ### ReasonInput
 
-[Definition](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/OfferController.java)
+[Definition](../../offer-service/src/main/java/com/openhire/offer/controller/OfferController.java)
 
 ```java
 record ReasonInput(String reason)
@@ -289,7 +289,7 @@ record ReasonInput(String reason)
 
 ### TemplateInput
 
-[Definition](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/OfferController.java)
+[Definition](../../offer-service/src/main/java/com/openhire/offer/controller/OfferController.java)
 
 ```java
 record TemplateInput(String name, String body, List<String> clauseKeys)
@@ -297,7 +297,7 @@ record TemplateInput(String name, String body, List<String> clauseKeys)
 
 ### ClauseInput
 
-[Definition](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/OfferController.java)
+[Definition](../../offer-service/src/main/java/com/openhire/offer/controller/OfferController.java)
 
 ```java
 record ClauseInput(String title, String body)
@@ -305,7 +305,7 @@ record ClauseInput(String title, String body)
 
 ### AcceptInput
 
-[Definition](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/PublicOfferController.java)
+[Definition](../../offer-service/src/main/java/com/openhire/offer/controller/PublicOfferController.java)
 
 ```java
 record AcceptInput(String fullName)
@@ -313,7 +313,7 @@ record AcceptInput(String fullName)
 
 ### DeclineInput
 
-[Definition](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/PublicOfferController.java)
+[Definition](../../offer-service/src/main/java/com/openhire/offer/controller/PublicOfferController.java)
 
 ```java
 record DeclineInput(String reason)
@@ -321,33 +321,15 @@ record DeclineInput(String reason)
 
 ### NegotiateInput
 
-[Definition](../../offer-service/src/main/java/com/openhire/offer/adapter/in/web/PublicOfferController.java)
+[Definition](../../offer-service/src/main/java/com/openhire/offer/controller/PublicOfferController.java)
 
 ```java
 record NegotiateInput(String message)
 ```
 
-### TermsInput
-
-[Definition](../../offer-service/src/main/java/com/openhire/offer/application/OfferApplicationService.java)
-
-```java
-record TermsInput(
-            String currency,
-            BigDecimal base,
-            BigDecimal variable,
-            BigDecimal bonus,
-            String joiningDate,
-            String joiningDateNote,
-            String reportsTo,
-            String location,
-            String expiryDate,
-            String designation)
-```
-
 ### Page
 
-[Definition](../../offer-service/src/main/java/com/openhire/offer/application/OfferViews.java)
+[Definition](../../offer-service/src/main/java/com/openhire/offer/dto/OfferViews.java)
 
 ```java
 record Page<T>(List<T> data, String nextCursor, boolean hasMore)
@@ -355,7 +337,7 @@ record Page<T>(List<T> data, String nextCursor, boolean hasMore)
 
 ### OfferSummary
 
-[Definition](../../offer-service/src/main/java/com/openhire/offer/application/OfferViews.java)
+[Definition](../../offer-service/src/main/java/com/openhire/offer/dto/OfferViews.java)
 
 ```java
 record OfferSummary(
@@ -372,7 +354,7 @@ record OfferSummary(
 
 ### OfferDetail
 
-[Definition](../../offer-service/src/main/java/com/openhire/offer/application/OfferViews.java)
+[Definition](../../offer-service/src/main/java/com/openhire/offer/dto/OfferViews.java)
 
 ```java
 record OfferDetail(
@@ -400,7 +382,7 @@ record OfferDetail(
 
 ### PublicOfferView
 
-[Definition](../../offer-service/src/main/java/com/openhire/offer/application/OfferViews.java)
+[Definition](../../offer-service/src/main/java/com/openhire/offer/dto/OfferViews.java)
 
 ```java
 record PublicOfferView(
@@ -419,7 +401,7 @@ record PublicOfferView(
 
 ### ReceiptOfferView
 
-[Definition](../../offer-service/src/main/java/com/openhire/offer/application/OfferViews.java)
+[Definition](../../offer-service/src/main/java/com/openhire/offer/dto/OfferViews.java)
 
 ```java
 record ReceiptOfferView(String status, String offerUrl)
@@ -427,7 +409,7 @@ record ReceiptOfferView(String status, String offerUrl)
 
 ### TemplateView
 
-[Definition](../../offer-service/src/main/java/com/openhire/offer/application/OfferViews.java)
+[Definition](../../offer-service/src/main/java/com/openhire/offer/dto/OfferViews.java)
 
 ```java
 record TemplateView(
@@ -443,15 +425,33 @@ record TemplateView(
 
 ### ClauseView
 
-[Definition](../../offer-service/src/main/java/com/openhire/offer/application/OfferViews.java)
+[Definition](../../offer-service/src/main/java/com/openhire/offer/dto/OfferViews.java)
 
 ```java
 record ClauseView(String key, String title, String body, int version, String updatedAt)
 ```
 
+### TermsInput
+
+[Definition](../../offer-service/src/main/java/com/openhire/offer/service/OfferApplicationService.java)
+
+```java
+record TermsInput(
+            String currency,
+            BigDecimal base,
+            BigDecimal variable,
+            BigDecimal bonus,
+            String joiningDate,
+            String joiningDateNote,
+            String reportsTo,
+            String location,
+            String expiryDate,
+            String designation)
+```
+
 ### StepView
 
-[Definition](../../offer-service/src/main/java/com/openhire/offer/application/OfferViews.java)
+[Definition](../../offer-service/src/main/java/com/openhire/offer/dto/OfferViews.java)
 
 ```java
 record StepView(
@@ -460,7 +460,7 @@ record StepView(
 
 ### TermsView
 
-[Definition](../../offer-service/src/main/java/com/openhire/offer/application/OfferViews.java)
+[Definition](../../offer-service/src/main/java/com/openhire/offer/dto/OfferViews.java)
 
 ```java
 record TermsView(
@@ -479,7 +479,7 @@ record TermsView(
 
 ### BandView
 
-[Definition](../../offer-service/src/main/java/com/openhire/offer/application/OfferViews.java)
+[Definition](../../offer-service/src/main/java/com/openhire/offer/dto/OfferViews.java)
 
 ```java
 record BandView(String currency, BigDecimal min, BigDecimal max)
@@ -487,7 +487,7 @@ record BandView(String currency, BigDecimal min, BigDecimal max)
 
 ### VersionView
 
-[Definition](../../offer-service/src/main/java/com/openhire/offer/application/OfferViews.java)
+[Definition](../../offer-service/src/main/java/com/openhire/offer/dto/OfferViews.java)
 
 ```java
 record VersionView(int versionNo, String createdAt, String createdBy, String sha256, boolean sent)
@@ -495,7 +495,7 @@ record VersionView(int versionNo, String createdAt, String createdBy, String sha
 
 ### PublicTerms
 
-[Definition](../../offer-service/src/main/java/com/openhire/offer/application/OfferViews.java)
+[Definition](../../offer-service/src/main/java/com/openhire/offer/dto/OfferViews.java)
 
 ```java
 record PublicTerms(

@@ -6,11 +6,11 @@ Mapped operations: **3**. Framework-generated Actuator endpoints and gateway-pro
 
 ## DeliveryController
 
-Source: [DeliveryController](../../notification-dispatcher/src/main/java/com/openhire/dispatch/adapter/in/web/DeliveryController.java).
+Source: [DeliveryController](../../notification-dispatcher/src/main/java/com/openhire/dispatch/controller/DeliveryController.java).
 
 ### GET `/api/v1/deliveries`
 
-- Handler: `list` ([source](../../notification-dispatcher/src/main/java/com/openhire/dispatch/adapter/in/web/DeliveryController.java#L29)).
+- Handler: `list` ([source](../../notification-dispatcher/src/main/java/com/openhire/dispatch/controller/DeliveryController.java#L29)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`.
 - Delegated operations: `dispatch.list`.
@@ -23,7 +23,7 @@ Map<String, List<DeliveryView>> list( Authentication auth, @RequestParam(require
 
 ### GET `/api/v1/deliveries/{messageId}`
 
-- Handler: `get` ([source](../../notification-dispatcher/src/main/java/com/openhire/dispatch/adapter/in/web/DeliveryController.java#L46)).
+- Handler: `get` ([source](../../notification-dispatcher/src/main/java/com/openhire/dispatch/controller/DeliveryController.java#L46)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`.
 - Delegated operations: `dispatch.get`.
@@ -36,7 +36,7 @@ DeliveryView get(Authentication auth, @PathVariable String messageId)
 
 ### POST `/api/v1/deliveries/{messageId}/retry`
 
-- Handler: `retry` ([source](../../notification-dispatcher/src/main/java/com/openhire/dispatch/adapter/in/web/DeliveryController.java#L52)).
+- Handler: `retry` ([source](../../notification-dispatcher/src/main/java/com/openhire/dispatch/controller/DeliveryController.java#L52)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`.
 - Delegated operations: `dispatch.retry`.
@@ -53,7 +53,7 @@ These are source declarations, including nested DTO records referenced by signat
 
 ### DeliveryView
 
-[Definition](../../notification-dispatcher/src/main/java/com/openhire/dispatch/application/DispatchService.java)
+[Definition](../../notification-dispatcher/src/main/java/com/openhire/dispatch/service/DispatchService.java)
 
 ```java
 record DeliveryView(

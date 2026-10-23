@@ -1,0 +1,2551 @@
+{
+  "protectedTypes": [
+    {
+      "fqn": "com.openhire.jobservice.domain.JobStatus",
+      "file": "job-service/src/main/java/com/openhire/jobservice/domain/JobStatus.java"
+    },
+    {
+      "fqn": "com.openhire.jobservice.domain.Job",
+      "file": "job-service/src/main/java/com/openhire/jobservice/domain/Job.java"
+    },
+    {
+      "fqn": "com.openhire.approval.domain.DelegationPeriod",
+      "file": "approval-service/src/main/java/com/openhire/approval/domain/DelegationPeriod.java"
+    },
+    {
+      "fqn": "com.openhire.approval.domain.ApprovalRequest",
+      "file": "approval-service/src/main/java/com/openhire/approval/domain/ApprovalRequest.java"
+    },
+    {
+      "fqn": "com.openhire.approval.domain.ApprovalStatus",
+      "file": "approval-service/src/main/java/com/openhire/approval/domain/ApprovalStatus.java"
+    },
+    {
+      "fqn": "com.openhire.analytics.domain.ServiceSample",
+      "file": "analytics-service/src/main/java/com/openhire/analytics/domain/ServiceSample.java"
+    },
+    {
+      "fqn": "com.openhire.analytics.domain.ApplicationFact",
+      "file": "analytics-service/src/main/java/com/openhire/analytics/domain/ApplicationFact.java"
+    },
+    {
+      "fqn": "com.openhire.analytics.domain.Range",
+      "file": "analytics-service/src/main/java/com/openhire/analytics/domain/Range.java"
+    },
+    {
+      "fqn": "com.openhire.analytics.domain.SloMath",
+      "file": "analytics-service/src/main/java/com/openhire/analytics/domain/SloMath.java"
+    },
+    {
+      "fqn": "com.openhire.analytics.domain.DeadLetterRecord",
+      "file": "analytics-service/src/main/java/com/openhire/analytics/domain/DeadLetterRecord.java"
+    },
+    {
+      "fqn": "com.openhire.analytics.domain.Facts",
+      "file": "analytics-service/src/main/java/com/openhire/analytics/domain/Facts.java"
+    },
+    {
+      "fqn": "com.openhire.analytics.domain.Redactor",
+      "file": "analytics-service/src/main/java/com/openhire/analytics/domain/Redactor.java"
+    },
+    {
+      "fqn": "com.openhire.analytics.domain.Stats",
+      "file": "analytics-service/src/main/java/com/openhire/analytics/domain/Stats.java"
+    },
+    {
+      "fqn": "com.openhire.analytics.domain.Envelope",
+      "file": "analytics-service/src/main/java/com/openhire/analytics/domain/Envelope.java"
+    },
+    {
+      "fqn": "com.openhire.approval.adapter.out.events.ApprovalOutboxEvent",
+      "file": "approval-service/src/main/java/com/openhire/approval/adapter/out/events/ApprovalOutboxEvent.java"
+    },
+    {
+      "fqn": "com.openhire.aiworkers.integrity.domain.Signal",
+      "file": "ai-workers/src/main/java/com/openhire/aiworkers/integrity/domain/Signal.java"
+    },
+    {
+      "fqn": "com.openhire.aiworkers.integrity.domain.TimelineOverlapDetector",
+      "file": "ai-workers/src/main/java/com/openhire/aiworkers/integrity/domain/TimelineOverlapDetector.java"
+    },
+    {
+      "fqn": "com.openhire.aiworkers.integrity.domain.Role",
+      "file": "ai-workers/src/main/java/com/openhire/aiworkers/integrity/domain/Role.java"
+    },
+    {
+      "fqn": "com.openhire.aiworkers.integrity.domain.Identities",
+      "file": "ai-workers/src/main/java/com/openhire/aiworkers/integrity/domain/Identities.java"
+    },
+    {
+      "fqn": "com.openhire.aiworkers.integrity.domain.InjectionAttemptDetector",
+      "file": "ai-workers/src/main/java/com/openhire/aiworkers/integrity/domain/InjectionAttemptDetector.java"
+    },
+    {
+      "fqn": "com.openhire.aiworkers.integrity.domain.DetectionContext",
+      "file": "ai-workers/src/main/java/com/openhire/aiworkers/integrity/domain/DetectionContext.java"
+    },
+    {
+      "fqn": "com.openhire.aiworkers.integrity.domain.Finding",
+      "file": "ai-workers/src/main/java/com/openhire/aiworkers/integrity/domain/Finding.java"
+    },
+    {
+      "fqn": "com.openhire.aiworkers.integrity.domain.AiTextLikelihoodDetector",
+      "file": "ai-workers/src/main/java/com/openhire/aiworkers/integrity/domain/AiTextLikelihoodDetector.java"
+    },
+    {
+      "fqn": "com.openhire.aiworkers.integrity.domain.Detector",
+      "file": "ai-workers/src/main/java/com/openhire/aiworkers/integrity/domain/Detector.java"
+    },
+    {
+      "fqn": "com.openhire.jobservice.adapter.out.mongo.OutboxEventDocument",
+      "file": "job-service/src/main/java/com/openhire/jobservice/adapter/out/mongo/OutboxEventDocument.java"
+    },
+    {
+      "fqn": "com.openhire.jobservice.configuration.HiringConfiguration",
+      "file": "job-service/src/main/java/com/openhire/jobservice/configuration/HiringConfiguration.java"
+    },
+    {
+      "fqn": "com.openhire.applicationservice.domain.ApplicationEvent",
+      "file": "application-service/src/main/java/com/openhire/applicationservice/domain/ApplicationEvent.java"
+    },
+    {
+      "fqn": "com.openhire.applicationservice.domain.IntakeCommand",
+      "file": "application-service/src/main/java/com/openhire/applicationservice/domain/IntakeCommand.java"
+    },
+    {
+      "fqn": "com.openhire.applicationservice.domain.ApplicationRecord",
+      "file": "application-service/src/main/java/com/openhire/applicationservice/domain/ApplicationRecord.java"
+    },
+    {
+      "fqn": "com.openhire.applicationservice.domain.ApplicationStage",
+      "file": "application-service/src/main/java/com/openhire/applicationservice/domain/ApplicationStage.java"
+    },
+    {
+      "fqn": "com.openhire.dispatch.domain.Delivery",
+      "file": "notification-dispatcher/src/main/java/com/openhire/dispatch/domain/Delivery.java"
+    },
+    {
+      "fqn": "com.openhire.aiworkers.matching.domain.Assessment",
+      "file": "ai-workers/src/main/java/com/openhire/aiworkers/matching/domain/Assessment.java"
+    },
+    {
+      "fqn": "com.openhire.aiworkers.matching.domain.Calibration",
+      "file": "ai-workers/src/main/java/com/openhire/aiworkers/matching/domain/Calibration.java"
+    },
+    {
+      "fqn": "com.openhire.aiworkers.matching.domain.Judgement",
+      "file": "ai-workers/src/main/java/com/openhire/aiworkers/matching/domain/Judgement.java"
+    },
+    {
+      "fqn": "com.openhire.aiworkers.matching.domain.StoredChunk",
+      "file": "ai-workers/src/main/java/com/openhire/aiworkers/matching/domain/StoredChunk.java"
+    },
+    {
+      "fqn": "com.openhire.aiworkers.matching.domain.Chunk",
+      "file": "ai-workers/src/main/java/com/openhire/aiworkers/matching/domain/Chunk.java"
+    },
+    {
+      "fqn": "com.openhire.aiworkers.matching.domain.Lexical",
+      "file": "ai-workers/src/main/java/com/openhire/aiworkers/matching/domain/Lexical.java"
+    },
+    {
+      "fqn": "com.openhire.aiworkers.matching.domain.Hashes",
+      "file": "ai-workers/src/main/java/com/openhire/aiworkers/matching/domain/Hashes.java"
+    },
+    {
+      "fqn": "com.openhire.aiworkers.matching.domain.Taxonomy",
+      "file": "ai-workers/src/main/java/com/openhire/aiworkers/matching/domain/Taxonomy.java"
+    },
+    {
+      "fqn": "com.openhire.aiworkers.matching.domain.MatchingRequest",
+      "file": "ai-workers/src/main/java/com/openhire/aiworkers/matching/domain/MatchingRequest.java"
+    },
+    {
+      "fqn": "com.openhire.aiworkers.matching.domain.Chunker",
+      "file": "ai-workers/src/main/java/com/openhire/aiworkers/matching/domain/Chunker.java"
+    },
+    {
+      "fqn": "com.openhire.aiworkers.matching.domain.Retrieval",
+      "file": "ai-workers/src/main/java/com/openhire/aiworkers/matching/domain/Retrieval.java"
+    },
+    {
+      "fqn": "com.openhire.talent.domain.Narratives",
+      "file": "talent-service/src/main/java/com/openhire/talent/domain/Narratives.java"
+    },
+    {
+      "fqn": "com.openhire.talent.domain.TalentTypes",
+      "file": "talent-service/src/main/java/com/openhire/talent/domain/TalentTypes.java"
+    },
+    {
+      "fqn": "com.openhire.talent.domain.TalentProfile",
+      "file": "talent-service/src/main/java/com/openhire/talent/domain/TalentProfile.java"
+    },
+    {
+      "fqn": "com.openhire.talent.domain.SkillTaxonomy",
+      "file": "talent-service/src/main/java/com/openhire/talent/domain/SkillTaxonomy.java"
+    },
+    {
+      "fqn": "com.openhire.talent.domain.Places",
+      "file": "talent-service/src/main/java/com/openhire/talent/domain/Places.java"
+    },
+    {
+      "fqn": "com.openhire.talent.domain.RediscoveryRun",
+      "file": "talent-service/src/main/java/com/openhire/talent/domain/RediscoveryRun.java"
+    },
+    {
+      "fqn": "com.openhire.talent.domain.Invitation",
+      "file": "talent-service/src/main/java/com/openhire/talent/domain/Invitation.java"
+    },
+    {
+      "fqn": "com.openhire.talent.domain.Vectors",
+      "file": "talent-service/src/main/java/com/openhire/talent/domain/Vectors.java"
+    },
+    {
+      "fqn": "com.openhire.talent.domain.Ranking",
+      "file": "talent-service/src/main/java/com/openhire/talent/domain/Ranking.java"
+    },
+    {
+      "fqn": "com.openhire.talent.domain.ProfileFilter",
+      "file": "talent-service/src/main/java/com/openhire/talent/domain/ProfileFilter.java"
+    },
+    {
+      "fqn": "com.openhire.applicationservice.adapter.out.mongo.ApplicationDocument",
+      "file": "application-service/src/main/java/com/openhire/applicationservice/adapter/out/mongo/ApplicationDocument.java"
+    },
+    {
+      "fqn": "com.openhire.employee.domain.Employee",
+      "file": "employee-service/src/main/java/com/openhire/employee/domain/Employee.java"
+    },
+    {
+      "fqn": "com.openhire.employee.domain.OnboardingTemplate",
+      "file": "employee-service/src/main/java/com/openhire/employee/domain/OnboardingTemplate.java"
+    },
+    {
+      "fqn": "com.openhire.employee.domain.EmployeeNumber",
+      "file": "employee-service/src/main/java/com/openhire/employee/domain/EmployeeNumber.java"
+    },
+    {
+      "fqn": "com.openhire.employee.domain.HireSaga",
+      "file": "employee-service/src/main/java/com/openhire/employee/domain/HireSaga.java"
+    },
+    {
+      "fqn": "com.openhire.employee.domain.ReferralReward",
+      "file": "employee-service/src/main/java/com/openhire/employee/domain/ReferralReward.java"
+    },
+    {
+      "fqn": "com.openhire.employee.domain.EmployeeTypes",
+      "file": "employee-service/src/main/java/com/openhire/employee/domain/EmployeeTypes.java"
+    },
+    {
+      "fqn": "com.openhire.offer.domain.OfferRenderer",
+      "file": "offer-service/src/main/java/com/openhire/offer/domain/OfferRenderer.java"
+    },
+    {
+      "fqn": "com.openhire.offer.domain.OfferTypes",
+      "file": "offer-service/src/main/java/com/openhire/offer/domain/OfferTypes.java"
+    },
+    {
+      "fqn": "com.openhire.offer.domain.OfferClause",
+      "file": "offer-service/src/main/java/com/openhire/offer/domain/OfferClause.java"
+    },
+    {
+      "fqn": "com.openhire.offer.domain.DefaultTemplates",
+      "file": "offer-service/src/main/java/com/openhire/offer/domain/DefaultTemplates.java"
+    },
+    {
+      "fqn": "com.openhire.offer.domain.OfferTemplate",
+      "file": "offer-service/src/main/java/com/openhire/offer/domain/OfferTemplate.java"
+    },
+    {
+      "fqn": "com.openhire.offer.domain.CompensationPolicy",
+      "file": "offer-service/src/main/java/com/openhire/offer/domain/CompensationPolicy.java"
+    },
+    {
+      "fqn": "com.openhire.offer.domain.Offer",
+      "file": "offer-service/src/main/java/com/openhire/offer/domain/Offer.java"
+    },
+    {
+      "fqn": "com.openhire.communication.domain.StaffNotification",
+      "file": "communication-service/src/main/java/com/openhire/communication/domain/StaffNotification.java"
+    },
+    {
+      "fqn": "com.openhire.communication.domain.TriggerRules",
+      "file": "communication-service/src/main/java/com/openhire/communication/domain/TriggerRules.java"
+    },
+    {
+      "fqn": "com.openhire.communication.domain.DigestItem",
+      "file": "communication-service/src/main/java/com/openhire/communication/domain/DigestItem.java"
+    },
+    {
+      "fqn": "com.openhire.communication.domain.Conversation",
+      "file": "communication-service/src/main/java/com/openhire/communication/domain/Conversation.java"
+    },
+    {
+      "fqn": "com.openhire.communication.domain.DefaultTemplates",
+      "file": "communication-service/src/main/java/com/openhire/communication/domain/DefaultTemplates.java"
+    },
+    {
+      "fqn": "com.openhire.communication.domain.MessageTemplate",
+      "file": "communication-service/src/main/java/com/openhire/communication/domain/MessageTemplate.java"
+    },
+    {
+      "fqn": "com.openhire.communication.domain.CandidatePreferences",
+      "file": "communication-service/src/main/java/com/openhire/communication/domain/CandidatePreferences.java"
+    },
+    {
+      "fqn": "com.openhire.communication.domain.NotificationPreferences",
+      "file": "communication-service/src/main/java/com/openhire/communication/domain/NotificationPreferences.java"
+    },
+    {
+      "fqn": "com.openhire.communication.domain.Message",
+      "file": "communication-service/src/main/java/com/openhire/communication/domain/Message.java"
+    },
+    {
+      "fqn": "com.openhire.communication.domain.CommunicationTypes",
+      "file": "communication-service/src/main/java/com/openhire/communication/domain/CommunicationTypes.java"
+    },
+    {
+      "fqn": "com.openhire.integration.domain.IntegrationConfig",
+      "file": "integration-hub/src/main/java/com/openhire/integration/domain/IntegrationConfig.java"
+    },
+    {
+      "fqn": "com.openhire.integration.domain.CalendarEvent",
+      "file": "integration-hub/src/main/java/com/openhire/integration/domain/CalendarEvent.java"
+    },
+    {
+      "fqn": "com.openhire.integration.domain.WebhookSecurity",
+      "file": "integration-hub/src/main/java/com/openhire/integration/domain/WebhookSecurity.java"
+    },
+    {
+      "fqn": "com.openhire.compliance.domain.AuditEntry",
+      "file": "compliance-service/src/main/java/com/openhire/compliance/domain/AuditEntry.java"
+    },
+    {
+      "fqn": "com.openhire.compliance.domain.CanonicalJson",
+      "file": "compliance-service/src/main/java/com/openhire/compliance/domain/CanonicalJson.java"
+    },
+    {
+      "fqn": "com.openhire.compliance.domain.Times",
+      "file": "compliance-service/src/main/java/com/openhire/compliance/domain/Times.java"
+    },
+    {
+      "fqn": "com.openhire.compliance.domain.Ulid",
+      "file": "compliance-service/src/main/java/com/openhire/compliance/domain/Ulid.java"
+    },
+    {
+      "fqn": "com.openhire.compliance.domain.AuditChain",
+      "file": "compliance-service/src/main/java/com/openhire/compliance/domain/AuditChain.java"
+    },
+    {
+      "fqn": "com.openhire.compliance.domain.RetentionPolicy",
+      "file": "compliance-service/src/main/java/com/openhire/compliance/domain/RetentionPolicy.java"
+    },
+    {
+      "fqn": "com.openhire.compliance.domain.Stages",
+      "file": "compliance-service/src/main/java/com/openhire/compliance/domain/Stages.java"
+    },
+    {
+      "fqn": "com.openhire.compliance.domain.Fairness",
+      "file": "compliance-service/src/main/java/com/openhire/compliance/domain/Fairness.java"
+    },
+    {
+      "fqn": "com.openhire.identity.domain.SamlConnection",
+      "file": "identity-service/src/main/java/com/openhire/identity/domain/SamlConnection.java"
+    },
+    {
+      "fqn": "com.openhire.identity.domain.IdentityPolicy",
+      "file": "identity-service/src/main/java/com/openhire/identity/domain/IdentityPolicy.java"
+    },
+    {
+      "fqn": "com.openhire.identity.domain.IdentityModels",
+      "file": "identity-service/src/main/java/com/openhire/identity/domain/IdentityModels.java"
+    },
+    {
+      "fqn": "com.openhire.aigateway.domain.AiTypes",
+      "file": "ai-gateway/src/main/java/com/openhire/aigateway/domain/AiTypes.java"
+    },
+    {
+      "fqn": "com.openhire.aigateway.domain.AiSettings",
+      "file": "ai-gateway/src/main/java/com/openhire/aigateway/domain/AiSettings.java"
+    },
+    {
+      "fqn": "com.openhire.aigateway.domain.SeedPrompts",
+      "file": "ai-gateway/src/main/java/com/openhire/aigateway/domain/SeedPrompts.java"
+    },
+    {
+      "fqn": "com.openhire.aigateway.domain.OutputGuard",
+      "file": "ai-gateway/src/main/java/com/openhire/aigateway/domain/OutputGuard.java"
+    },
+    {
+      "fqn": "com.openhire.aigateway.domain.PromptVersion",
+      "file": "ai-gateway/src/main/java/com/openhire/aigateway/domain/PromptVersion.java"
+    },
+    {
+      "fqn": "com.openhire.aigateway.domain.AiTask",
+      "file": "ai-gateway/src/main/java/com/openhire/aigateway/domain/AiTask.java"
+    },
+    {
+      "fqn": "com.openhire.aigateway.domain.ProtectedAttributes",
+      "file": "ai-gateway/src/main/java/com/openhire/aigateway/domain/ProtectedAttributes.java"
+    },
+    {
+      "fqn": "com.openhire.aigateway.domain.Json",
+      "file": "ai-gateway/src/main/java/com/openhire/aigateway/domain/Json.java"
+    },
+    {
+      "fqn": "com.openhire.aigateway.domain.SchemaValidator",
+      "file": "ai-gateway/src/main/java/com/openhire/aigateway/domain/SchemaValidator.java"
+    },
+    {
+      "fqn": "com.openhire.aigateway.domain.InputGuard",
+      "file": "ai-gateway/src/main/java/com/openhire/aigateway/domain/InputGuard.java"
+    },
+    {
+      "fqn": "com.openhire.aigateway.domain.EvalRun",
+      "file": "ai-gateway/src/main/java/com/openhire/aigateway/domain/EvalRun.java"
+    },
+    {
+      "fqn": "com.openhire.aigateway.domain.Text",
+      "file": "ai-gateway/src/main/java/com/openhire/aigateway/domain/Text.java"
+    },
+    {
+      "fqn": "com.openhire.aigateway.domain.Golden",
+      "file": "ai-gateway/src/main/java/com/openhire/aigateway/domain/Golden.java"
+    },
+    {
+      "fqn": "com.openhire.interview.domain.InterviewTypes",
+      "file": "interview-service/src/main/java/com/openhire/interview/domain/InterviewTypes.java"
+    },
+    {
+      "fqn": "com.openhire.interview.domain.InterviewRound",
+      "file": "interview-service/src/main/java/com/openhire/interview/domain/InterviewRound.java"
+    },
+    {
+      "fqn": "com.openhire.interview.domain.DebriefBuilder",
+      "file": "interview-service/src/main/java/com/openhire/interview/domain/DebriefBuilder.java"
+    },
+    {
+      "fqn": "com.openhire.interview.domain.SlotFinder",
+      "file": "interview-service/src/main/java/com/openhire/interview/domain/SlotFinder.java"
+    },
+    {
+      "fqn": "com.openhire.interview.domain.InterviewLoop",
+      "file": "interview-service/src/main/java/com/openhire/interview/domain/InterviewLoop.java"
+    }
+  ],
+  "moves": [
+    {
+      "from": "com.openhire.resumeprocessor.ResumePipeline",
+      "to": "com.openhire.resumeprocessor.service.ResumePipeline"
+    },
+    {
+      "from": "com.openhire.resumeprocessor.HttpApplicationLookup",
+      "to": "com.openhire.resumeprocessor.client.http.HttpApplicationLookup"
+    },
+    {
+      "from": "com.openhire.resumeprocessor.ResumeController",
+      "to": "com.openhire.resumeprocessor.controller.ResumeController"
+    },
+    {
+      "from": "com.openhire.resumeprocessor.ApplicationLookup",
+      "to": "com.openhire.resumeprocessor.client.ApplicationLookup"
+    },
+    {
+      "from": "com.openhire.resumeprocessor.PrivacyData",
+      "to": "com.openhire.resumeprocessor.repository.mongo.PrivacyData"
+    },
+    {
+      "from": "com.openhire.integration.application.IntegrationService",
+      "to": "com.openhire.integration.service.IntegrationService"
+    },
+    {
+      "from": "com.openhire.integration.application.CalendarConnections",
+      "to": "com.openhire.integration.service.CalendarConnections"
+    },
+    {
+      "from": "com.openhire.integration.application.CalendarPorts",
+      "to": "com.openhire.integration.service.CalendarPorts"
+    },
+    {
+      "from": "com.openhire.candidateservice.ApplicationProjectionConsumer",
+      "to": "com.openhire.candidateservice.messaging.consumer.ApplicationProjectionConsumer"
+    },
+    {
+      "from": "com.openhire.candidateservice.CandidateService",
+      "to": "com.openhire.candidateservice.service.CandidateService"
+    },
+    {
+      "from": "com.openhire.candidateservice.PrivacyData",
+      "to": "com.openhire.candidateservice.repository.mongo.PrivacyData"
+    },
+    {
+      "from": "com.openhire.candidateservice.CandidateController",
+      "to": "com.openhire.candidateservice.controller.CandidateController"
+    },
+    {
+      "from": "com.openhire.identity.application.port.IdentityEventPublisher",
+      "to": "com.openhire.identity.service.port.IdentityEventPublisher"
+    },
+    {
+      "from": "com.openhire.identity.application.port.IdentityRepositories",
+      "to": "com.openhire.identity.service.port.IdentityRepositories"
+    },
+    {
+      "from": "com.openhire.identity.application.port.EnterpriseDirectory",
+      "to": "com.openhire.identity.service.port.EnterpriseDirectory"
+    },
+    {
+      "from": "com.openhire.identity.application.port.IdentityProvider",
+      "to": "com.openhire.identity.service.port.IdentityProvider"
+    },
+    {
+      "from": "com.openhire.identity.application.ScimUsers",
+      "to": "com.openhire.identity.service.ScimUsers"
+    },
+    {
+      "from": "com.openhire.identity.application.IdentityApplicationService",
+      "to": "com.openhire.identity.service.IdentityApplicationService"
+    },
+    {
+      "from": "com.openhire.integration.adapter.in.kafka.InterviewCalendarSync",
+      "to": "com.openhire.integration.messaging.consumer.InterviewCalendarSync"
+    },
+    {
+      "from": "com.openhire.integration.adapter.in.kafka.WebhookEvents",
+      "to": "com.openhire.integration.messaging.consumer.WebhookEvents"
+    },
+    {
+      "from": "com.openhire.identity.adapter.in.web.IdentityController",
+      "to": "com.openhire.identity.controller.IdentityController"
+    },
+    {
+      "from": "com.openhire.identity.adapter.in.web.ScimController",
+      "to": "com.openhire.identity.controller.ScimController"
+    },
+    {
+      "from": "com.openhire.identity.adapter.in.web.SamlController",
+      "to": "com.openhire.identity.controller.SamlController"
+    },
+    {
+      "from": "com.openhire.identity.adapter.in.web.TenantPlatformController",
+      "to": "com.openhire.identity.controller.TenantPlatformController"
+    },
+    {
+      "from": "com.openhire.integration.adapter.in.web.WebhookDeliveryController",
+      "to": "com.openhire.integration.controller.WebhookDeliveryController"
+    },
+    {
+      "from": "com.openhire.integration.adapter.in.web.McpController",
+      "to": "com.openhire.integration.controller.McpController"
+    },
+    {
+      "from": "com.openhire.integration.adapter.in.web.IntegrationController",
+      "to": "com.openhire.integration.controller.IntegrationController"
+    },
+    {
+      "from": "com.openhire.integration.adapter.in.web.CalendarWorkController",
+      "to": "com.openhire.integration.controller.CalendarWorkController"
+    },
+    {
+      "from": "com.openhire.integration.adapter.in.web.CalendarSyncController",
+      "to": "com.openhire.integration.controller.CalendarSyncController"
+    },
+    {
+      "from": "com.openhire.integration.adapter.in.web.McpResourceMetadata",
+      "to": "com.openhire.integration.controller.McpResourceMetadata"
+    },
+    {
+      "from": "com.openhire.integration.adapter.in.web.McpAccess",
+      "to": "com.openhire.integration.controller.McpAccess"
+    },
+    {
+      "from": "com.openhire.integration.adapter.in.web.CalendarController",
+      "to": "com.openhire.integration.controller.CalendarController"
+    },
+    {
+      "from": "com.openhire.identity.adapter.out.events.IdentityEventConfiguration",
+      "to": "com.openhire.identity.config.IdentityEventConfiguration"
+    },
+    {
+      "from": "com.openhire.identity.adapter.out.mongo.MongoIdentityRepository",
+      "to": "com.openhire.identity.repository.mongo.MongoIdentityRepository"
+    },
+    {
+      "from": "com.openhire.integration.adapter.out.mongo.IntegrationBudget",
+      "to": "com.openhire.integration.repository.mongo.IntegrationBudget"
+    },
+    {
+      "from": "com.openhire.integration.adapter.out.mongo.WebhookDeliveryQueue",
+      "to": "com.openhire.integration.repository.mongo.WebhookDeliveryQueue"
+    },
+    {
+      "from": "com.openhire.integration.adapter.out.mongo.McpConfirmations",
+      "to": "com.openhire.integration.repository.mongo.McpConfirmations"
+    },
+    {
+      "from": "com.openhire.integration.adapter.out.mongo.MongoCalendarStore",
+      "to": "com.openhire.integration.repository.mongo.MongoCalendarStore"
+    },
+    {
+      "from": "com.openhire.integration.adapter.out.mongo.MongoIntegrationStore",
+      "to": "com.openhire.integration.repository.mongo.MongoIntegrationStore"
+    },
+    {
+      "from": "com.openhire.integration.adapter.out.mongo.CalendarWorkQueue",
+      "to": "com.openhire.integration.repository.mongo.CalendarWorkQueue"
+    },
+    {
+      "from": "com.openhire.integration.adapter.out.http.CalendarHttpProvider",
+      "to": "com.openhire.integration.client.http.CalendarHttpProvider"
+    },
+    {
+      "from": "com.openhire.integration.adapter.out.http.PinnedWebhookSender",
+      "to": "com.openhire.integration.client.http.PinnedWebhookSender"
+    },
+    {
+      "from": "com.openhire.integration.adapter.out.security.TokenCipher",
+      "to": "com.openhire.integration.security.TokenCipher"
+    },
+    {
+      "from": "com.openhire.integration.adapter.out.security.FileIntegrationSecrets",
+      "to": "com.openhire.integration.security.FileIntegrationSecrets"
+    },
+    {
+      "from": "com.openhire.identity.adapter.out.idp.LocalIdentityProvider",
+      "to": "com.openhire.identity.client.idp.LocalIdentityProvider"
+    },
+    {
+      "from": "com.openhire.identity.adapter.out.idp.KeycloakIdentityProvider",
+      "to": "com.openhire.identity.client.idp.KeycloakIdentityProvider"
+    },
+    {
+      "from": "com.openhire.identity.adapter.out.idp.KeycloakEnterpriseDirectory",
+      "to": "com.openhire.identity.client.idp.KeycloakEnterpriseDirectory"
+    },
+    {
+      "from": "com.openhire.jobservice.application.JobApplicationService",
+      "to": "com.openhire.jobservice.service.JobApplicationService"
+    },
+    {
+      "from": "com.openhire.jobservice.application.port.IdempotencyStore",
+      "to": "com.openhire.jobservice.service.port.IdempotencyStore"
+    },
+    {
+      "from": "com.openhire.jobservice.application.port.JobDescriptionGenerator",
+      "to": "com.openhire.jobservice.service.port.JobDescriptionGenerator"
+    },
+    {
+      "from": "com.openhire.jobservice.application.port.ApprovalClient",
+      "to": "com.openhire.jobservice.service.port.ApprovalClient"
+    },
+    {
+      "from": "com.openhire.jobservice.application.port.OutboxWriter",
+      "to": "com.openhire.jobservice.service.port.OutboxWriter"
+    },
+    {
+      "from": "com.openhire.jobservice.application.port.JobRepository",
+      "to": "com.openhire.jobservice.service.port.JobRepository"
+    },
+    {
+      "from": "com.openhire.jobservice.api.AiJobDraftRequest",
+      "to": "com.openhire.jobservice.dto.request.AiJobDraftRequest"
+    },
+    {
+      "from": "com.openhire.jobservice.api.JobCommands",
+      "to": "com.openhire.jobservice.dto.request.JobCommands"
+    },
+    {
+      "from": "com.openhire.jobservice.api.JobController",
+      "to": "com.openhire.jobservice.controller.JobController"
+    },
+    {
+      "from": "com.openhire.jobservice.api.JobSummaryResponse",
+      "to": "com.openhire.jobservice.dto.response.JobSummaryResponse"
+    },
+    {
+      "from": "com.openhire.jobservice.api.JobProjectionController",
+      "to": "com.openhire.jobservice.controller.JobProjectionController"
+    },
+    {
+      "from": "com.openhire.jobservice.api.PageResponse",
+      "to": "com.openhire.jobservice.dto.response.PageResponse"
+    },
+    {
+      "from": "com.openhire.jobservice.api.JobResponse",
+      "to": "com.openhire.jobservice.dto.response.JobResponse"
+    },
+    {
+      "from": "com.openhire.jobservice.api.AiJobDraftResponse",
+      "to": "com.openhire.jobservice.dto.response.AiJobDraftResponse"
+    },
+    {
+      "from": "com.openhire.jobservice.api.CreateJobRequest",
+      "to": "com.openhire.jobservice.dto.request.CreateJobRequest"
+    },
+    {
+      "from": "com.openhire.aiworkers.integrity.application.DuplicateIdentityDetector",
+      "to": "com.openhire.aiworkers.integrity.service.DuplicateIdentityDetector"
+    },
+    {
+      "from": "com.openhire.aiworkers.integrity.application.port.IntegrityPorts",
+      "to": "com.openhire.aiworkers.integrity.service.port.IntegrityPorts"
+    },
+    {
+      "from": "com.openhire.aiworkers.integrity.application.IntegrityService",
+      "to": "com.openhire.aiworkers.integrity.service.IntegrityService"
+    },
+    {
+      "from": "com.openhire.jobservice.adapter.out.approval.HttpApprovalClient",
+      "to": "com.openhire.jobservice.client.approval.HttpApprovalClient"
+    },
+    {
+      "from": "com.openhire.jobservice.adapter.out.mongo.SpringDataJobRepository",
+      "to": "com.openhire.jobservice.repository.mongo.SpringDataJobRepository"
+    },
+    {
+      "from": "com.openhire.jobservice.adapter.out.mongo.SpringDataOutboxRepositoryAccess",
+      "to": "com.openhire.jobservice.repository.mongo.SpringDataOutboxRepositoryAccess"
+    },
+    {
+      "from": "com.openhire.jobservice.adapter.out.mongo.SpringDataOutboxRepository",
+      "to": "com.openhire.jobservice.repository.mongo.SpringDataOutboxRepository"
+    },
+    {
+      "from": "com.openhire.jobservice.adapter.out.mongo.MongoOutboxAdapter",
+      "to": "com.openhire.jobservice.repository.mongo.MongoOutboxAdapter"
+    },
+    {
+      "from": "com.openhire.jobservice.adapter.out.mongo.MongoJobRepositoryAdapter",
+      "to": "com.openhire.jobservice.repository.mongo.MongoJobRepositoryAdapter"
+    },
+    {
+      "from": "com.openhire.aiworkers.integrity.adapter.in.kafka.IntegrityListener",
+      "to": "com.openhire.aiworkers.integrity.messaging.consumer.IntegrityListener"
+    },
+    {
+      "from": "com.openhire.jobservice.adapter.out.ai.LocalLlmJobDescriptionGenerator",
+      "to": "com.openhire.jobservice.client.ai.LocalLlmJobDescriptionGenerator"
+    },
+    {
+      "from": "com.openhire.jobservice.adapter.out.kafka.OutboxRelay",
+      "to": "com.openhire.jobservice.messaging.publisher.OutboxRelay"
+    },
+    {
+      "from": "com.openhire.aiworkers.integrity.adapter.in.web.IntegrityController",
+      "to": "com.openhire.aiworkers.integrity.controller.IntegrityController"
+    },
+    {
+      "from": "com.openhire.jobservice.adapter.out.redis.RedisIdempotencyStore",
+      "to": "com.openhire.jobservice.repository.redis.RedisIdempotencyStore"
+    },
+    {
+      "from": "com.openhire.aiworkers.integrity.adapter.out.mongo.MongoIdentityIndex",
+      "to": "com.openhire.aiworkers.integrity.repository.mongo.MongoIdentityIndex"
+    },
+    {
+      "from": "com.openhire.aiworkers.integrity.adapter.out.mongo.MongoSignalStore",
+      "to": "com.openhire.aiworkers.integrity.repository.mongo.MongoSignalStore"
+    },
+    {
+      "from": "com.openhire.aiworkers.integrity.adapter.out.http.HttpApplicationDirectory",
+      "to": "com.openhire.aiworkers.integrity.client.http.HttpApplicationDirectory"
+    },
+    {
+      "from": "com.openhire.aiworkers.integrity.adapter.out.http.HttpStructuring",
+      "to": "com.openhire.aiworkers.integrity.client.http.HttpStructuring"
+    },
+    {
+      "from": "com.openhire.jobservice.configuration.PipelineTemplateRepository",
+      "to": "com.openhire.jobservice.repository.mongo.PipelineTemplateRepository"
+    },
+    {
+      "from": "com.openhire.jobservice.configuration.HiringConfigurationController",
+      "to": "com.openhire.jobservice.controller.HiringConfigurationController"
+    },
+    {
+      "from": "com.openhire.jobservice.configuration.HiringStageRepository",
+      "to": "com.openhire.jobservice.repository.mongo.HiringStageRepository"
+    },
+    {
+      "from": "com.openhire.aiworkers.shared.application.port.ResumeSource",
+      "to": "com.openhire.aiworkers.shared.service.port.ResumeSource"
+    },
+    {
+      "from": "com.openhire.aiworkers.shared.application.Envelopes",
+      "to": "com.openhire.aiworkers.shared.service.Envelopes"
+    },
+    {
+      "from": "com.openhire.applicationservice.application.ConsentTexts",
+      "to": "com.openhire.applicationservice.service.ConsentTexts"
+    },
+    {
+      "from": "com.openhire.aiworkers.shared.adapter.out.http.InternalClient",
+      "to": "com.openhire.aiworkers.shared.client.http.InternalClient"
+    },
+    {
+      "from": "com.openhire.aiworkers.shared.adapter.out.http.HttpResumeSource",
+      "to": "com.openhire.aiworkers.shared.client.http.HttpResumeSource"
+    },
+    {
+      "from": "com.openhire.analytics.application.HealthPollService",
+      "to": "com.openhire.analytics.service.HealthPollService"
+    },
+    {
+      "from": "com.openhire.analytics.application.DeadLetterService",
+      "to": "com.openhire.analytics.service.DeadLetterService"
+    },
+    {
+      "from": "com.openhire.applicationservice.application.port.JobCatalog",
+      "to": "com.openhire.applicationservice.service.port.JobCatalog"
+    },
+    {
+      "from": "com.openhire.applicationservice.application.port.ApplicationStore",
+      "to": "com.openhire.applicationservice.service.port.ApplicationStore"
+    },
+    {
+      "from": "com.openhire.applicationservice.application.port.ConsentSource",
+      "to": "com.openhire.applicationservice.service.port.ConsentSource"
+    },
+    {
+      "from": "com.openhire.applicationservice.application.IntakeService",
+      "to": "com.openhire.applicationservice.service.IntakeService"
+    },
+    {
+      "from": "com.openhire.analytics.application.port.AnalyticsPorts",
+      "to": "com.openhire.analytics.service.port.AnalyticsPorts"
+    },
+    {
+      "from": "com.openhire.analytics.application.DeadLetterViews",
+      "to": "com.openhire.analytics.dto.DeadLetterViews"
+    },
+    {
+      "from": "com.openhire.analytics.application.PlatformViews",
+      "to": "com.openhire.analytics.dto.PlatformViews"
+    },
+    {
+      "from": "com.openhire.analytics.application.AnalyticsViews",
+      "to": "com.openhire.analytics.dto.AnalyticsViews"
+    },
+    {
+      "from": "com.openhire.analytics.application.PlatformQueryService",
+      "to": "com.openhire.analytics.service.PlatformQueryService"
+    },
+    {
+      "from": "com.openhire.analytics.application.MonitoredSlos",
+      "to": "com.openhire.analytics.service.MonitoredSlos"
+    },
+    {
+      "from": "com.openhire.analytics.application.ProjectionService",
+      "to": "com.openhire.analytics.service.ProjectionService"
+    },
+    {
+      "from": "com.openhire.analytics.application.PlatformSettings",
+      "to": "com.openhire.analytics.service.PlatformSettings"
+    },
+    {
+      "from": "com.openhire.analytics.application.AnalyticsQueryService",
+      "to": "com.openhire.analytics.service.AnalyticsQueryService"
+    },
+    {
+      "from": "com.openhire.applicationservice.workflow.AiAssessments",
+      "to": "com.openhire.applicationservice.service.AiAssessments"
+    },
+    {
+      "from": "com.openhire.applicationservice.workflow.SubmissionService",
+      "to": "com.openhire.applicationservice.service.SubmissionService"
+    },
+    {
+      "from": "com.openhire.applicationservice.workflow.EmployeeCreatedConsumer",
+      "to": "com.openhire.applicationservice.messaging.consumer.EmployeeCreatedConsumer"
+    },
+    {
+      "from": "com.openhire.applicationservice.workflow.AssessmentCompletedConsumer",
+      "to": "com.openhire.applicationservice.messaging.consumer.AssessmentCompletedConsumer"
+    },
+    {
+      "from": "com.openhire.applicationservice.workflow.BulkImportController",
+      "to": "com.openhire.applicationservice.controller.BulkImportController"
+    },
+    {
+      "from": "com.openhire.applicationservice.workflow.SubmissionController",
+      "to": "com.openhire.applicationservice.controller.SubmissionController"
+    },
+    {
+      "from": "com.openhire.applicationservice.workflow.PrivacyLookupController",
+      "to": "com.openhire.applicationservice.controller.PrivacyLookupController"
+    },
+    {
+      "from": "com.openhire.applicationservice.workflow.PrivacyData",
+      "to": "com.openhire.applicationservice.repository.mongo.PrivacyData"
+    },
+    {
+      "from": "com.openhire.applicationservice.workflow.ResumeOutcomeConsumer",
+      "to": "com.openhire.applicationservice.messaging.consumer.ResumeOutcomeConsumer"
+    },
+    {
+      "from": "com.openhire.applicationservice.workflow.MatchingCommandRelay",
+      "to": "com.openhire.applicationservice.messaging.publisher.MatchingCommandRelay"
+    },
+    {
+      "from": "com.openhire.applicationservice.workflow.Answers",
+      "to": "com.openhire.applicationservice.service.Answers"
+    },
+    {
+      "from": "com.openhire.applicationservice.workflow.IntegritySignalConsumer",
+      "to": "com.openhire.applicationservice.messaging.consumer.IntegritySignalConsumer"
+    },
+    {
+      "from": "com.openhire.applicationservice.workflow.ApiIntakeController",
+      "to": "com.openhire.applicationservice.controller.ApiIntakeController"
+    },
+    {
+      "from": "com.openhire.applicationservice.workflow.CandidateMergeConsumer",
+      "to": "com.openhire.applicationservice.messaging.consumer.CandidateMergeConsumer"
+    },
+    {
+      "from": "com.openhire.applicationservice.workflow.MatchingCommands",
+      "to": "com.openhire.applicationservice.service.MatchingCommands"
+    },
+    {
+      "from": "com.openhire.aiworkers.privacy.PrivacyData",
+      "to": "com.openhire.aiworkers.privacy.repository.mongo.PrivacyData"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.in.kafka.AnalyticsEventsListener",
+      "to": "com.openhire.analytics.messaging.consumer.AnalyticsEventsListener"
+    },
+    {
+      "from": "com.openhire.applicationservice.adapter.in.web.IntakeController",
+      "to": "com.openhire.applicationservice.controller.IntakeController"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.in.web.DeadLetterController",
+      "to": "com.openhire.analytics.controller.DeadLetterController"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.in.web.PlatformController",
+      "to": "com.openhire.analytics.controller.PlatformController"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.in.web.SloMetricsController",
+      "to": "com.openhire.analytics.controller.SloMetricsController"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.in.web.Viewers",
+      "to": "com.openhire.analytics.controller.Viewers"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.in.web.AnalyticsErrors",
+      "to": "com.openhire.analytics.exception.AnalyticsErrors"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.in.web.AnalyticsController",
+      "to": "com.openhire.analytics.controller.AnalyticsController"
+    },
+    {
+      "from": "com.openhire.aiworkers.matching.application.port.MatchingPorts",
+      "to": "com.openhire.aiworkers.matching.service.port.MatchingPorts"
+    },
+    {
+      "from": "com.openhire.aiworkers.matching.application.MatchingSettings",
+      "to": "com.openhire.aiworkers.matching.service.MatchingSettings"
+    },
+    {
+      "from": "com.openhire.aiworkers.matching.application.AssessmentEvents",
+      "to": "com.openhire.aiworkers.matching.service.AssessmentEvents"
+    },
+    {
+      "from": "com.openhire.aiworkers.matching.application.MatchingService",
+      "to": "com.openhire.aiworkers.matching.service.MatchingService"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.in.schedule.HealthScheduler",
+      "to": "com.openhire.analytics.scheduler.HealthScheduler"
+    },
+    {
+      "from": "com.openhire.applicationservice.adapter.out.mongo.MongoApplicationStore",
+      "to": "com.openhire.applicationservice.repository.mongo.MongoApplicationStore"
+    },
+    {
+      "from": "com.openhire.applicationservice.adapter.out.mongo.ApplicationEventRelay",
+      "to": "com.openhire.applicationservice.repository.mongo.ApplicationEventRelay"
+    },
+    {
+      "from": "com.openhire.applicationservice.adapter.out.http.HttpConsentSource",
+      "to": "com.openhire.applicationservice.client.http.HttpConsentSource"
+    },
+    {
+      "from": "com.openhire.applicationservice.adapter.out.http.HttpJobCatalog",
+      "to": "com.openhire.applicationservice.client.http.HttpJobCatalog"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.out.mongo.MongoHealthStore",
+      "to": "com.openhire.analytics.repository.mongo.MongoHealthStore"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.out.mongo.AnalyticsIndexes",
+      "to": "com.openhire.analytics.repository.mongo.AnalyticsIndexes"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.out.mongo.Docs",
+      "to": "com.openhire.analytics.repository.mongo.Docs"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.out.mongo.MongoLatencyFacts",
+      "to": "com.openhire.analytics.repository.mongo.MongoLatencyFacts"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.out.mongo.MongoAiDayFacts",
+      "to": "com.openhire.analytics.repository.mongo.MongoAiDayFacts"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.out.mongo.MongoJobTitles",
+      "to": "com.openhire.analytics.repository.mongo.MongoJobTitles"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.out.mongo.MongoApplicationFacts",
+      "to": "com.openhire.analytics.repository.mongo.MongoApplicationFacts"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.out.mongo.MongoReplayLog",
+      "to": "com.openhire.analytics.repository.mongo.MongoReplayLog"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.out.mongo.MongoProcessedEvents",
+      "to": "com.openhire.analytics.repository.mongo.MongoProcessedEvents"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.out.mongo.MongoAssessmentFacts",
+      "to": "com.openhire.analytics.repository.mongo.MongoAssessmentFacts"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.out.mongo.MongoDecisionFacts",
+      "to": "com.openhire.analytics.repository.mongo.MongoDecisionFacts"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.out.mongo.MongoOfferFacts",
+      "to": "com.openhire.analytics.repository.mongo.MongoOfferFacts"
+    },
+    {
+      "from": "com.openhire.aiworkers.matching.adapter.in.kafka.MatchingCommandListener",
+      "to": "com.openhire.aiworkers.matching.messaging.consumer.MatchingCommandListener"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.out.kafka.KafkaRepublisher",
+      "to": "com.openhire.analytics.messaging.publisher.KafkaRepublisher"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.out.kafka.KafkaDeadLetterSource",
+      "to": "com.openhire.analytics.messaging.publisher.KafkaDeadLetterSource"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.out.kafka.KafkaConsumerOffsets",
+      "to": "com.openhire.analytics.messaging.publisher.KafkaConsumerOffsets"
+    },
+    {
+      "from": "com.openhire.aiworkers.matching.adapter.in.schedule.MatchingRetryScheduler",
+      "to": "com.openhire.aiworkers.matching.scheduler.MatchingRetryScheduler"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.out.http.PrometheusSamples",
+      "to": "com.openhire.analytics.client.http.PrometheusSamples"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.out.http.HttpActuatorClient",
+      "to": "com.openhire.analytics.client.http.HttpActuatorClient"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.out.http.HttpApplicationDirectory",
+      "to": "com.openhire.analytics.client.http.HttpApplicationDirectory"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.out.audit.RecorderAuditTrail",
+      "to": "com.openhire.analytics.repository.audit.RecorderAuditTrail"
+    },
+    {
+      "from": "com.openhire.analytics.adapter.out.redis.RedisSweepLock",
+      "to": "com.openhire.analytics.repository.redis.RedisSweepLock"
+    },
+    {
+      "from": "com.openhire.aiworkers.matching.adapter.out.mongo.MongoAssessmentStore",
+      "to": "com.openhire.aiworkers.matching.repository.mongo.MongoAssessmentStore"
+    },
+    {
+      "from": "com.openhire.aiworkers.matching.adapter.out.mongo.MongoRetryStore",
+      "to": "com.openhire.aiworkers.matching.repository.mongo.MongoRetryStore"
+    },
+    {
+      "from": "com.openhire.aiworkers.matching.adapter.out.mongo.MongoChunkStore",
+      "to": "com.openhire.aiworkers.matching.repository.mongo.MongoChunkStore"
+    },
+    {
+      "from": "com.openhire.aiworkers.matching.adapter.out.mongo.MongoCriterionVectors",
+      "to": "com.openhire.aiworkers.matching.repository.mongo.MongoCriterionVectors"
+    },
+    {
+      "from": "com.openhire.aiworkers.matching.adapter.out.http.HttpAiGateway",
+      "to": "com.openhire.aiworkers.matching.client.http.HttpAiGateway"
+    },
+    {
+      "from": "com.openhire.offer.application.port.OfferPorts",
+      "to": "com.openhire.offer.service.port.OfferPorts"
+    },
+    {
+      "from": "com.openhire.offer.application.OfferApplicationService",
+      "to": "com.openhire.offer.service.OfferApplicationService"
+    },
+    {
+      "from": "com.openhire.offer.application.OfferViews",
+      "to": "com.openhire.offer.dto.OfferViews"
+    },
+    {
+      "from": "com.openhire.offer.application.OfferSettings",
+      "to": "com.openhire.offer.service.OfferSettings"
+    },
+    {
+      "from": "com.openhire.offer.adapter.in.kafka.ApplicationEventsListener",
+      "to": "com.openhire.offer.messaging.consumer.ApplicationEventsListener"
+    },
+    {
+      "from": "com.openhire.compliance.application.FairnessService",
+      "to": "com.openhire.compliance.service.FairnessService"
+    },
+    {
+      "from": "com.openhire.offer.adapter.in.web.PublicOfferController",
+      "to": "com.openhire.offer.controller.PublicOfferController"
+    },
+    {
+      "from": "com.openhire.offer.adapter.in.web.OfferErrors",
+      "to": "com.openhire.offer.exception.OfferErrors"
+    },
+    {
+      "from": "com.openhire.offer.adapter.in.web.Viewers",
+      "to": "com.openhire.offer.controller.Viewers"
+    },
+    {
+      "from": "com.openhire.offer.adapter.in.web.OfferController",
+      "to": "com.openhire.offer.controller.OfferController"
+    },
+    {
+      "from": "com.openhire.compliance.application.port.CompliancePorts",
+      "to": "com.openhire.compliance.service.port.CompliancePorts"
+    },
+    {
+      "from": "com.openhire.compliance.application.LegalHolds",
+      "to": "com.openhire.compliance.service.LegalHolds"
+    },
+    {
+      "from": "com.openhire.compliance.application.AuditLedger",
+      "to": "com.openhire.compliance.service.AuditLedger"
+    },
+    {
+      "from": "com.openhire.compliance.application.PrivacyService",
+      "to": "com.openhire.compliance.service.PrivacyService"
+    },
+    {
+      "from": "com.openhire.compliance.application.Actor",
+      "to": "com.openhire.compliance.service.Actor"
+    },
+    {
+      "from": "com.openhire.compliance.application.RetentionService",
+      "to": "com.openhire.compliance.service.RetentionService"
+    },
+    {
+      "from": "com.openhire.compliance.application.ComplianceSettings",
+      "to": "com.openhire.compliance.service.ComplianceSettings"
+    },
+    {
+      "from": "com.openhire.compliance.application.SelfIdentificationService",
+      "to": "com.openhire.compliance.service.SelfIdentificationService"
+    },
+    {
+      "from": "com.openhire.compliance.application.OverviewService",
+      "to": "com.openhire.compliance.service.OverviewService"
+    },
+    {
+      "from": "com.openhire.compliance.application.DecisionHistory",
+      "to": "com.openhire.compliance.service.DecisionHistory"
+    },
+    {
+      "from": "com.openhire.compliance.application.ConsentService",
+      "to": "com.openhire.compliance.service.ConsentService"
+    },
+    {
+      "from": "com.openhire.compliance.application.ComplianceExceptions",
+      "to": "com.openhire.compliance.exception.ComplianceExceptions"
+    },
+    {
+      "from": "com.openhire.compliance.application.Maps",
+      "to": "com.openhire.compliance.service.Maps"
+    },
+    {
+      "from": "com.openhire.compliance.application.HoldPolicy",
+      "to": "com.openhire.compliance.service.HoldPolicy"
+    },
+    {
+      "from": "com.openhire.compliance.application.Projections",
+      "to": "com.openhire.compliance.service.Projections"
+    },
+    {
+      "from": "com.openhire.offer.adapter.in.schedule.OfferSweepScheduler",
+      "to": "com.openhire.offer.scheduler.OfferSweepScheduler"
+    },
+    {
+      "from": "com.openhire.offer.adapter.out.mongo.MongoTemplateStore",
+      "to": "com.openhire.offer.repository.mongo.MongoTemplateStore"
+    },
+    {
+      "from": "com.openhire.offer.adapter.out.mongo.MongoOfferRepository",
+      "to": "com.openhire.offer.repository.mongo.MongoOfferRepository"
+    },
+    {
+      "from": "com.openhire.offer.adapter.out.mongo.PrivacyData",
+      "to": "com.openhire.offer.repository.mongo.PrivacyData"
+    },
+    {
+      "from": "com.openhire.compliance.adapter.in.kafka.ComplianceListeners",
+      "to": "com.openhire.compliance.messaging.consumer.ComplianceListeners"
+    },
+    {
+      "from": "com.openhire.offer.adapter.out.http.HttpDirectories",
+      "to": "com.openhire.offer.client.http.HttpDirectories"
+    },
+    {
+      "from": "com.openhire.compliance.adapter.in.web.AuditController",
+      "to": "com.openhire.compliance.controller.AuditController"
+    },
+    {
+      "from": "com.openhire.compliance.adapter.in.web.PublicController",
+      "to": "com.openhire.compliance.controller.PublicController"
+    },
+    {
+      "from": "com.openhire.compliance.adapter.in.web.ComplianceErrors",
+      "to": "com.openhire.compliance.exception.ComplianceErrors"
+    },
+    {
+      "from": "com.openhire.compliance.adapter.in.web.Viewers",
+      "to": "com.openhire.compliance.controller.Viewers"
+    },
+    {
+      "from": "com.openhire.compliance.adapter.in.web.StaffController",
+      "to": "com.openhire.compliance.controller.StaffController"
+    },
+    {
+      "from": "com.openhire.offer.adapter.out.redis.RedisSweepLock",
+      "to": "com.openhire.offer.repository.redis.RedisSweepLock"
+    },
+    {
+      "from": "com.openhire.compliance.adapter.in.schedule.ComplianceScheduler",
+      "to": "com.openhire.compliance.scheduler.ComplianceScheduler"
+    },
+    {
+      "from": "com.openhire.offer.adapter.out.token.HmacOfferTokens",
+      "to": "com.openhire.offer.security.HmacOfferTokens"
+    },
+    {
+      "from": "com.openhire.compliance.adapter.out.mongo.MongoDecisionStore",
+      "to": "com.openhire.compliance.repository.mongo.MongoDecisionStore"
+    },
+    {
+      "from": "com.openhire.compliance.adapter.out.mongo.Docs",
+      "to": "com.openhire.compliance.repository.mongo.Docs"
+    },
+    {
+      "from": "com.openhire.compliance.adapter.out.mongo.MongoSmallStores",
+      "to": "com.openhire.compliance.repository.mongo.MongoSmallStores"
+    },
+    {
+      "from": "com.openhire.compliance.adapter.out.mongo.MongoAuditStore",
+      "to": "com.openhire.compliance.repository.mongo.MongoAuditStore"
+    },
+    {
+      "from": "com.openhire.compliance.adapter.out.mongo.MongoIndexes",
+      "to": "com.openhire.compliance.repository.mongo.MongoIndexes"
+    },
+    {
+      "from": "com.openhire.compliance.adapter.out.mongo.TombstoneErased",
+      "to": "com.openhire.compliance.repository.mongo.TombstoneErased"
+    },
+    {
+      "from": "com.openhire.compliance.adapter.out.mongo.RecorderAuditSink",
+      "to": "com.openhire.compliance.repository.mongo.RecorderAuditSink"
+    },
+    {
+      "from": "com.openhire.compliance.adapter.out.mongo.MongoPrivacyStore",
+      "to": "com.openhire.compliance.repository.mongo.MongoPrivacyStore"
+    },
+    {
+      "from": "com.openhire.compliance.adapter.out.mongo.MongoRecordRetention",
+      "to": "com.openhire.compliance.repository.mongo.MongoRecordRetention"
+    },
+    {
+      "from": "com.openhire.compliance.adapter.out.mongo.MongoActivityStore",
+      "to": "com.openhire.compliance.repository.mongo.MongoActivityStore"
+    },
+    {
+      "from": "com.openhire.compliance.adapter.out.mongo.MongoEvents",
+      "to": "com.openhire.compliance.repository.mongo.MongoEvents"
+    },
+    {
+      "from": "com.openhire.compliance.adapter.out.http.HttpApplicationDirectory",
+      "to": "com.openhire.compliance.client.http.HttpApplicationDirectory"
+    },
+    {
+      "from": "com.openhire.compliance.adapter.out.redis.RedisSweepLock",
+      "to": "com.openhire.compliance.repository.redis.RedisSweepLock"
+    },
+    {
+      "from": "com.openhire.compliance.adapter.out.crypto.AesGcmCipher",
+      "to": "com.openhire.compliance.security.AesGcmCipher"
+    },
+    {
+      "from": "com.openhire.communication.application.CommunicationViews",
+      "to": "com.openhire.communication.dto.CommunicationViews"
+    },
+    {
+      "from": "com.openhire.communication.application.port.CommunicationPorts",
+      "to": "com.openhire.communication.service.port.CommunicationPorts"
+    },
+    {
+      "from": "com.openhire.communication.application.CommunicationService",
+      "to": "com.openhire.communication.service.CommunicationService"
+    },
+    {
+      "from": "com.openhire.communication.adapter.in.kafka.LifecycleEventsListener",
+      "to": "com.openhire.communication.messaging.consumer.LifecycleEventsListener"
+    },
+    {
+      "from": "com.openhire.interview.application.port.InterviewPorts",
+      "to": "com.openhire.interview.service.port.InterviewPorts"
+    },
+    {
+      "from": "com.openhire.interview.application.InterviewViews",
+      "to": "com.openhire.interview.dto.InterviewViews"
+    },
+    {
+      "from": "com.openhire.interview.application.InterviewSettings",
+      "to": "com.openhire.interview.service.InterviewSettings"
+    },
+    {
+      "from": "com.openhire.interview.application.InterviewApplicationService",
+      "to": "com.openhire.interview.service.InterviewApplicationService"
+    },
+    {
+      "from": "com.openhire.communication.adapter.in.kafka.DeliveryUpdatesListener",
+      "to": "com.openhire.communication.messaging.consumer.DeliveryUpdatesListener"
+    },
+    {
+      "from": "com.openhire.communication.adapter.in.web.StaffViewers",
+      "to": "com.openhire.communication.controller.StaffViewers"
+    },
+    {
+      "from": "com.openhire.communication.adapter.in.web.CommunicationErrors",
+      "to": "com.openhire.communication.exception.CommunicationErrors"
+    },
+    {
+      "from": "com.openhire.communication.adapter.in.web.InternalMessageController",
+      "to": "com.openhire.communication.controller.InternalMessageController"
+    },
+    {
+      "from": "com.openhire.communication.adapter.in.web.TemplateController",
+      "to": "com.openhire.communication.controller.TemplateController"
+    },
+    {
+      "from": "com.openhire.communication.adapter.in.web.NotificationController",
+      "to": "com.openhire.communication.controller.NotificationController"
+    },
+    {
+      "from": "com.openhire.communication.adapter.in.web.ConversationController",
+      "to": "com.openhire.communication.controller.ConversationController"
+    },
+    {
+      "from": "com.openhire.communication.adapter.in.web.PublicCandidateController",
+      "to": "com.openhire.communication.controller.PublicCandidateController"
+    },
+    {
+      "from": "com.openhire.approval.application.port.ApprovalEventPublisher",
+      "to": "com.openhire.approval.service.port.ApprovalEventPublisher"
+    },
+    {
+      "from": "com.openhire.interview.adapter.in.kafka.ApplicationEventsListener",
+      "to": "com.openhire.interview.messaging.consumer.ApplicationEventsListener"
+    },
+    {
+      "from": "com.openhire.approval.application.port.ApprovalRepository",
+      "to": "com.openhire.approval.service.port.ApprovalRepository"
+    },
+    {
+      "from": "com.openhire.approval.application.port.DelegationResolver",
+      "to": "com.openhire.approval.service.port.DelegationResolver"
+    },
+    {
+      "from": "com.openhire.approval.application.port.JobWorkflowClient",
+      "to": "com.openhire.approval.service.port.JobWorkflowClient"
+    },
+    {
+      "from": "com.openhire.approval.application.ApprovalApplicationService",
+      "to": "com.openhire.approval.service.ApprovalApplicationService"
+    },
+    {
+      "from": "com.openhire.approval.application.ApprovalReminderScheduler",
+      "to": "com.openhire.approval.scheduler.ApprovalReminderScheduler"
+    },
+    {
+      "from": "com.openhire.communication.adapter.in.schedule.DigestScheduler",
+      "to": "com.openhire.communication.scheduler.DigestScheduler"
+    },
+    {
+      "from": "com.openhire.interview.adapter.in.web.PublicSchedulingController",
+      "to": "com.openhire.interview.controller.PublicSchedulingController"
+    },
+    {
+      "from": "com.openhire.interview.adapter.in.web.InterviewController",
+      "to": "com.openhire.interview.controller.InterviewController"
+    },
+    {
+      "from": "com.openhire.interview.adapter.in.web.Viewers",
+      "to": "com.openhire.interview.controller.Viewers"
+    },
+    {
+      "from": "com.openhire.interview.adapter.in.web.InterviewErrors",
+      "to": "com.openhire.interview.exception.InterviewErrors"
+    },
+    {
+      "from": "com.openhire.approval.api.ApprovalDtos",
+      "to": "com.openhire.approval.dto.ApprovalDtos"
+    },
+    {
+      "from": "com.openhire.approval.api.DelegationPeriodController",
+      "to": "com.openhire.approval.controller.DelegationPeriodController"
+    },
+    {
+      "from": "com.openhire.approval.api.ApprovalController",
+      "to": "com.openhire.approval.controller.ApprovalController"
+    },
+    {
+      "from": "com.openhire.interview.adapter.in.schedule.InterviewSweepScheduler",
+      "to": "com.openhire.interview.scheduler.InterviewSweepScheduler"
+    },
+    {
+      "from": "com.openhire.communication.adapter.out.mongo.MongoTemplateStore",
+      "to": "com.openhire.communication.repository.mongo.MongoTemplateStore"
+    },
+    {
+      "from": "com.openhire.communication.adapter.out.mongo.MongoDigestStore",
+      "to": "com.openhire.communication.repository.mongo.MongoDigestStore"
+    },
+    {
+      "from": "com.openhire.communication.adapter.out.mongo.MongoNotificationStore",
+      "to": "com.openhire.communication.repository.mongo.MongoNotificationStore"
+    },
+    {
+      "from": "com.openhire.communication.adapter.out.mongo.LegacyIndexCleanup",
+      "to": "com.openhire.communication.repository.mongo.LegacyIndexCleanup"
+    },
+    {
+      "from": "com.openhire.communication.adapter.out.mongo.MongoMessageStore",
+      "to": "com.openhire.communication.repository.mongo.MongoMessageStore"
+    },
+    {
+      "from": "com.openhire.communication.adapter.out.mongo.PrivacyData",
+      "to": "com.openhire.communication.repository.mongo.PrivacyData"
+    },
+    {
+      "from": "com.openhire.communication.adapter.out.mongo.MongoConversationStore",
+      "to": "com.openhire.communication.repository.mongo.MongoConversationStore"
+    },
+    {
+      "from": "com.openhire.communication.adapter.out.mongo.MongoCandidatePreferenceStore",
+      "to": "com.openhire.communication.repository.mongo.MongoCandidatePreferenceStore"
+    },
+    {
+      "from": "com.openhire.communication.adapter.out.mongo.MongoPreferenceStore",
+      "to": "com.openhire.communication.repository.mongo.MongoPreferenceStore"
+    },
+    {
+      "from": "com.openhire.interview.adapter.out.mongo.MongoBookingLedger",
+      "to": "com.openhire.interview.repository.mongo.MongoBookingLedger"
+    },
+    {
+      "from": "com.openhire.interview.adapter.out.mongo.PrivacyData",
+      "to": "com.openhire.interview.repository.mongo.PrivacyData"
+    },
+    {
+      "from": "com.openhire.interview.adapter.out.mongo.MongoLoopRepository",
+      "to": "com.openhire.interview.repository.mongo.MongoLoopRepository"
+    },
+    {
+      "from": "com.openhire.approval.adapter.out.events.ApprovalOutboxRepository",
+      "to": "com.openhire.approval.repository.mongo.ApprovalOutboxRepository"
+    },
+    {
+      "from": "com.openhire.approval.adapter.out.events.ApprovalEventConfiguration",
+      "to": "com.openhire.approval.config.ApprovalEventConfiguration"
+    },
+    {
+      "from": "com.openhire.approval.adapter.out.events.ApprovalOutboxRelay",
+      "to": "com.openhire.approval.messaging.publisher.ApprovalOutboxRelay"
+    },
+    {
+      "from": "com.openhire.communication.adapter.out.http.HttpReplyDrafter",
+      "to": "com.openhire.communication.client.http.HttpReplyDrafter"
+    },
+    {
+      "from": "com.openhire.communication.adapter.out.http.HttpContactDirectory",
+      "to": "com.openhire.communication.client.http.HttpContactDirectory"
+    },
+    {
+      "from": "com.openhire.aigateway.application.Bulkhead",
+      "to": "com.openhire.aigateway.service.Bulkhead"
+    },
+    {
+      "from": "com.openhire.aigateway.application.PromptAdminService",
+      "to": "com.openhire.aigateway.service.PromptAdminService"
+    },
+    {
+      "from": "com.openhire.aigateway.application.AiExceptions",
+      "to": "com.openhire.aigateway.exception.AiExceptions"
+    },
+    {
+      "from": "com.openhire.aigateway.application.AiDefaults",
+      "to": "com.openhire.aigateway.service.AiDefaults"
+    },
+    {
+      "from": "com.openhire.aigateway.application.EvaluationService",
+      "to": "com.openhire.aigateway.service.EvaluationService"
+    },
+    {
+      "from": "com.openhire.interview.adapter.out.http.HttpDirectories",
+      "to": "com.openhire.interview.client.http.HttpDirectories"
+    },
+    {
+      "from": "com.openhire.talent.application.port.TalentPorts",
+      "to": "com.openhire.talent.service.port.TalentPorts"
+    },
+    {
+      "from": "com.openhire.talent.application.SearchService",
+      "to": "com.openhire.talent.service.SearchService"
+    },
+    {
+      "from": "com.openhire.talent.application.TalentViews",
+      "to": "com.openhire.talent.dto.TalentViews"
+    },
+    {
+      "from": "com.openhire.talent.application.TalentSettings",
+      "to": "com.openhire.talent.service.TalentSettings"
+    },
+    {
+      "from": "com.openhire.talent.application.ProfileProjector",
+      "to": "com.openhire.talent.service.ProfileProjector"
+    },
+    {
+      "from": "com.openhire.talent.application.ConsentService",
+      "to": "com.openhire.talent.service.ConsentService"
+    },
+    {
+      "from": "com.openhire.talent.application.InvitationService",
+      "to": "com.openhire.talent.service.InvitationService"
+    },
+    {
+      "from": "com.openhire.talent.application.RediscoveryService",
+      "to": "com.openhire.talent.service.RediscoveryService"
+    },
+    {
+      "from": "com.openhire.approval.adapter.out.mongo.DelegationPeriodRepository",
+      "to": "com.openhire.approval.repository.mongo.DelegationPeriodRepository"
+    },
+    {
+      "from": "com.openhire.approval.adapter.out.mongo.MongoApprovalRepository",
+      "to": "com.openhire.approval.repository.mongo.MongoApprovalRepository"
+    },
+    {
+      "from": "com.openhire.approval.adapter.out.mongo.MongoDelegationResolver",
+      "to": "com.openhire.approval.repository.mongo.MongoDelegationResolver"
+    },
+    {
+      "from": "com.openhire.aigateway.application.port.LogRetention",
+      "to": "com.openhire.aigateway.service.port.LogRetention"
+    },
+    {
+      "from": "com.openhire.aigateway.application.port.AiPorts",
+      "to": "com.openhire.aigateway.service.port.AiPorts"
+    },
+    {
+      "from": "com.openhire.aigateway.application.ProvenanceWriter",
+      "to": "com.openhire.aigateway.service.ProvenanceWriter"
+    },
+    {
+      "from": "com.openhire.aigateway.application.ModelGateway",
+      "to": "com.openhire.aigateway.service.ModelGateway"
+    },
+    {
+      "from": "com.openhire.aigateway.application.AiViews",
+      "to": "com.openhire.aigateway.dto.AiViews"
+    },
+    {
+      "from": "com.openhire.aigateway.application.PromptRegistry",
+      "to": "com.openhire.aigateway.service.PromptRegistry"
+    },
+    {
+      "from": "com.openhire.aigateway.application.TaskRouter",
+      "to": "com.openhire.aigateway.service.TaskRouter"
+    },
+    {
+      "from": "com.openhire.aigateway.application.AiTaskService",
+      "to": "com.openhire.aigateway.service.AiTaskService"
+    },
+    {
+      "from": "com.openhire.aigateway.application.CostMeter",
+      "to": "com.openhire.aigateway.service.CostMeter"
+    },
+    {
+      "from": "com.openhire.aigateway.application.OpsService",
+      "to": "com.openhire.aigateway.service.OpsService"
+    },
+    {
+      "from": "com.openhire.aigateway.application.ProviderGuards",
+      "to": "com.openhire.aigateway.service.ProviderGuards"
+    },
+    {
+      "from": "com.openhire.aigateway.application.SettingsService",
+      "to": "com.openhire.aigateway.service.SettingsService"
+    },
+    {
+      "from": "com.openhire.aigateway.application.EvalGates",
+      "to": "com.openhire.aigateway.service.EvalGates"
+    },
+    {
+      "from": "com.openhire.aigateway.application.CircuitBreaker",
+      "to": "com.openhire.aigateway.service.CircuitBreaker"
+    },
+    {
+      "from": "com.openhire.talent.adapter.in.kafka.TalentEventsListener",
+      "to": "com.openhire.talent.messaging.consumer.TalentEventsListener"
+    },
+    {
+      "from": "com.openhire.talent.adapter.in.web.Viewers",
+      "to": "com.openhire.talent.controller.Viewers"
+    },
+    {
+      "from": "com.openhire.talent.adapter.in.web.TalentController",
+      "to": "com.openhire.talent.controller.TalentController"
+    },
+    {
+      "from": "com.openhire.talent.adapter.in.web.PublicConsentController",
+      "to": "com.openhire.talent.controller.PublicConsentController"
+    },
+    {
+      "from": "com.openhire.talent.adapter.in.web.TalentErrors",
+      "to": "com.openhire.talent.exception.TalentErrors"
+    },
+    {
+      "from": "com.openhire.talent.adapter.in.schedule.TalentScheduler",
+      "to": "com.openhire.talent.scheduler.TalentScheduler"
+    },
+    {
+      "from": "com.openhire.approval.adapter.out.job.HttpJobWorkflowClient",
+      "to": "com.openhire.approval.client.job.HttpJobWorkflowClient"
+    },
+    {
+      "from": "com.openhire.talent.adapter.out.mongo.MongoRuns",
+      "to": "com.openhire.talent.repository.mongo.MongoRuns"
+    },
+    {
+      "from": "com.openhire.talent.adapter.out.mongo.MongoInvitations",
+      "to": "com.openhire.talent.repository.mongo.MongoInvitations"
+    },
+    {
+      "from": "com.openhire.talent.adapter.out.mongo.PrivacyData",
+      "to": "com.openhire.talent.repository.mongo.PrivacyData"
+    },
+    {
+      "from": "com.openhire.talent.adapter.out.mongo.MongoOutbox",
+      "to": "com.openhire.talent.repository.mongo.MongoOutbox"
+    },
+    {
+      "from": "com.openhire.talent.adapter.out.mongo.MongoProfiles",
+      "to": "com.openhire.talent.repository.mongo.MongoProfiles"
+    },
+    {
+      "from": "com.openhire.talent.adapter.out.mongo.MongoVectors",
+      "to": "com.openhire.talent.repository.mongo.MongoVectors"
+    },
+    {
+      "from": "com.openhire.talent.adapter.out.http.HttpAiGateway",
+      "to": "com.openhire.talent.client.http.HttpAiGateway"
+    },
+    {
+      "from": "com.openhire.talent.adapter.out.http.HttpMessenger",
+      "to": "com.openhire.talent.client.http.HttpMessenger"
+    },
+    {
+      "from": "com.openhire.talent.adapter.out.http.HttpDirectories",
+      "to": "com.openhire.talent.client.http.HttpDirectories"
+    },
+    {
+      "from": "com.openhire.aigateway.adapter.in.web.AiErrors",
+      "to": "com.openhire.aigateway.exception.AiErrors"
+    },
+    {
+      "from": "com.openhire.aigateway.adapter.in.web.LogRetentionController",
+      "to": "com.openhire.aigateway.controller.LogRetentionController"
+    },
+    {
+      "from": "com.openhire.aigateway.adapter.in.web.StaffAiController",
+      "to": "com.openhire.aigateway.controller.StaffAiController"
+    },
+    {
+      "from": "com.openhire.aigateway.adapter.in.web.InternalAiController",
+      "to": "com.openhire.aigateway.controller.InternalAiController"
+    },
+    {
+      "from": "com.openhire.talent.adapter.out.redis.RedisSweepLock",
+      "to": "com.openhire.talent.repository.redis.RedisSweepLock"
+    },
+    {
+      "from": "com.openhire.interview.adapter.out.redis.RedisSweepLock",
+      "to": "com.openhire.interview.repository.redis.RedisSweepLock"
+    },
+    {
+      "from": "com.openhire.interview.adapter.out.redis.RedisSlotHolds",
+      "to": "com.openhire.interview.repository.redis.RedisSlotHolds"
+    },
+    {
+      "from": "com.openhire.interview.adapter.out.token.HmacSchedulingTokens",
+      "to": "com.openhire.interview.security.HmacSchedulingTokens"
+    },
+    {
+      "from": "com.openhire.aigateway.adapter.out.resource.ClasspathGoldenDatasets",
+      "to": "com.openhire.aigateway.repository.resource.ClasspathGoldenDatasets"
+    },
+    {
+      "from": "com.openhire.aigateway.adapter.out.redis.RedisResultCache",
+      "to": "com.openhire.aigateway.repository.redis.RedisResultCache"
+    },
+    {
+      "from": "com.openhire.aigateway.adapter.out.provider.OllamaProvider",
+      "to": "com.openhire.aigateway.client.provider.OllamaProvider"
+    },
+    {
+      "from": "com.openhire.aigateway.adapter.out.provider.ProviderSupport",
+      "to": "com.openhire.aigateway.client.provider.ProviderSupport"
+    },
+    {
+      "from": "com.openhire.aigateway.adapter.out.provider.OpenAiCompatibleProvider",
+      "to": "com.openhire.aigateway.client.provider.OpenAiCompatibleProvider"
+    },
+    {
+      "from": "com.openhire.employee.adapter.in.kafka.EmployeeEventsListener",
+      "to": "com.openhire.employee.messaging.consumer.EmployeeEventsListener"
+    },
+    {
+      "from": "com.openhire.aigateway.adapter.out.mongo.MongoSettingsStore",
+      "to": "com.openhire.aigateway.repository.mongo.MongoSettingsStore"
+    },
+    {
+      "from": "com.openhire.aigateway.adapter.out.mongo.MongoPromptStore",
+      "to": "com.openhire.aigateway.repository.mongo.MongoPromptStore"
+    },
+    {
+      "from": "com.openhire.aigateway.adapter.out.mongo.MongoLogRetention",
+      "to": "com.openhire.aigateway.repository.mongo.MongoLogRetention"
+    },
+    {
+      "from": "com.openhire.aigateway.adapter.out.mongo.MongoUsageStore",
+      "to": "com.openhire.aigateway.repository.mongo.MongoUsageStore"
+    },
+    {
+      "from": "com.openhire.aigateway.adapter.out.mongo.MongoEvalStore",
+      "to": "com.openhire.aigateway.repository.mongo.MongoEvalStore"
+    },
+    {
+      "from": "com.openhire.aigateway.adapter.out.mongo.MongoRequestLog",
+      "to": "com.openhire.aigateway.repository.mongo.MongoRequestLog"
+    },
+    {
+      "from": "com.openhire.employee.adapter.in.web.EmployeeController",
+      "to": "com.openhire.employee.controller.EmployeeController"
+    },
+    {
+      "from": "com.openhire.employee.adapter.in.web.Viewers",
+      "to": "com.openhire.employee.controller.Viewers"
+    },
+    {
+      "from": "com.openhire.employee.adapter.in.web.EmployeeErrors",
+      "to": "com.openhire.employee.exception.EmployeeErrors"
+    },
+    {
+      "from": "com.openhire.employee.adapter.in.schedule.EmployeeScheduler",
+      "to": "com.openhire.employee.scheduler.EmployeeScheduler"
+    },
+    {
+      "from": "com.openhire.employee.adapter.out.redis.RedisSweepLock",
+      "to": "com.openhire.employee.repository.redis.RedisSweepLock"
+    },
+    {
+      "from": "com.openhire.employee.application.Retries",
+      "to": "com.openhire.employee.service.Retries"
+    },
+    {
+      "from": "com.openhire.employee.application.EmployeeViews",
+      "to": "com.openhire.employee.dto.EmployeeViews"
+    },
+    {
+      "from": "com.openhire.employee.application.EmployeeNumberAllocator",
+      "to": "com.openhire.employee.service.EmployeeNumberAllocator"
+    },
+    {
+      "from": "com.openhire.employee.application.EmployeeSettings",
+      "to": "com.openhire.employee.service.EmployeeSettings"
+    },
+    {
+      "from": "com.openhire.employee.application.EmployeeApplicationService",
+      "to": "com.openhire.employee.service.EmployeeApplicationService"
+    },
+    {
+      "from": "com.openhire.employee.application.HireSagaService",
+      "to": "com.openhire.employee.service.HireSagaService"
+    },
+    {
+      "from": "com.openhire.employee.application.port.EmployeePorts",
+      "to": "com.openhire.employee.service.port.EmployeePorts"
+    },
+    {
+      "from": "com.openhire.employee.adapter.out.mongo.MongoEmployeeRepository",
+      "to": "com.openhire.employee.repository.mongo.MongoEmployeeRepository"
+    },
+    {
+      "from": "com.openhire.employee.adapter.out.mongo.MongoSagaRepository",
+      "to": "com.openhire.employee.repository.mongo.MongoSagaRepository"
+    },
+    {
+      "from": "com.openhire.employee.adapter.out.mongo.MongoEmployeeNumbers",
+      "to": "com.openhire.employee.repository.mongo.MongoEmployeeNumbers"
+    },
+    {
+      "from": "com.openhire.employee.adapter.out.mongo.PrivacyData",
+      "to": "com.openhire.employee.repository.mongo.PrivacyData"
+    },
+    {
+      "from": "com.openhire.employee.adapter.out.mongo.MongoRewardRepository",
+      "to": "com.openhire.employee.repository.mongo.MongoRewardRepository"
+    },
+    {
+      "from": "com.openhire.employee.adapter.out.http.HttpApplicationDirectory",
+      "to": "com.openhire.employee.client.http.HttpApplicationDirectory"
+    },
+    {
+      "from": "com.openhire.dispatch.application.port.DispatchPorts",
+      "to": "com.openhire.dispatch.service.port.DispatchPorts"
+    },
+    {
+      "from": "com.openhire.dispatch.application.port.ChannelAdapter",
+      "to": "com.openhire.dispatch.service.port.ChannelAdapter"
+    },
+    {
+      "from": "com.openhire.dispatch.application.DispatchService",
+      "to": "com.openhire.dispatch.service.DispatchService"
+    },
+    {
+      "from": "com.openhire.gateway.web.BffAccountController",
+      "to": "com.openhire.gateway.controller.BffAccountController"
+    },
+    {
+      "from": "com.openhire.gateway.web.BffSessionController",
+      "to": "com.openhire.gateway.controller.BffSessionController"
+    },
+    {
+      "from": "com.openhire.dispatch.adapter.in.kafka.DispatchCommandsListener",
+      "to": "com.openhire.dispatch.messaging.consumer.DispatchCommandsListener"
+    },
+    {
+      "from": "com.openhire.dispatch.adapter.out.redis.RedisDispatchGuards",
+      "to": "com.openhire.dispatch.repository.redis.RedisDispatchGuards"
+    },
+    {
+      "from": "com.openhire.dispatch.adapter.out.mongo.MongoDeliveryStore",
+      "to": "com.openhire.dispatch.repository.mongo.MongoDeliveryStore"
+    },
+    {
+      "from": "com.openhire.dispatch.adapter.out.mongo.PrivacyData",
+      "to": "com.openhire.dispatch.repository.mongo.PrivacyData"
+    },
+    {
+      "from": "com.openhire.dispatch.adapter.in.schedule.DeferredDeliveryScheduler",
+      "to": "com.openhire.dispatch.scheduler.DeferredDeliveryScheduler"
+    },
+    {
+      "from": "com.openhire.dispatch.adapter.out.channel.UnconfiguredChannels",
+      "to": "com.openhire.dispatch.client.channel.UnconfiguredChannels"
+    },
+    {
+      "from": "com.openhire.dispatch.adapter.out.channel.SmtpEmailAdapter",
+      "to": "com.openhire.dispatch.client.channel.SmtpEmailAdapter"
+    },
+    {
+      "from": "com.openhire.dispatch.adapter.in.web.DeliveryController",
+      "to": "com.openhire.dispatch.controller.DeliveryController"
+    }
+  ],
+  "routes": [
+    {
+      "module": "application-service",
+      "name": "BulkImportController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/imports\")",
+        "@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)",
+        "@GetMapping(\"/{id}\")"
+      ]
+    },
+    {
+      "module": "application-service",
+      "name": "SubmissionController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1\")",
+        "@GetMapping(\"/internal/applications/{id}/projection\")",
+        "@PostMapping(\"/internal/applications/{id}/receipt-check\")",
+        "@GetMapping(\"/applications/{id}/decision\")",
+        "@PostMapping(\"/applications/{id}/decision\")",
+        "@GetMapping(\"/public/consent\")",
+        "@PostMapping(value = \"/applications\", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)",
+        "@PostMapping(value = \"/applications\", consumes = MediaType.APPLICATION_JSON_VALUE)",
+        "@PostMapping(value = \"/public/applications\", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)",
+        "@GetMapping(\"/public/applications/{id}\")",
+        "@PostMapping(\"/public/applications/{id}/withdraw\")",
+        "@GetMapping(\"/applications\")",
+        "@GetMapping(\"/jobs/{id}/applications\")",
+        "@GetMapping(\"/jobs/{id}/pipeline\")",
+        "@GetMapping(\"/applications/{id}/assessment\")",
+        "@PatchMapping(\"/applications/{id}/stage\")",
+        "@PostMapping(\"/applications/{id}/shortlist\")",
+        "@PostMapping(\"/applications/{id}/reject\")",
+        "@PostMapping(\"/applications/{id}/undo-decision\")",
+        "@PostMapping(\"/applications/{id}/retry\")",
+        "@PostMapping(\"/applications/{id}/eligibility\")",
+        "@PostMapping(\"/applications/{id}/resume\")",
+        "@PostMapping(\"/assessments/{id}/override\")",
+        "@PutMapping(\"/partner-assignments/{actorId}/{jobId}\")",
+        "@GetMapping(\"/partner/jobs\")",
+        "@GetMapping({\"/partner/submissions\", \"/me/referrals\"})"
+      ]
+    },
+    {
+      "module": "application-service",
+      "name": "PrivacyLookupController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/internal/candidates\")",
+        "@GetMapping(\"/{candidateId}/application-ids\")"
+      ]
+    },
+    {
+      "module": "application-service",
+      "name": "ApiIntakeController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/public/api-applications\")",
+        "@PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)",
+        "@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)"
+      ]
+    },
+    {
+      "module": "application-service",
+      "name": "IntakeController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/intake/applications\")",
+        "@PostMapping(consumes = \"application/json\")",
+        "@GetMapping(\"/{id}\")",
+        "@GetMapping ",
+        "@PatchMapping(\"/{id}/stage\")"
+      ]
+    },
+    {
+      "module": "ai-workers",
+      "name": "IntegrityController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/integrity\")",
+        "@GetMapping(\"/signals\")",
+        "@PostMapping(\"/signals/{id}/dismiss\")"
+      ]
+    },
+    {
+      "module": "resume-processor",
+      "name": "ResumeController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1\")",
+        "@PostMapping(\"/internal/resumes\")",
+        "@GetMapping(\"/internal/resumes/{id}\")",
+        "@PostMapping(\"/internal/resumes/{id}/retry\")",
+        "@GetMapping(\"/resumes/{id}/download\")"
+      ]
+    },
+    {
+      "module": "interview-service",
+      "name": "PublicSchedulingController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/public/scheduling\")",
+        "@GetMapping ",
+        "@PostMapping(\"/book\")",
+        "@PostMapping(\"/alternatives\")",
+        "@PostMapping(\"/cancel\")"
+      ]
+    },
+    {
+      "module": "interview-service",
+      "name": "InterviewController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1\")",
+        "@PostMapping(\"/applications/{applicationId}/interview-loop\")",
+        "@GetMapping(\"/applications/{applicationId}/interview-loop\")",
+        "@GetMapping(\"/interviews\")",
+        "@GetMapping(\"/interviews/unscheduled\")",
+        "@GetMapping(\"/me/interviews\")",
+        "@PostMapping(\"/rounds/{roundId}/schedule\")",
+        "@PutMapping(\"/rounds/{roundId}/panel\")",
+        "@PostMapping(\"/rounds/{roundId}/reschedule\")",
+        "@PostMapping(\"/rounds/{roundId}/cancel\")",
+        "@PostMapping(\"/rounds/{roundId}/no-show\")",
+        "@PostMapping(\"/rounds/{roundId}/complete\")",
+        "@PostMapping(\"/rounds/{roundId}/scheduling-link\")",
+        "@GetMapping(\"/rounds/{roundId}/scorecard\")",
+        "@PostMapping(\"/rounds/{roundId}/scorecards\")",
+        "@GetMapping(\"/rounds/{roundId}/scorecards\")",
+        "@GetMapping(\"/applications/{applicationId}/debrief\")"
+      ]
+    },
+    {
+      "module": "candidate-service",
+      "name": "CandidateController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1\")",
+        "@PostMapping(\"/internal/candidates/resolve\")",
+        "@PostMapping(\"/internal/candidates/project\")",
+        "@GetMapping(\"/internal/candidates/{id}/canonical\")",
+        "@GetMapping(\"/candidates/{id}/360\")",
+        "@PutMapping(\"/candidates/{id}/owner\")",
+        "@GetMapping(\"/merge-suggestions\")",
+        "@PostMapping(\"/merge-suggestions/{id}/dismiss\")",
+        "@PostMapping(\"/candidates/merge\")"
+      ]
+    },
+    {
+      "module": "job-service",
+      "name": "JobController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/jobs\")",
+        "@GetMapping ",
+        "@PostMapping(\"/ai-draft\")",
+        "@GetMapping(\"/{id}\")",
+        "@PostMapping ",
+        "@PatchMapping(\"/{id}\")",
+        "@PutMapping(\"/{id}/hiring-team\")",
+        "@PutMapping(\"/{id}/versions/{version}/interview-plan\")",
+        "@PostMapping(\"/{id}/submit\")",
+        "@PostMapping(\"/{id}/publish\")",
+        "@PostMapping(\"/{id}/pause\")",
+        "@PostMapping(\"/{id}/close\")",
+        "@PostMapping(\"/{id}/reopen\")",
+        "@PostMapping(\"/{id}/versions/{version}/ai-draft\")",
+        "@PostMapping(\"/internal/{id}/approval-decision\")",
+        "@GetMapping(\"/internal/{id}/intake\")"
+      ]
+    },
+    {
+      "module": "job-service",
+      "name": "JobProjectionController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1\")",
+        "@GetMapping(\"/public/jobs\")",
+        "@GetMapping(\"/public/jobs/{id}\")",
+        "@GetMapping(\"/internal-jobs\")",
+        "@GetMapping(\"/me/inbox\")"
+      ]
+    },
+    {
+      "module": "communication-service",
+      "name": "InternalMessageController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/internal/messages\")",
+        "@PostMapping(\"/template\")"
+      ]
+    },
+    {
+      "module": "communication-service",
+      "name": "TemplateController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/message-templates\")",
+        "@GetMapping ",
+        "@PutMapping(\"/{key}\")",
+        "@PostMapping(\"/{key}/preview\")"
+      ]
+    },
+    {
+      "module": "communication-service",
+      "name": "NotificationController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1\")",
+        "@GetMapping(\"/notifications\")",
+        "@GetMapping(\"/notifications/unread-count\")",
+        "@PatchMapping(\"/notifications/{id}\")",
+        "@PostMapping(\"/notifications/read-all\")",
+        "@GetMapping(\"/me/notification-preferences\")",
+        "@PutMapping(\"/me/notification-preferences\")"
+      ]
+    },
+    {
+      "module": "communication-service",
+      "name": "ConversationController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/conversations\")",
+        "@GetMapping ",
+        "@PostMapping ",
+        "@GetMapping(\"/{id}\")",
+        "@PostMapping(\"/{id}/messages\")",
+        "@PostMapping(\"/{id}/ai-draft\")"
+      ]
+    },
+    {
+      "module": "communication-service",
+      "name": "PublicCandidateController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/public/applications/{applicationId}\")",
+        "@GetMapping(\"/messages\")",
+        "@PostMapping(\"/messages\")",
+        "@GetMapping(\"/communication-preferences\")",
+        "@PutMapping(\"/communication-preferences\")"
+      ]
+    },
+    {
+      "module": "analytics-service",
+      "name": "DeadLetterController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/admin/dlq\")",
+        "@GetMapping ",
+        "@GetMapping(\"/{id}\")",
+        "@PostMapping(\"/{id}/replay\")",
+        "@PostMapping(\"/replay\")"
+      ]
+    },
+    {
+      "module": "analytics-service",
+      "name": "PlatformController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/platform\")",
+        "@GetMapping(\"/services\")",
+        "@GetMapping(\"/slo\")",
+        "@GetMapping(\"/consumers\")"
+      ]
+    },
+    {
+      "module": "analytics-service",
+      "name": "SloMetricsController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/internal/platform\")",
+        "@GetMapping(value = \"/metrics\", produces = \"text/plain;version=0.0.4;charset=utf-8\")"
+      ]
+    },
+    {
+      "module": "analytics-service",
+      "name": "AnalyticsController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/analytics\")",
+        "@GetMapping(\"/kpis\")",
+        "@GetMapping(\"/funnel\")",
+        "@GetMapping(\"/time-to-hire\")",
+        "@GetMapping(\"/sources\")",
+        "@GetMapping(\"/ai-overrides\")",
+        "@GetMapping(\"/stage-latency\")"
+      ]
+    },
+    {
+      "module": "job-service",
+      "name": "HiringConfigurationController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1\")",
+        "@GetMapping(\"/hiring-stages\")",
+        "@PutMapping(\"/hiring-stages\")",
+        "@GetMapping(\"/pipeline-templates\")",
+        "@PutMapping(\"/pipeline-templates\")",
+        "@GetMapping(\"/pipeline-templates/resolve\")"
+      ]
+    },
+    {
+      "module": "employee-service",
+      "name": "EmployeeController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1\")",
+        "@GetMapping(\"/employees\")",
+        "@GetMapping(\"/employees/{id}\")",
+        "@PostMapping(\"/employees/{id}/activate\")",
+        "@GetMapping(\"/employees/{id}/onboarding\")",
+        "@PatchMapping(\"/employees/{id}/onboarding/tasks/{taskId}\")",
+        "@GetMapping(\"/me/onboarding\")",
+        "@PatchMapping(\"/me/onboarding/tasks/{taskId}\")",
+        "@GetMapping(\"/hire-sagas\")",
+        "@PostMapping(\"/hire-sagas/{id}/retry\")",
+        "@GetMapping(\"/me/referral-rewards\")"
+      ]
+    },
+    {
+      "module": "integration-hub",
+      "name": "WebhookDeliveryController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/webhooks\")",
+        "@GetMapping(\"/delivery-status\")",
+        "@GetMapping(\"/{id}/deliveries\")",
+        "@PostMapping(\"/{id}/deliveries/{delivery}/replay\")"
+      ]
+    },
+    {
+      "module": "integration-hub",
+      "name": "McpController",
+      "annotations": [
+        "@PostMapping(value = \"/api/v1/mcp\", produces = MediaType.APPLICATION_JSON_VALUE)",
+        "@GetMapping(\"/api/v1/connectors/mcp-confirmations\")",
+        "@PostMapping(\"/api/v1/connectors/mcp-confirmations/{id}/decision\")"
+      ]
+    },
+    {
+      "module": "integration-hub",
+      "name": "IntegrationController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1\")",
+        "@GetMapping(\"/connectors/catalog\")",
+        "@GetMapping(\"/connectors\")",
+        "@GetMapping(\"/webhooks\")",
+        "@PostMapping(\"/connectors\")",
+        "@PostMapping(\"/webhooks\")",
+        "@PutMapping(\"/connectors/{id}\")",
+        "@PutMapping(\"/webhooks/{id}\")"
+      ]
+    },
+    {
+      "module": "integration-hub",
+      "name": "CalendarWorkController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/connectors/{id}/calendar/work\")",
+        "@PutMapping(\"/{resource}\")",
+        "@GetMapping(\"/{resource}\")"
+      ]
+    },
+    {
+      "module": "integration-hub",
+      "name": "CalendarSyncController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/connectors/interview-sync\")",
+        "@GetMapping ",
+        "@PutMapping "
+      ]
+    },
+    {
+      "module": "integration-hub",
+      "name": "McpResourceMetadata",
+      "annotations": [
+        "@GetMapping(\"/api/v1/public/mcp/resource-metadata\")"
+      ]
+    },
+    {
+      "module": "integration-hub",
+      "name": "CalendarController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/connectors\")",
+        "@PostMapping(\"/{id}/authorize\")",
+        "@PostMapping(\"/oauth/callback\")",
+        "@GetMapping(\"/{id}/connection\")",
+        "@GetMapping(\"/{id}/calendar/events\")",
+        "@DeleteMapping(\"/{id}/connection\")"
+      ]
+    },
+    {
+      "module": "identity-service",
+      "name": "IdentityController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1\")",
+        "@PostMapping(\"/platform/organizations\")",
+        "@GetMapping(\"/platform/organizations\")",
+        "@PostMapping(\"/platform/organizations/onboard\")",
+        "@GetMapping(\"/platform/organizations/{id}\")",
+        "@PostMapping(\"/platform/organizations/{id}/admin-invitations\")",
+        "@PatchMapping(\"/platform/organizations/{id}/status\")",
+        "@GetMapping(\"/users\")",
+        "@PatchMapping(\"/users/{id}/roles\")",
+        "@DeleteMapping(\"/users/{id}\")",
+        "@GetMapping(\"/roles\")",
+        "@PostMapping(\"/roles\")",
+        "@PutMapping(\"/roles/{id}/permissions\")",
+        "@PostMapping(\"/invites\")",
+        "@GetMapping(\"/invites\")",
+        "@PostMapping(\"/invites/{id}/resend\")",
+        "@GetMapping(\"/public/invitations/{token}\")",
+        "@PostMapping(\"/public/invitations/{token}/accept\")",
+        "@PostMapping(\"/public/verifications/{code}/complete\")",
+        "@PostMapping(\"/internal/api-keys/validate\")",
+        "@GetMapping(\"/internal/tenant-access/{slug}\")",
+        "@PostMapping(\"/internal/tenant-access/{slug}/activate\")",
+        "@GetMapping(\"/api-keys\")",
+        "@PostMapping(\"/api-keys\")",
+        "@PostMapping(\"/api-keys/{id}/rotate\")",
+        "@DeleteMapping(\"/api-keys/{id}\")",
+        "@GetMapping(\"/setup\")",
+        "@PatchMapping(\"/setup/{step}/complete\")",
+        "@GetMapping(\"/auth-policy\")",
+        "@PutMapping(\"/auth-policy\")",
+        "@GetMapping(\"/sso-config\")",
+        "@PutMapping(\"/sso-config\")",
+        "@GetMapping(\"/platform/organizations/{id}/quota\")",
+        "@PutMapping(\"/platform/organizations/{id}/quota\")",
+        "@PostMapping(\"/platform/organizations/{id}/break-glass\")",
+        "@GetMapping(\"/platform/organizations/{id}/break-glass\")"
+      ]
+    },
+    {
+      "module": "identity-service",
+      "name": "ScimController",
+      "annotations": [
+        "@RequestMapping(value = \"/api/v1/scim/v2\", produces = \"application/scim+json\")",
+        "@GetMapping(\"/ServiceProviderConfig\")",
+        "@GetMapping(\"/ResourceTypes\")",
+        "@GetMapping(\"/ResourceTypes/User\")",
+        "@GetMapping(\"/Schemas\")",
+        "@GetMapping(\"/Schemas/{id}\")",
+        "@GetMapping(\"/Users\")",
+        "@GetMapping(\"/Users/{id}\")",
+        "@PostMapping(\"/Users\")",
+        "@PutMapping(\"/Users/{id}\")",
+        "@PatchMapping(\"/Users/{id}\")",
+        "@DeleteMapping(\"/Users/{id}\")"
+      ]
+    },
+    {
+      "module": "identity-service",
+      "name": "SamlController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/sso-config/saml\")",
+        "@GetMapping ",
+        "@PutMapping ",
+        "@PostMapping(\"/links\")"
+      ]
+    },
+    {
+      "module": "identity-service",
+      "name": "TenantPlatformController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/platform/tenants\")",
+        "@GetMapping ",
+        "@PostMapping ",
+        "@PostMapping(\"/onboard\")",
+        "@GetMapping(\"/{id}\")",
+        "@PostMapping(\"/{id}/admin-invitations\")",
+        "@PatchMapping(\"/{id}/status\")",
+        "@GetMapping(\"/{id}/quota\")",
+        "@PutMapping(\"/{id}/quota\")",
+        "@PostMapping(\"/{id}/break-glass\")",
+        "@GetMapping(\"/{id}/break-glass\")"
+      ]
+    },
+    {
+      "module": "talent-service",
+      "name": "TalentController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/talent\")",
+        "@GetMapping(\"/rediscovery\")",
+        "@PostMapping(\"/search/nl\")",
+        "@PostMapping(\"/search\")",
+        "@GetMapping(\"/pool-health\")",
+        "@PostMapping(\"/{candidateId}/invite\")"
+      ]
+    },
+    {
+      "module": "talent-service",
+      "name": "PublicConsentController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/public/applications/{applicationId}/talent-consent\")",
+        "@GetMapping ",
+        "@PutMapping "
+      ]
+    },
+    {
+      "module": "approval-service",
+      "name": "DelegationPeriodController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/approval-delegation-periods\")",
+        "@GetMapping ",
+        "@PostMapping "
+      ]
+    },
+    {
+      "module": "approval-service",
+      "name": "ApprovalController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1\")",
+        "@PostMapping(\"/approvals\")",
+        "@PostMapping(\"/internal/approvals\")",
+        "@GetMapping(\"/approvals\")",
+        "@GetMapping(\"/approvals/counts\")",
+        "@GetMapping(\"/approvals/sla-overdue\")",
+        "@GetMapping(\"/approvals/{id}\")",
+        "@PostMapping(\"/approvals/{id}/approve\")",
+        "@PostMapping(\"/approvals/{id}/reject\")",
+        "@PostMapping(\"/approvals/{id}/request-changes\")",
+        "@PostMapping(\"/approvals/{id}/undo\")",
+        "@PostMapping(\"/approval-delegations\")"
+      ]
+    },
+    {
+      "module": "compliance-service",
+      "name": "AuditController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/audit-events\")",
+        "@GetMapping ",
+        "@GetMapping(\"/verify\")",
+        "@GetMapping(\"/export\")"
+      ]
+    },
+    {
+      "module": "compliance-service",
+      "name": "PublicController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1\")",
+        "@PostMapping(\"/public/applications/{applicationId}/privacy-requests\")",
+        "@GetMapping(\"/public/applications/{applicationId}/privacy-requests\")",
+        "@GetMapping(\"/public/privacy-requests/{id}/export\")",
+        "@PutMapping(\"/public/applications/{applicationId}/self-identification\")",
+        "@GetMapping(\"/public/applications/{applicationId}/self-identification\")",
+        "@GetMapping(\"/internal/consent/active\")"
+      ]
+    },
+    {
+      "module": "compliance-service",
+      "name": "StaffController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1\")",
+        "@GetMapping(\"/ai-decisions\")",
+        "@GetMapping(\"/ai-decisions/{id}\")",
+        "@GetMapping(\"/trace/applications/{applicationId}\")",
+        "@GetMapping(\"/consent-texts\")",
+        "@PostMapping(\"/consent-texts\")",
+        "@GetMapping(\"/consent-records\")",
+        "@GetMapping(\"/privacy/requests\")",
+        "@GetMapping(\"/privacy/requests/{id}\")",
+        "@PostMapping(\"/privacy/requests\")",
+        "@GetMapping(\"/legal-holds\")",
+        "@PostMapping(\"/legal-holds\")",
+        "@PostMapping(\"/legal-holds/{id}/release\")",
+        "@GetMapping(\"/retention-policies\")",
+        "@PutMapping(\"/retention-policies/{key}\")",
+        "@PostMapping(\"/retention-policies/run\")",
+        "@GetMapping(\"/reports/fairness\")",
+        "@GetMapping(\"/compliance/overview\")"
+      ]
+    },
+    {
+      "module": "api-gateway",
+      "name": "BffAccountController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/me\")",
+        "@GetMapping ",
+        "@PatchMapping ",
+        "@GetMapping(\"/sessions\")",
+        "@DeleteMapping(\"/sessions\")"
+      ]
+    },
+    {
+      "module": "api-gateway",
+      "name": "BffSessionController",
+      "annotations": [
+        "@RequestMapping(\"/bff\")",
+        "@GetMapping(\"/session\")",
+        "@GetMapping(\"/csrf\")",
+        "@DeleteMapping(\"/session\")",
+        "@GetMapping(\"/logout\")"
+      ]
+    },
+    {
+      "module": "ai-gateway",
+      "name": "LogRetentionController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/internal/ai/log-retention\")",
+        "@GetMapping(\"/tenants\")",
+        "@PostMapping "
+      ]
+    },
+    {
+      "module": "ai-gateway",
+      "name": "StaffAiController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1\")",
+        "@PostMapping(\"/jobs/ai-draft\")",
+        "@GetMapping(\"/ai-settings\")",
+        "@PutMapping(\"/ai-settings\")",
+        "@GetMapping(\"/prompts\")",
+        "@GetMapping(\"/prompts/{id}\")",
+        "@PostMapping(\"/prompts/{id}/evaluate\")",
+        "@GetMapping(\"/eval-runs/{id}\")",
+        "@PostMapping(\"/prompts/{id}/promote\")",
+        "@GetMapping(\"/ai/ops-summary\")"
+      ]
+    },
+    {
+      "module": "ai-gateway",
+      "name": "InternalAiController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/internal/ai\")",
+        "@PostMapping(\"/embed\")",
+        "@PostMapping(\"/judge\")",
+        "@PostMapping(\"/structure-resume\")",
+        "@PostMapping(\"/jd-draft\")",
+        "@PostMapping(\"/message-draft\")",
+        "@PostMapping(\"/nl-filter\")",
+        "@PostMapping(\"/explain-fit\")"
+      ]
+    },
+    {
+      "module": "notification-dispatcher",
+      "name": "DeliveryController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/deliveries\")",
+        "@GetMapping ",
+        "@GetMapping(\"/{messageId}\")",
+        "@PostMapping(\"/{messageId}/retry\")"
+      ]
+    },
+    {
+      "module": "api-gateway",
+      "name": "OpenApiPortalConfiguration",
+      "annotations": [
+        "@GetMapping(\"/openapi/config\")"
+      ]
+    },
+    {
+      "module": "offer-service",
+      "name": "PublicOfferController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1/public\")",
+        "@GetMapping(\"/offers\")",
+        "@PostMapping(\"/offers/accept\")",
+        "@PostMapping(\"/offers/decline\")",
+        "@PostMapping(\"/offers/negotiate\")",
+        "@GetMapping(\"/applications/{applicationId}/offer\")"
+      ]
+    },
+    {
+      "module": "offer-service",
+      "name": "OfferController",
+      "annotations": [
+        "@RequestMapping(\"/api/v1\")",
+        "@GetMapping(\"/offers\")",
+        "@GetMapping(\"/offers/{id}\")",
+        "@PostMapping(\"/applications/{applicationId}/offer\")",
+        "@GetMapping(\"/applications/{applicationId}/offer\")",
+        "@PatchMapping(\"/offers/{id}\")",
+        "@PostMapping(\"/offers/{id}/submit\")",
+        "@PostMapping(\"/offers/{id}/approvals/{stepId}/approve\")",
+        "@PostMapping(\"/offers/{id}/approvals/{stepId}/reject\")",
+        "@PostMapping(\"/offers/{id}/send\")",
+        "@PostMapping(\"/offers/{id}/rescind\")",
+        "@GetMapping(\"/offer-templates\")",
+        "@PutMapping(\"/offer-templates/{key}\")",
+        "@GetMapping(\"/offer-clauses\")",
+        "@PutMapping(\"/offer-clauses/{key}\")"
+      ]
+    }
+  ]
+}

@@ -9,12 +9,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 /** Fixed, server-owned targets: the browser cannot supply a proxy destination. */
 @Configuration
-@RestController
 @ConditionalOnProperty(name = "springdoc.api-docs.enabled", havingValue = "true")
 public class OpenApiPortalConfiguration {
     public record ServiceSpec(String name, String environment, int port, String path) {}
@@ -52,7 +49,6 @@ public class OpenApiPortalConfiguration {
         return routes.build();
     }
 
-    @GetMapping("/openapi/config")
     public Map<String, Object> swaggerConfig() {
         var urls = new java.util.ArrayList<Map<String, String>>();
         urls.add(Map.of("name", "api-gateway", "url", "/v3/api-docs"));

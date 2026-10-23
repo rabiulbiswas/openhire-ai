@@ -6,11 +6,11 @@ Mapped operations: **7**. Framework-generated Actuator endpoints and gateway-pro
 
 ## PublicConsentController
 
-Source: [PublicConsentController](../../talent-service/src/main/java/com/openhire/talent/adapter/in/web/PublicConsentController.java).
+Source: [PublicConsentController](../../talent-service/src/main/java/com/openhire/talent/controller/PublicConsentController.java).
 
 ### GET `/api/v1/public/applications/{applicationId}/talent-consent`
 
-- Handler: `get` ([source](../../talent-service/src/main/java/com/openhire/talent/adapter/in/web/PublicConsentController.java#L26)).
+- Handler: `get` ([source](../../talent-service/src/main/java/com/openhire/talent/controller/PublicConsentController.java#L26)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `consent.current`.
@@ -23,7 +23,7 @@ ConsentView get( @PathVariable String applicationId, @RequestParam String tenant
 
 ### PUT `/api/v1/public/applications/{applicationId}/talent-consent`
 
-- Handler: `put` ([source](../../talent-service/src/main/java/com/openhire/talent/adapter/in/web/PublicConsentController.java#L34)).
+- Handler: `put` ([source](../../talent-service/src/main/java/com/openhire/talent/controller/PublicConsentController.java#L34)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `consent.set`.
@@ -36,11 +36,11 @@ ConsentView put( @PathVariable String applicationId, @RequestParam String tenant
 
 ## TalentController
 
-Source: [TalentController](../../talent-service/src/main/java/com/openhire/talent/adapter/in/web/TalentController.java).
+Source: [TalentController](../../talent-service/src/main/java/com/openhire/talent/controller/TalentController.java).
 
 ### GET `/api/v1/talent/rediscovery`
 
-- Handler: `rediscovery` ([source](../../talent-service/src/main/java/com/openhire/talent/adapter/in/web/TalentController.java#L42)).
+- Handler: `rediscovery` ([source](../../talent-service/src/main/java/com/openhire/talent/controller/TalentController.java#L42)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.staffTenant(auth)`.
 - Delegated operations: `rediscovery.forJob`.
@@ -53,7 +53,7 @@ SearchResult rediscovery( Authentication auth, @RequestParam(required = false) S
 
 ### POST `/api/v1/talent/search/nl`
 
-- Handler: `naturalLanguage` ([source](../../talent-service/src/main/java/com/openhire/talent/adapter/in/web/TalentController.java#L50)).
+- Handler: `naturalLanguage` ([source](../../talent-service/src/main/java/com/openhire/talent/controller/TalentController.java#L50)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.staffTenant(auth)`.
 - Delegated operations: `search.naturalLanguage`.
@@ -66,7 +66,7 @@ SearchResult naturalLanguage(Authentication auth, @RequestBody NlInput input)
 
 ### POST `/api/v1/talent/search`
 
-- Handler: `search` ([source](../../talent-service/src/main/java/com/openhire/talent/adapter/in/web/TalentController.java#L55)).
+- Handler: `search` ([source](../../talent-service/src/main/java/com/openhire/talent/controller/TalentController.java#L55)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.staffTenant(auth)`.
 - Delegated operations: `search.search`.
@@ -79,7 +79,7 @@ SearchResult search(Authentication auth, @RequestBody SearchInput input)
 
 ### GET `/api/v1/talent/pool-health`
 
-- Handler: `poolHealth` ([source](../../talent-service/src/main/java/com/openhire/talent/adapter/in/web/TalentController.java#L60)).
+- Handler: `poolHealth` ([source](../../talent-service/src/main/java/com/openhire/talent/controller/TalentController.java#L60)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.staffTenant(auth)`.
 - Delegated operations: `search.poolHealth`.
@@ -92,7 +92,7 @@ PoolHealth poolHealth(Authentication auth)
 
 ### POST `/api/v1/talent/{candidateId}/invite`
 
-- Handler: `invite` ([source](../../talent-service/src/main/java/com/openhire/talent/adapter/in/web/TalentController.java#L65)).
+- Handler: `invite` ([source](../../talent-service/src/main/java/com/openhire/talent/controller/TalentController.java#L65)).
 - Success status: \@ResponseStatus(HttpStatus.NO_CONTENT).
 - Controller access/tenant calls: `viewers.staffTenant(auth)`; `viewers.viewer(auth)`.
 - Delegated operations: `invitations.invite`.
@@ -109,7 +109,7 @@ These are source declarations, including nested DTO records referenced by signat
 
 ### ConsentInput
 
-[Definition](../../talent-service/src/main/java/com/openhire/talent/adapter/in/web/PublicConsentController.java)
+[Definition](../../talent-service/src/main/java/com/openhire/talent/controller/PublicConsentController.java)
 
 ```java
 record ConsentInput(Boolean granted)
@@ -117,7 +117,7 @@ record ConsentInput(Boolean granted)
 
 ### NlInput
 
-[Definition](../../talent-service/src/main/java/com/openhire/talent/adapter/in/web/TalentController.java)
+[Definition](../../talent-service/src/main/java/com/openhire/talent/controller/TalentController.java)
 
 ```java
 record NlInput(String query)
@@ -125,7 +125,7 @@ record NlInput(String query)
 
 ### SearchInput
 
-[Definition](../../talent-service/src/main/java/com/openhire/talent/adapter/in/web/TalentController.java)
+[Definition](../../talent-service/src/main/java/com/openhire/talent/controller/TalentController.java)
 
 ```java
 record SearchInput(Filters filters, String semanticQuery)
@@ -133,42 +133,10 @@ record SearchInput(Filters filters, String semanticQuery)
 
 ### InviteInput
 
-[Definition](../../talent-service/src/main/java/com/openhire/talent/adapter/in/web/TalentController.java)
+[Definition](../../talent-service/src/main/java/com/openhire/talent/controller/TalentController.java)
 
 ```java
 record InviteInput(String jobId)
-```
-
-### SearchResult
-
-[Definition](../../talent-service/src/main/java/com/openhire/talent/application/TalentViews.java)
-
-```java
-record SearchResult(
-            List<String> filters,
-            Filters filterSpec,
-            String semanticQuery,
-            List<CandidateView> candidates,
-            String rediscoveryForJobTitle,
-            String jobId,
-            String semanticMode)
-```
-
-### PoolHealth
-
-[Definition](../../talent-service/src/main/java/com/openhire/talent/application/TalentViews.java)
-
-```java
-record PoolHealth(
-            int silverMedalists, int consentExpiringSoon, int reEngagedThisQuarter, double hireRateFromPoolPct)
-```
-
-### ConsentView
-
-[Definition](../../talent-service/src/main/java/com/openhire/talent/application/TalentViews.java)
-
-```java
-record ConsentView(boolean granted, String consentUpdatedAt)
 ```
 
 ### Filters
@@ -185,9 +153,41 @@ record Filters(
             String stage)
 ```
 
+### SearchResult
+
+[Definition](../../talent-service/src/main/java/com/openhire/talent/dto/TalentViews.java)
+
+```java
+record SearchResult(
+            List<String> filters,
+            Filters filterSpec,
+            String semanticQuery,
+            List<CandidateView> candidates,
+            String rediscoveryForJobTitle,
+            String jobId,
+            String semanticMode)
+```
+
+### PoolHealth
+
+[Definition](../../talent-service/src/main/java/com/openhire/talent/dto/TalentViews.java)
+
+```java
+record PoolHealth(
+            int silverMedalists, int consentExpiringSoon, int reEngagedThisQuarter, double hireRateFromPoolPct)
+```
+
+### ConsentView
+
+[Definition](../../talent-service/src/main/java/com/openhire/talent/dto/TalentViews.java)
+
+```java
+record ConsentView(boolean granted, String consentUpdatedAt)
+```
+
 ### CandidateView
 
-[Definition](../../talent-service/src/main/java/com/openhire/talent/application/TalentViews.java)
+[Definition](../../talent-service/src/main/java/com/openhire/talent/dto/TalentViews.java)
 
 ```java
 record CandidateView(

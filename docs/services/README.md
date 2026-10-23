@@ -1,12 +1,17 @@
 # Service design and REST documentation
 
+Package checkpoint (2026-10-23): all 18 service sources use the standardized
+[backend package architecture](../BACKEND_PACKAGE_ARCHITECTURE.md). REST source links/signatures have been
+regenerated for the new locations. Persisted model names and existing HTTP mappings are preserved; the
+architecture guide explicitly lists remaining legacy controller/persistence dependencies.
+
 Source checkpoint: **2026-10-16**. Covers all **18 runnable backend modules** in `backend/settings.gradle`, plus two shared libraries. These documents describe implemented code and distinguish planned/unverified behavior; they do not certify every phase for production.
 
 Start with [end-to-end platform design](END_TO_END_DESIGN.md) and [shared component purposes](SHARED_COMPONENTS.md), then read the service guide and detailed REST reference.
 
 | Service | Business ownership | Design and components | REST details |
 | --- | --- | --- | --- |
-| identity-service | Organizations, members, policy, SAML and SCIM | [Design](identity-service.md) | [44 operations](identity-service-endpoints.md) |
+| identity-service | Tenants, members, policy, SAML and SCIM | [Design](identity-service.md) | [59 operations](identity-service-endpoints.md) |
 | api-gateway | Browser session and external API boundary | [Design](api-gateway.md) | [9 owned operations](api-gateway-endpoints.md) |
 | job-service | Requisition versions and publication | [Design](job-service.md) | [24 operations](job-service-endpoints.md) |
 | approval-service | Decisions, inbox and delegation | [Design](approval-service.md) | [13 operations](approval-service-endpoints.md) |

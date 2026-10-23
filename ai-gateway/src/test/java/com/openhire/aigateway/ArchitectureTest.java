@@ -15,20 +15,28 @@ class ArchitectureTest {
             .resideInAPackage("..aigateway.domain..")
             .should()
             .dependOnClassesThat()
-            .resideInAnyPackage("..aigateway.application..", "..aigateway.adapter..", "..aigateway.config..");
+            .resideInAnyPackage(
+                    "..aigateway.service..",
+                    "..aigateway.controller..",
+                    "..aigateway.repository..",
+                    "..aigateway.client..",
+                    "..aigateway.messaging..",
+                    "..aigateway.scheduler..",
+                    "..aigateway.config..");
 
     @ArchTest
-    static final ArchRule applicationDoesNotDependOnAdapters = noClasses()
+    static final ArchRule servicesDoNotDependOnInboundLayers = noClasses()
             .that()
-            .resideInAPackage("..aigateway.application..")
+            .resideInAPackage("..service..")
             .should()
             .dependOnClassesThat()
-            .resideInAnyPackage("..aigateway.adapter..", "..aigateway.config..");
+            .resideInAnyPackage(
+                    "com.openhire..controller..", "com.openhire..scheduler..", "com.openhire..messaging.consumer..");
 
     @ArchTest
     static final ArchRule applicationDoesNotUseWebOrKafkaOrRedis = noClasses()
             .that()
-            .resideInAPackage("..aigateway.application..")
+            .resideInAPackage("..aigateway.service..")
             .should()
             .dependOnClassesThat()
             .resideInAnyPackage(
@@ -37,7 +45,7 @@ class ArchitectureTest {
     @ArchTest
     static final ArchRule onlyProviderAdaptersTouchHttpClients = noClasses()
             .that()
-            .resideOutsideOfPackage("..aigateway.adapter.out.provider..")
+            .resideOutsideOfPackage("..aigateway.client.provider..")
             .should()
             .dependOnClassesThat()
             .haveFullyQualifiedName("org.springframework.web.client.RestClient");

@@ -6,11 +6,11 @@ Mapped operations: **10**. Framework-generated Actuator endpoints and gateway-pr
 
 ## EmployeeController
 
-Source: [EmployeeController](../../employee-service/src/main/java/com/openhire/employee/adapter/in/web/EmployeeController.java).
+Source: [EmployeeController](../../employee-service/src/main/java/com/openhire/employee/controller/EmployeeController.java).
 
 ### GET `/api/v1/employees`
 
-- Handler: `list` ([source](../../employee-service/src/main/java/com/openhire/employee/adapter/in/web/EmployeeController.java#L44)).
+- Handler: `list` ([source](../../employee-service/src/main/java/com/openhire/employee/controller/EmployeeController.java#L44)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.staff(auth)`; `viewers.tenant(auth)`.
 - Delegated operations: `employees.list`.
@@ -23,7 +23,7 @@ Page<EmployeeSummary> list( Authentication auth, @RequestParam(required = false)
 
 ### GET `/api/v1/employees/{id}`
 
-- Handler: `detail` ([source](../../employee-service/src/main/java/com/openhire/employee/adapter/in/web/EmployeeController.java#L53)).
+- Handler: `detail` ([source](../../employee-service/src/main/java/com/openhire/employee/controller/EmployeeController.java#L53)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.staff(auth)`; `viewers.tenant(auth)`.
 - Delegated operations: `employees.detail`.
@@ -36,7 +36,7 @@ EmployeeDetail detail(Authentication auth, @PathVariable String id)
 
 ### POST `/api/v1/employees/{id}/activate`
 
-- Handler: `activate` ([source](../../employee-service/src/main/java/com/openhire/employee/adapter/in/web/EmployeeController.java#L59)).
+- Handler: `activate` ([source](../../employee-service/src/main/java/com/openhire/employee/controller/EmployeeController.java#L59)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.staff(auth)`; `viewers.tenant(auth)`.
 - Delegated operations: `employees.activate`.
@@ -49,7 +49,7 @@ EmployeeDetail activate(Authentication auth, @PathVariable String id)
 
 ### GET `/api/v1/employees/{id}/onboarding`
 
-- Handler: `onboarding` ([source](../../employee-service/src/main/java/com/openhire/employee/adapter/in/web/EmployeeController.java#L65)).
+- Handler: `onboarding` ([source](../../employee-service/src/main/java/com/openhire/employee/controller/EmployeeController.java#L65)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.viewer(auth)`.
 - Delegated operations: `employees.onboarding`.
@@ -62,7 +62,7 @@ OnboardingView onboarding(Authentication auth, @PathVariable String id)
 
 ### PATCH `/api/v1/employees/{id}/onboarding/tasks/{taskId}`
 
-- Handler: `toggle` ([source](../../employee-service/src/main/java/com/openhire/employee/adapter/in/web/EmployeeController.java#L70)).
+- Handler: `toggle` ([source](../../employee-service/src/main/java/com/openhire/employee/controller/EmployeeController.java#L70)).
 - Success status: \@ResponseStatus(HttpStatus.NO_CONTENT).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.viewer(auth)`.
 - Delegated operations: `employees.toggleTask`.
@@ -75,7 +75,7 @@ void toggle( Authentication auth, @PathVariable String id, @PathVariable String 
 
 ### GET `/api/v1/me/onboarding`
 
-- Handler: `mine` ([source](../../employee-service/src/main/java/com/openhire/employee/adapter/in/web/EmployeeController.java#L77)).
+- Handler: `mine` ([source](../../employee-service/src/main/java/com/openhire/employee/controller/EmployeeController.java#L77)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.email(auth)`.
 - Delegated operations: `employees.mine`.
@@ -88,7 +88,7 @@ MyOnboardingView mine(Authentication auth)
 
 ### PATCH `/api/v1/me/onboarding/tasks/{taskId}`
 
-- Handler: `toggleMine` ([source](../../employee-service/src/main/java/com/openhire/employee/adapter/in/web/EmployeeController.java#L82)).
+- Handler: `toggleMine` ([source](../../employee-service/src/main/java/com/openhire/employee/controller/EmployeeController.java#L82)).
 - Success status: \@ResponseStatus(HttpStatus.NO_CONTENT).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.email(auth)`.
 - Delegated operations: `employees.toggleMine`.
@@ -101,7 +101,7 @@ void toggleMine(Authentication auth, @PathVariable String taskId, @RequestBody T
 
 ### GET `/api/v1/hire-sagas`
 
-- Handler: `sagas` ([source](../../employee-service/src/main/java/com/openhire/employee/adapter/in/web/EmployeeController.java#L88)).
+- Handler: `sagas` ([source](../../employee-service/src/main/java/com/openhire/employee/controller/EmployeeController.java#L88)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.requireOperator(auth)`; `viewers.tenant(auth)`.
 - Delegated operations: `employees.sagas`.
@@ -114,7 +114,7 @@ Page<SagaView> sagas(Authentication auth, @RequestParam(required = false) String
 
 ### POST `/api/v1/hire-sagas/{id}/retry`
 
-- Handler: `retry` ([source](../../employee-service/src/main/java/com/openhire/employee/adapter/in/web/EmployeeController.java#L94)).
+- Handler: `retry` ([source](../../employee-service/src/main/java/com/openhire/employee/controller/EmployeeController.java#L94)).
 - Success status: \@ResponseStatus(HttpStatus.NO_CONTENT).
 - Controller access/tenant calls: `viewers.requireOperator(auth)`; `viewers.tenant(auth)`; `viewers.viewer(auth)`.
 - Delegated operations: `sagas.retry`.
@@ -127,7 +127,7 @@ void retry(Authentication auth, @PathVariable String id)
 
 ### GET `/api/v1/me/referral-rewards`
 
-- Handler: `rewards` ([source](../../employee-service/src/main/java/com/openhire/employee/adapter/in/web/EmployeeController.java#L101)).
+- Handler: `rewards` ([source](../../employee-service/src/main/java/com/openhire/employee/controller/EmployeeController.java#L101)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.viewer(auth)`.
 - Delegated operations: `employees.rewards`.
@@ -144,7 +144,7 @@ These are source declarations, including nested DTO records referenced by signat
 
 ### TaskInput
 
-[Definition](../../employee-service/src/main/java/com/openhire/employee/adapter/in/web/EmployeeController.java)
+[Definition](../../employee-service/src/main/java/com/openhire/employee/controller/EmployeeController.java)
 
 ```java
 record TaskInput(Boolean done)
@@ -152,7 +152,7 @@ record TaskInput(Boolean done)
 
 ### Page
 
-[Definition](../../employee-service/src/main/java/com/openhire/employee/application/EmployeeViews.java)
+[Definition](../../employee-service/src/main/java/com/openhire/employee/dto/EmployeeViews.java)
 
 ```java
 record Page<T>(List<T> data, String nextCursor, boolean hasMore)
@@ -160,7 +160,7 @@ record Page<T>(List<T> data, String nextCursor, boolean hasMore)
 
 ### EmployeeSummary
 
-[Definition](../../employee-service/src/main/java/com/openhire/employee/application/EmployeeViews.java)
+[Definition](../../employee-service/src/main/java/com/openhire/employee/dto/EmployeeViews.java)
 
 ```java
 record EmployeeSummary(
@@ -175,7 +175,7 @@ record EmployeeSummary(
 
 ### EmployeeDetail
 
-[Definition](../../employee-service/src/main/java/com/openhire/employee/application/EmployeeViews.java)
+[Definition](../../employee-service/src/main/java/com/openhire/employee/dto/EmployeeViews.java)
 
 ```java
 record EmployeeDetail(
@@ -198,7 +198,7 @@ record EmployeeDetail(
 
 ### OnboardingView
 
-[Definition](../../employee-service/src/main/java/com/openhire/employee/application/EmployeeViews.java)
+[Definition](../../employee-service/src/main/java/com/openhire/employee/dto/EmployeeViews.java)
 
 ```java
 record OnboardingView(String employeeId, List<TaskView> tasks)
@@ -206,7 +206,7 @@ record OnboardingView(String employeeId, List<TaskView> tasks)
 
 ### MyOnboardingView
 
-[Definition](../../employee-service/src/main/java/com/openhire/employee/application/EmployeeViews.java)
+[Definition](../../employee-service/src/main/java/com/openhire/employee/dto/EmployeeViews.java)
 
 ```java
 record MyOnboardingView(
@@ -221,7 +221,7 @@ record MyOnboardingView(
 
 ### SagaView
 
-[Definition](../../employee-service/src/main/java/com/openhire/employee/application/EmployeeViews.java)
+[Definition](../../employee-service/src/main/java/com/openhire/employee/dto/EmployeeViews.java)
 
 ```java
 record SagaView(
@@ -242,7 +242,7 @@ record SagaView(
 
 ### RewardView
 
-[Definition](../../employee-service/src/main/java/com/openhire/employee/application/EmployeeViews.java)
+[Definition](../../employee-service/src/main/java/com/openhire/employee/dto/EmployeeViews.java)
 
 ```java
 record RewardView(
@@ -265,7 +265,7 @@ record Contact(String name, String email)
 
 ### TaskView
 
-[Definition](../../employee-service/src/main/java/com/openhire/employee/application/EmployeeViews.java)
+[Definition](../../employee-service/src/main/java/com/openhire/employee/dto/EmployeeViews.java)
 
 ```java
 record TaskView(String id, String label, boolean done, String group, String doneAt)

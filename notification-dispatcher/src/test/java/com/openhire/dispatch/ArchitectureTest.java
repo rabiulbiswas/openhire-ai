@@ -15,17 +15,21 @@ class ArchitectureTest {
             .resideInAPackage("..dispatch.domain..")
             .should()
             .dependOnClassesThat()
-            .resideInAnyPackage("..dispatch.application..", "..dispatch.adapter..", "..dispatch.config..");
+            .resideInAnyPackage(
+                    "..dispatch.service..",
+                    "..dispatch.controller..",
+                    "..dispatch.repository..",
+                    "..dispatch.client..",
+                    "..dispatch.messaging..",
+                    "..dispatch.scheduler..",
+                    "..dispatch.config..");
 
     @ArchTest
-    static final ArchRule applicationDoesNotDependOnAdapters = noClasses()
+    static final ArchRule servicesDoNotDependOnInboundLayers = noClasses()
             .that()
-            .resideInAPackage("..dispatch.application..")
+            .resideInAPackage("..service..")
             .should()
             .dependOnClassesThat()
             .resideInAnyPackage(
-                    "..dispatch.adapter..",
-                    "org.springframework.mail..",
-                    "org.springframework.kafka..",
-                    "org.springframework.web..");
+                    "com.openhire..controller..", "com.openhire..scheduler..", "com.openhire..messaging.consumer..");
 }

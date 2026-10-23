@@ -80,7 +80,9 @@ phase guide before running them, use a dedicated development tenant, and supply 
 the optional image-only PDF generator also needs the Sharp dependency used by its fixture code.
 
 Keep fixture files and `phase3-staff-token.mjs` with the testing tools: other scripts import them.
-The two `*.test.mjs` files test tools under `deployment/` and `maintenance/`, and are invoked by CI.
+The `*.test.mjs` files test deployment/maintenance tooling, tenant configuration and package contracts, and are
+invoked by CI. Run `node scripts/maintenance/package-layout.mjs` for package alignment, HTTP mapping and
+persisted class-name compatibility checks; see [backend package architecture](../docs/BACKEND_PACKAGE_ARCHITECTURE.md).
 
 ## Setup
 
@@ -102,10 +104,10 @@ a standalone deployment command.
 
 No scripts were removed from the toolset. `.github/scripts/` remains separate because it contains pipeline-specific
 change detection, release and deployment helpers rather than the operator tools in this directory.
-# Branded login assets
+
+## Branded login assets
 
 `bash scripts/setup/install-login-theme.sh` copies the OpenHire login theme into the running Keycloak
 container without restarting it. It does not modify clients, users, callback allowlists or credentials.
 An operator selects `openhire` under each tenant/platform client's Login theme setting afterward.
 `deploy-local.sh --tenant-portals` includes this asset installation. See `docs/TENANT_PORTALS.md` for setup.
-

@@ -52,7 +52,7 @@ management:
 
 openhire:
   tenant:
-    default-id: ${OPENHIRE_DEFAULT_TENANT:demo-tenant}
+    default-id: ${OPENHIRE_DEFAULT_TENANT:}
   outbox:
     relay-enabled: ${OPENHIRE_OUTBOX_RELAY_ENABLED:true}
     poll-delay: 1000

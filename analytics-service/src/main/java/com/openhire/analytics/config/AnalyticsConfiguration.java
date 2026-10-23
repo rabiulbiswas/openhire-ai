@@ -1,12 +1,12 @@
 package com.openhire.analytics.config;
 
-import com.openhire.analytics.application.AnalyticsQueryService;
-import com.openhire.analytics.application.DeadLetterService;
-import com.openhire.analytics.application.HealthPollService;
-import com.openhire.analytics.application.PlatformQueryService;
-import com.openhire.analytics.application.PlatformSettings;
-import com.openhire.analytics.application.ProjectionService;
-import com.openhire.analytics.application.port.AnalyticsPorts.*;
+import com.openhire.analytics.service.AnalyticsQueryService;
+import com.openhire.analytics.service.DeadLetterService;
+import com.openhire.analytics.service.HealthPollService;
+import com.openhire.analytics.service.PlatformQueryService;
+import com.openhire.analytics.service.PlatformSettings;
+import com.openhire.analytics.service.ProjectionService;
+import com.openhire.analytics.service.port.AnalyticsPorts.*;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.LinkedHashMap;
@@ -19,9 +19,9 @@ import tools.jackson.databind.ObjectMapper;
 @Configuration
 class AnalyticsConfiguration {
     @Bean
-    com.openhire.analytics.application.MonitoredSlos monitoredSlos(
-            PlatformQueryService platform, com.openhire.analytics.application.MonitoredSlos.Samples samples) {
-        return new com.openhire.analytics.application.MonitoredSlos(platform, samples);
+    com.openhire.analytics.service.MonitoredSlos monitoredSlos(
+            PlatformQueryService platform, com.openhire.analytics.service.MonitoredSlos.Samples samples) {
+        return new com.openhire.analytics.service.MonitoredSlos(platform, samples);
     }
 
     @Bean

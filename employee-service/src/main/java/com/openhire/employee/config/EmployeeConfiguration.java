@@ -1,8 +1,8 @@
 package com.openhire.employee.config;
 
-import com.openhire.employee.application.EmployeeNumberAllocator;
-import com.openhire.employee.application.EmployeeSettings;
-import com.openhire.employee.application.port.EmployeePorts.EmployeeNumbers;
+import com.openhire.employee.service.EmployeeNumberAllocator;
+import com.openhire.employee.service.EmployeeSettings;
+import com.openhire.employee.service.port.EmployeePorts.EmployeeNumbers;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.Arrays;

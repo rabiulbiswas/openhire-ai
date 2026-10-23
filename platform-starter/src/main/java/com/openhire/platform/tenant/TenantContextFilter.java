@@ -17,6 +17,9 @@ public class TenantContextFilter extends OncePerRequestFilter {
     private static final String TENANT_HEADER = "X-Tenant-Id";
     private final String defaultTenantId;
 
+    @Value("${openhire.security.mode:oidc}")
+    private String securityMode = "oidc";
+
     public TenantContextFilter(@Value("${openhire.tenant.default-id:}") String defaultTenantId) {
         this.defaultTenantId = defaultTenantId;
     }
@@ -34,7 +37,7 @@ public class TenantContextFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         var tenantId = request.getHeader(TENANT_HEADER);
-        if (tenantId == null || tenantId.isBlank()) {
+        if ((tenantId == null || tenantId.isBlank()) && "local".equals(securityMode)) {
             tenantId = defaultTenantId;
         }
         if ((tenantId == null || tenantId.isBlank()) && request.getRequestURI().startsWith("/api/")) {

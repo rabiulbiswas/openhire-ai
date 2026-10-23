@@ -6,11 +6,11 @@ Mapped operations: **18**. Framework-generated Actuator endpoints and gateway-pr
 
 ## InternalAiController
 
-Source: [InternalAiController](../../ai-gateway/src/main/java/com/openhire/aigateway/adapter/in/web/InternalAiController.java).
+Source: [InternalAiController](../../ai-gateway/src/main/java/com/openhire/aigateway/controller/InternalAiController.java).
 
 ### POST `/api/v1/internal/ai/embed`
 
-- Handler: `embed` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/adapter/in/web/InternalAiController.java#L41)).
+- Handler: `embed` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/controller/InternalAiController.java#L41)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `tasks.embed`.
@@ -23,7 +23,7 @@ EmbedResponse embed( @RequestHeader(value = "X-Internal-Service-Secret", require
 
 ### POST `/api/v1/internal/ai/judge`
 
-- Handler: `judge` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/adapter/in/web/InternalAiController.java#L49)).
+- Handler: `judge` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/controller/InternalAiController.java#L49)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `tasks.judge`.
@@ -36,7 +36,7 @@ JudgeResponse judge( @RequestHeader(value = "X-Internal-Service-Secret", require
 
 ### POST `/api/v1/internal/ai/structure-resume`
 
-- Handler: `structure` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/adapter/in/web/InternalAiController.java#L57)).
+- Handler: `structure` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/controller/InternalAiController.java#L57)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `tasks.structureResume`.
@@ -49,7 +49,7 @@ Map<String, Object> structure( @RequestHeader(value = "X-Internal-Service-Secret
 
 ### POST `/api/v1/internal/ai/jd-draft`
 
-- Handler: `jdDraft` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/adapter/in/web/InternalAiController.java#L65)).
+- Handler: `jdDraft` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/controller/InternalAiController.java#L65)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `tasks.jdDraft`.
@@ -62,7 +62,7 @@ Map<String, Object> jdDraft( @RequestHeader(value = "X-Internal-Service-Secret",
 
 ### POST `/api/v1/internal/ai/message-draft`
 
-- Handler: `message` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/adapter/in/web/InternalAiController.java#L73)).
+- Handler: `message` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/controller/InternalAiController.java#L73)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `tasks.messageDraft`.
@@ -75,7 +75,7 @@ MessageResponse message( @RequestHeader(value = "X-Internal-Service-Secret", req
 
 ### POST `/api/v1/internal/ai/nl-filter`
 
-- Handler: `nlFilter` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/adapter/in/web/InternalAiController.java#L81)).
+- Handler: `nlFilter` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/controller/InternalAiController.java#L81)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `tasks.nlFilter`.
@@ -88,7 +88,7 @@ Map<String, Object> nlFilter( @RequestHeader(value = "X-Internal-Service-Secret"
 
 ### POST `/api/v1/internal/ai/explain-fit`
 
-- Handler: `explain` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/adapter/in/web/InternalAiController.java#L89)).
+- Handler: `explain` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/controller/InternalAiController.java#L89)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `tasks.explainFit`.
@@ -101,11 +101,11 @@ ExplainResponse explain( @RequestHeader(value = "X-Internal-Service-Secret", req
 
 ## LogRetentionController
 
-Source: [LogRetentionController](../../ai-gateway/src/main/java/com/openhire/aigateway/adapter/in/web/LogRetentionController.java).
+Source: [LogRetentionController](../../ai-gateway/src/main/java/com/openhire/aigateway/controller/LogRetentionController.java).
 
 ### GET `/api/v1/internal/ai/log-retention/tenants`
 
-- Handler: `tenants` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/adapter/in/web/LogRetentionController.java#L26)).
+- Handler: `tenants` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/controller/LogRetentionController.java#L26)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.internal(secret)`.
 
@@ -117,7 +117,7 @@ Map<String, Object> tenants(@RequestHeader("X-Internal-Service-Secret") String s
 
 ### POST `/api/v1/internal/ai/log-retention`
 
-- Handler: `run` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/adapter/in/web/LogRetentionController.java#L32)).
+- Handler: `run` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/controller/LogRetentionController.java#L32)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.internal(secret)`.
 
@@ -129,11 +129,11 @@ Map<String, Object> run(@RequestHeader("X-Internal-Service-Secret") String secre
 
 ## StaffAiController
 
-Source: [StaffAiController](../../ai-gateway/src/main/java/com/openhire/aigateway/adapter/in/web/StaffAiController.java).
+Source: [StaffAiController](../../ai-gateway/src/main/java/com/openhire/aigateway/controller/StaffAiController.java).
 
 ### POST `/api/v1/jobs/ai-draft`
 
-- Handler: `draft` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/adapter/in/web/StaffAiController.java#L106)).
+- Handler: `draft` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/controller/StaffAiController.java#L106)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `require(auth, DRAFTERS)`.
 - Delegated operations: `tasks.staffDraft`.
@@ -146,7 +146,7 @@ DraftResponse draft(Authentication auth, @RequestBody JdRequest request)
 
 ### GET `/api/v1/ai-settings`
 
-- Handler: `settings` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/adapter/in/web/StaffAiController.java#L111)).
+- Handler: `settings` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/controller/StaffAiController.java#L111)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `require(auth, ADMINS)`.
 - Delegated operations: `settings.view`.
@@ -159,7 +159,7 @@ SettingsView settings(Authentication auth)
 
 ### PUT `/api/v1/ai-settings`
 
-- Handler: `updateSettings` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/adapter/in/web/StaffAiController.java#L116)).
+- Handler: `updateSettings` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/controller/StaffAiController.java#L116)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `require(auth, ADMINS)`; `access.actor(auth)`.
 - Delegated operations: `settings.update`.
@@ -172,7 +172,7 @@ SettingsView updateSettings(Authentication auth, @RequestBody UpdateInput input)
 
 ### GET `/api/v1/prompts`
 
-- Handler: `prompts` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/adapter/in/web/StaffAiController.java#L122)).
+- Handler: `prompts` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/controller/StaffAiController.java#L122)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `require(auth, PROMPT_READERS)`.
 - Delegated operations: `prompts.list`.
@@ -185,7 +185,7 @@ List<PromptSummary> prompts(Authentication auth)
 
 ### GET `/api/v1/prompts/{id}`
 
-- Handler: `prompt` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/adapter/in/web/StaffAiController.java#L127)).
+- Handler: `prompt` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/controller/StaffAiController.java#L127)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `require(auth, PROMPT_READERS)`.
 - Delegated operations: `prompts.get`.
@@ -198,7 +198,7 @@ PromptDetail prompt(Authentication auth, @PathVariable String id)
 
 ### POST `/api/v1/prompts/{id}/evaluate`
 
-- Handler: `evaluate` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/adapter/in/web/StaffAiController.java#L132)).
+- Handler: `evaluate` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/controller/StaffAiController.java#L132)).
 - Success status: ResponseEntity chooses status; see handler.
 - Controller access/tenant calls: `require(auth, ADMINS)`; `access.actor(auth)`.
 - Delegated operations: `evaluation.start`.
@@ -211,7 +211,7 @@ ResponseEntity<EvalRunView> evaluate(Authentication auth, @PathVariable String i
 
 ### GET `/api/v1/eval-runs/{id}`
 
-- Handler: `evalRun` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/adapter/in/web/StaffAiController.java#L138)).
+- Handler: `evalRun` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/controller/StaffAiController.java#L138)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `require(auth, ADMINS)`.
 - Delegated operations: `evaluation.get`.
@@ -224,7 +224,7 @@ EvalRunView evalRun(Authentication auth, @PathVariable String id)
 
 ### POST `/api/v1/prompts/{id}/promote`
 
-- Handler: `promote` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/adapter/in/web/StaffAiController.java#L143)).
+- Handler: `promote` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/controller/StaffAiController.java#L143)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `require(auth, ADMINS)`; `access.actor(auth)`.
 - Delegated operations: `prompts.promote`.
@@ -237,7 +237,7 @@ PromptSummary promote( Authentication auth, @PathVariable String id, @RequestBod
 
 ### GET `/api/v1/ai/ops-summary`
 
-- Handler: `summary` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/adapter/in/web/StaffAiController.java#L150)).
+- Handler: `summary` ([source](../../ai-gateway/src/main/java/com/openhire/aigateway/controller/StaffAiController.java#L150)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `require(auth, ADMINS)`.
 - Delegated operations: `ops.summary`.
@@ -254,7 +254,7 @@ These are source declarations, including nested DTO records referenced by signat
 
 ### Input
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/adapter/in/web/LogRetentionController.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/controller/LogRetentionController.java)
 
 ```java
 record Input(String tenantId, String cutoff, boolean dryRun, int limit)
@@ -262,7 +262,7 @@ record Input(String tenantId, String cutoff, boolean dryRun, int limit)
 
 ### PromoteInput
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/adapter/in/web/StaffAiController.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/controller/StaffAiController.java)
 
 ```java
 record PromoteInput(Integer trafficPct)
@@ -270,7 +270,7 @@ record PromoteInput(Integer trafficPct)
 
 ### EvalRunView
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/adapter/in/web/StaffAiController.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/controller/StaffAiController.java)
 
 ```java
 record EvalRunView(
@@ -289,9 +289,34 @@ record EvalRunView(
             String error)
 ```
 
+### CaseResult
+
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/domain/EvalRun.java)
+
+```java
+record CaseResult(
+            String caseId,
+            boolean valid,
+            Integer score,
+            int min,
+            int max,
+            boolean inBand,
+            int quotesTotal,
+            int quotesGrounded,
+            long latencyMs)
+```
+
+### Check
+
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/domain/EvalRun.java)
+
+```java
+record Check(String name, Double baseline, double candidate, String gate, boolean passed)
+```
+
 ### EmbedRequest
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/AiViews.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/dto/AiViews.java)
 
 ```java
 record EmbedRequest(List<String> inputs, String inputType)
@@ -299,7 +324,7 @@ record EmbedRequest(List<String> inputs, String inputType)
 
 ### EmbedResponse
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/AiViews.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/dto/AiViews.java)
 
 ```java
 record EmbedResponse(List<float[]> vectors, int dimensions, Provenance provenance)
@@ -307,7 +332,7 @@ record EmbedResponse(List<float[]> vectors, int dimensions, Provenance provenanc
 
 ### JudgeRequest
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/AiViews.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/dto/AiViews.java)
 
 ```java
 record JudgeRequest(
@@ -316,7 +341,7 @@ record JudgeRequest(
 
 ### JudgeResponse
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/AiViews.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/dto/AiViews.java)
 
 ```java
 record JudgeResponse(
@@ -333,7 +358,7 @@ record JudgeResponse(
 
 ### StructureRequest
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/AiViews.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/dto/AiViews.java)
 
 ```java
 record StructureRequest(String text, String candidateName)
@@ -341,7 +366,7 @@ record StructureRequest(String text, String candidateName)
 
 ### JdRequest
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/AiViews.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/dto/AiViews.java)
 
 ```java
 record JdRequest(
@@ -350,7 +375,7 @@ record JdRequest(
 
 ### MessageRequest
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/AiViews.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/dto/AiViews.java)
 
 ```java
 record MessageRequest(
@@ -364,7 +389,7 @@ record MessageRequest(
 
 ### MessageResponse
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/AiViews.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/dto/AiViews.java)
 
 ```java
 record MessageResponse(String text, Provenance provenance)
@@ -372,7 +397,7 @@ record MessageResponse(String text, Provenance provenance)
 
 ### NlRequest
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/AiViews.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/dto/AiViews.java)
 
 ```java
 record NlRequest(String query)
@@ -380,7 +405,7 @@ record NlRequest(String query)
 
 ### ExplainRequest
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/AiViews.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/dto/AiViews.java)
 
 ```java
 record ExplainRequest(JobIn job, List<ChunkIn> historical, List<ChunkIn> current)
@@ -388,7 +413,7 @@ record ExplainRequest(JobIn job, List<ChunkIn> historical, List<ChunkIn> current
 
 ### ExplainResponse
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/AiViews.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/dto/AiViews.java)
 
 ```java
 record ExplainResponse(
@@ -401,7 +426,7 @@ record ExplainResponse(
 
 ### DraftResponse
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/AiViews.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/dto/AiViews.java)
 
 ```java
 record DraftResponse(
@@ -416,7 +441,7 @@ record DraftResponse(
 
 ### Summary
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/OpsService.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/service/OpsService.java)
 
 ```java
 record Summary(
@@ -431,7 +456,7 @@ record Summary(
 
 ### PromptSummary
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/PromptAdminService.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/service/PromptAdminService.java)
 
 ```java
 record PromptSummary(
@@ -448,7 +473,7 @@ record PromptSummary(
 
 ### PromptDetail
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/PromptAdminService.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/service/PromptAdminService.java)
 
 ```java
 record PromptDetail(
@@ -468,7 +493,7 @@ record PromptDetail(
 
 ### UpdateInput
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/SettingsService.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/service/SettingsService.java)
 
 ```java
 record UpdateInput(
@@ -481,7 +506,7 @@ record UpdateInput(
 
 ### SettingsView
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/SettingsService.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/service/SettingsService.java)
 
 ```java
 record SettingsView(
@@ -515,34 +540,9 @@ record Provenance(
             Instant createdAt)
 ```
 
-### CaseResult
-
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/domain/EvalRun.java)
-
-```java
-record CaseResult(
-            String caseId,
-            boolean valid,
-            Integer score,
-            int min,
-            int max,
-            boolean inBand,
-            int quotesTotal,
-            int quotesGrounded,
-            long latencyMs)
-```
-
-### Check
-
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/domain/EvalRun.java)
-
-```java
-record Check(String name, Double baseline, double candidate, String gate, boolean passed)
-```
-
 ### ChunkIn
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/AiViews.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/dto/AiViews.java)
 
 ```java
 record ChunkIn(String chunkId, String text)
@@ -550,7 +550,7 @@ record ChunkIn(String chunkId, String text)
 
 ### CriterionIn
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/AiViews.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/dto/AiViews.java)
 
 ```java
 record CriterionIn(String id, String label, String requirement, String description)
@@ -558,7 +558,7 @@ record CriterionIn(String id, String label, String requirement, String descripti
 
 ### EvidenceView
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/AiViews.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/dto/AiViews.java)
 
 ```java
 record EvidenceView(String chunkId, String quote)
@@ -566,7 +566,7 @@ record EvidenceView(String chunkId, String quote)
 
 ### GuardrailsView
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/AiViews.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/dto/AiViews.java)
 
 ```java
 record GuardrailsView(boolean grounded, boolean protectedAttributeFree, boolean injectionSuspected)
@@ -574,7 +574,7 @@ record GuardrailsView(boolean grounded, boolean protectedAttributeFree, boolean 
 
 ### ThreadItem
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/AiViews.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/dto/AiViews.java)
 
 ```java
 record ThreadItem(String from, String text)
@@ -582,7 +582,7 @@ record ThreadItem(String from, String text)
 
 ### JobIn
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/AiViews.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/dto/AiViews.java)
 
 ```java
 record JobIn(String title, String summary, List<String> criteria)
@@ -590,7 +590,7 @@ record JobIn(String title, String summary, List<String> criteria)
 
 ### StatementView
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/AiViews.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/dto/AiViews.java)
 
 ```java
 record StatementView(String statement, String source, String chunkId, String quote)
@@ -598,7 +598,7 @@ record StatementView(String statement, String source, String chunkId, String quo
 
 ### TaskLine
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/OpsService.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/service/OpsService.java)
 
 ```java
 record TaskLine(
@@ -613,7 +613,7 @@ record TaskLine(
 
 ### Circuit
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/OpsService.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/service/OpsService.java)
 
 ```java
 record Circuit(String provider, String state)
@@ -621,7 +621,7 @@ record Circuit(String provider, String state)
 
 ### TaskIn
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/SettingsService.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/service/SettingsService.java)
 
 ```java
 record TaskIn(String provider, String model, ModelRef fallback)
@@ -629,7 +629,7 @@ record TaskIn(String provider, String model, ModelRef fallback)
 
 ### TaskView
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/SettingsService.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/service/SettingsService.java)
 
 ```java
 record TaskView(String provider, String model, ModelRef fallback)
@@ -637,7 +637,7 @@ record TaskView(String provider, String model, ModelRef fallback)
 
 ### ProviderView
 
-[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/application/SettingsService.java)
+[Definition](../../ai-gateway/src/main/java/com/openhire/aigateway/service/SettingsService.java)
 
 ```java
 record ProviderView(

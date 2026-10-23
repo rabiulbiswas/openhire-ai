@@ -6,11 +6,11 @@ Mapped operations: **20**. Framework-generated Actuator endpoints and gateway-pr
 
 ## InterviewController
 
-Source: [InterviewController](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/InterviewController.java).
+Source: [InterviewController](../../interview-service/src/main/java/com/openhire/interview/controller/InterviewController.java).
 
 ### POST `/api/v1/applications/{applicationId}/interview-loop`
 
-- Handler: `createLoop` ([source](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/InterviewController.java#L58)).
+- Handler: `createLoop` ([source](../../interview-service/src/main/java/com/openhire/interview/controller/InterviewController.java#L58)).
 - Success status: \@ResponseStatus(HttpStatus.CREATED).
 - Controller access/tenant calls: `viewers.coordinator(auth)`; `viewers.tenant(auth)`.
 - Delegated operations: `interviews.createLoop`.
@@ -23,7 +23,7 @@ LoopView createLoop(Authentication auth, @PathVariable String applicationId)
 
 ### GET `/api/v1/applications/{applicationId}/interview-loop`
 
-- Handler: `loop` ([source](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/InterviewController.java#L65)).
+- Handler: `loop` ([source](../../interview-service/src/main/java/com/openhire/interview/controller/InterviewController.java#L65)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.coordinator(auth)`; `viewers.tenant(auth)`.
 - Delegated operations: `interviews.loop`.
@@ -36,7 +36,7 @@ LoopView loop(Authentication auth, @PathVariable String applicationId)
 
 ### GET `/api/v1/interviews`
 
-- Handler: `week` ([source](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/InterviewController.java#L71)).
+- Handler: `week` ([source](../../interview-service/src/main/java/com/openhire/interview/controller/InterviewController.java#L71)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.participant(auth)`; `viewers.tenant(auth)`.
 - Delegated operations: `interviews.week`.
@@ -49,7 +49,7 @@ Page<InterviewEventView> week(Authentication auth, @RequestParam(required = fals
 
 ### GET `/api/v1/interviews/unscheduled`
 
-- Handler: `unscheduled` ([source](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/InterviewController.java#L83)).
+- Handler: `unscheduled` ([source](../../interview-service/src/main/java/com/openhire/interview/controller/InterviewController.java#L83)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.coordinator(auth)`; `viewers.tenant(auth)`.
 - Delegated operations: `interviews.unscheduled`.
@@ -62,7 +62,7 @@ Page<UnscheduledRoundView> unscheduled(Authentication auth)
 
 ### GET `/api/v1/me/interviews`
 
-- Handler: `mine` ([source](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/InterviewController.java#L89)).
+- Handler: `mine` ([source](../../interview-service/src/main/java/com/openhire/interview/controller/InterviewController.java#L89)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.participant(auth)`; `viewers.tenant(auth)`.
 - Delegated operations: `interviews.myInterviews`.
@@ -75,7 +75,7 @@ Page<MyInterviewView> mine(Authentication auth)
 
 ### POST `/api/v1/rounds/{roundId}/schedule`
 
-- Handler: `schedule` ([source](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/InterviewController.java#L95)).
+- Handler: `schedule` ([source](../../interview-service/src/main/java/com/openhire/interview/controller/InterviewController.java#L95)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.coordinator(auth)`; `viewers.tenant(auth)`.
 - Delegated operations: `interviews.schedule`.
@@ -88,7 +88,7 @@ RoundView schedule(Authentication auth, @PathVariable String roundId, @RequestBo
 
 ### PUT `/api/v1/rounds/{roundId}/panel`
 
-- Handler: `assignPanel` ([source](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/InterviewController.java#L115)).
+- Handler: `assignPanel` ([source](../../interview-service/src/main/java/com/openhire/interview/controller/InterviewController.java#L115)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.coordinator(auth)`; `viewers.tenant(auth)`.
 - Delegated operations: `interviews.assignPanel`.
@@ -101,7 +101,7 @@ RoundView assignPanel(Authentication auth, @PathVariable String roundId, @Reques
 
 ### POST `/api/v1/rounds/{roundId}/reschedule`
 
-- Handler: `reschedule` ([source](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/InterviewController.java#L126)).
+- Handler: `reschedule` ([source](../../interview-service/src/main/java/com/openhire/interview/controller/InterviewController.java#L126)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.coordinator(auth)`; `viewers.tenant(auth)`.
 - Delegated operations: `interviews.reschedule`.
@@ -114,7 +114,7 @@ Map<String, String> reschedule( Authentication auth, @PathVariable String roundI
 
 ### POST `/api/v1/rounds/{roundId}/cancel`
 
-- Handler: `cancel` ([source](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/InterviewController.java#L134)).
+- Handler: `cancel` ([source](../../interview-service/src/main/java/com/openhire/interview/controller/InterviewController.java#L134)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.coordinator(auth)`; `viewers.tenant(auth)`.
 - Delegated operations: `interviews.cancel`.
@@ -127,7 +127,7 @@ Map<String, String> cancel( Authentication auth, @PathVariable String roundId, @
 
 ### POST `/api/v1/rounds/{roundId}/no-show`
 
-- Handler: `noShow` ([source](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/InterviewController.java#L142)).
+- Handler: `noShow` ([source](../../interview-service/src/main/java/com/openhire/interview/controller/InterviewController.java#L142)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.coordinator(auth)`; `viewers.tenant(auth)`.
 - Delegated operations: `interviews.noShow`.
@@ -140,7 +140,7 @@ Map<String, String> noShow(Authentication auth, @PathVariable String roundId)
 
 ### POST `/api/v1/rounds/{roundId}/complete`
 
-- Handler: `complete` ([source](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/InterviewController.java#L149)).
+- Handler: `complete` ([source](../../interview-service/src/main/java/com/openhire/interview/controller/InterviewController.java#L149)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.coordinator(auth)`; `viewers.tenant(auth)`.
 - Delegated operations: `interviews.complete`.
@@ -153,7 +153,7 @@ Map<String, String> complete(Authentication auth, @PathVariable String roundId)
 
 ### POST `/api/v1/rounds/{roundId}/scheduling-link`
 
-- Handler: `schedulingLink` ([source](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/InterviewController.java#L156)).
+- Handler: `schedulingLink` ([source](../../interview-service/src/main/java/com/openhire/interview/controller/InterviewController.java#L156)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.coordinator(auth)`; `viewers.tenant(auth)`.
 - Delegated operations: `interviews.schedulingLink`.
@@ -166,7 +166,7 @@ SchedulingLinkView schedulingLink(Authentication auth, @PathVariable String roun
 
 ### GET `/api/v1/rounds/{roundId}/scorecard`
 
-- Handler: `scorecard` ([source](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/InterviewController.java#L162)).
+- Handler: `scorecard` ([source](../../interview-service/src/main/java/com/openhire/interview/controller/InterviewController.java#L162)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.participant(auth)`.
 - Delegated operations: `interviews.myScorecard`.
@@ -179,7 +179,7 @@ ScorecardView scorecard(Authentication auth, @PathVariable String roundId)
 
 ### POST `/api/v1/rounds/{roundId}/scorecards`
 
-- Handler: `submit` ([source](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/InterviewController.java#L167)).
+- Handler: `submit` ([source](../../interview-service/src/main/java/com/openhire/interview/controller/InterviewController.java#L167)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.participant(auth)`; `viewers.tenant(auth)`.
 - Delegated operations: `interviews.submitScorecard`.
@@ -192,7 +192,7 @@ Map<String, String> submit(Authentication auth, @PathVariable String roundId, @R
 
 ### GET `/api/v1/rounds/{roundId}/scorecards`
 
-- Handler: `scorecards` ([source](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/InterviewController.java#L184)).
+- Handler: `scorecards` ([source](../../interview-service/src/main/java/com/openhire/interview/controller/InterviewController.java#L184)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.participant(auth)`.
 - Delegated operations: `interviews.scorecards`.
@@ -205,7 +205,7 @@ Map<String, List<SubmittedScorecardView>> scorecards(Authentication auth, @PathV
 
 ### GET `/api/v1/applications/{applicationId}/debrief`
 
-- Handler: `debrief` ([source](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/InterviewController.java#L189)).
+- Handler: `debrief` ([source](../../interview-service/src/main/java/com/openhire/interview/controller/InterviewController.java#L189)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `viewers.tenant(auth)`; `viewers.participant(auth)`.
 - Delegated operations: `interviews.debrief`.
@@ -218,11 +218,11 @@ DebriefBuilder.Debrief debrief(Authentication auth, @PathVariable String applica
 
 ## PublicSchedulingController
 
-Source: [PublicSchedulingController](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/PublicSchedulingController.java).
+Source: [PublicSchedulingController](../../interview-service/src/main/java/com/openhire/interview/controller/PublicSchedulingController.java).
 
 ### GET `/api/v1/public/scheduling`
 
-- Handler: `view` ([source](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/PublicSchedulingController.java#L29)).
+- Handler: `view` ([source](../../interview-service/src/main/java/com/openhire/interview/controller/PublicSchedulingController.java#L29)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `interviews.publicView`.
@@ -235,7 +235,7 @@ PublicSchedulingView view(@RequestHeader("X-Scheduling-Token") String token)
 
 ### POST `/api/v1/public/scheduling/book`
 
-- Handler: `book` ([source](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/PublicSchedulingController.java#L34)).
+- Handler: `book` ([source](../../interview-service/src/main/java/com/openhire/interview/controller/PublicSchedulingController.java#L34)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `interviews.publicBook`.
@@ -248,7 +248,7 @@ PublicSchedulingView book(@RequestHeader("X-Scheduling-Token") String token, @Re
 
 ### POST `/api/v1/public/scheduling/alternatives`
 
-- Handler: `alternatives` ([source](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/PublicSchedulingController.java#L39)).
+- Handler: `alternatives` ([source](../../interview-service/src/main/java/com/openhire/interview/controller/PublicSchedulingController.java#L39)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `interviews.publicAlternatives`.
@@ -261,7 +261,7 @@ PublicSchedulingView alternatives(@RequestHeader("X-Scheduling-Token") String to
 
 ### POST `/api/v1/public/scheduling/cancel`
 
-- Handler: `cancel` ([source](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/PublicSchedulingController.java#L44)).
+- Handler: `cancel` ([source](../../interview-service/src/main/java/com/openhire/interview/controller/PublicSchedulingController.java#L44)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 - Delegated operations: `interviews.publicCancel`.
@@ -278,7 +278,7 @@ These are source declarations, including nested DTO records referenced by signat
 
 ### ScheduleInput
 
-[Definition](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/InterviewController.java)
+[Definition](../../interview-service/src/main/java/com/openhire/interview/controller/InterviewController.java)
 
 ```java
 record ScheduleInput(String start, String timezone, List<PanelInput> panel, String meetingUrl)
@@ -286,7 +286,7 @@ record ScheduleInput(String start, String timezone, List<PanelInput> panel, Stri
 
 ### RescheduleInput
 
-[Definition](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/InterviewController.java)
+[Definition](../../interview-service/src/main/java/com/openhire/interview/controller/InterviewController.java)
 
 ```java
 record RescheduleInput(String start)
@@ -294,7 +294,7 @@ record RescheduleInput(String start)
 
 ### CancelInput
 
-[Definition](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/InterviewController.java)
+[Definition](../../interview-service/src/main/java/com/openhire/interview/controller/InterviewController.java)
 
 ```java
 record CancelInput(String reason)
@@ -302,7 +302,7 @@ record CancelInput(String reason)
 
 ### ScorecardInput
 
-[Definition](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/InterviewController.java)
+[Definition](../../interview-service/src/main/java/com/openhire/interview/controller/InterviewController.java)
 
 ```java
 record ScorecardInput(List<RatingInput> ratings, String evidence, String recommendation)
@@ -310,7 +310,7 @@ record ScorecardInput(List<RatingInput> ratings, String evidence, String recomme
 
 ### PanelAssignment
 
-[Definition](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/InterviewController.java)
+[Definition](../../interview-service/src/main/java/com/openhire/interview/controller/InterviewController.java)
 
 ```java
 record PanelAssignment(List<PanelInput> panel)
@@ -318,7 +318,7 @@ record PanelAssignment(List<PanelInput> panel)
 
 ### BookInput
 
-[Definition](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/PublicSchedulingController.java)
+[Definition](../../interview-service/src/main/java/com/openhire/interview/controller/PublicSchedulingController.java)
 
 ```java
 record BookInput(String start)
@@ -326,15 +326,31 @@ record BookInput(String start)
 
 ### CancelInput
 
-[Definition](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/PublicSchedulingController.java)
+[Definition](../../interview-service/src/main/java/com/openhire/interview/controller/PublicSchedulingController.java)
 
 ```java
 record CancelInput(String reason)
 ```
 
+### Debrief
+
+[Definition](../../interview-service/src/main/java/com/openhire/interview/domain/DebriefBuilder.java)
+
+```java
+record Debrief(
+            String applicationId,
+            String candidateName,
+            int roundsCompleted,
+            int roundsTotal,
+            List<Point> consistentStrengths,
+            List<Point> concerns,
+            List<Point> disagreements,
+            String generatedBy)
+```
+
 ### Page
 
-[Definition](../../interview-service/src/main/java/com/openhire/interview/application/InterviewViews.java)
+[Definition](../../interview-service/src/main/java/com/openhire/interview/dto/InterviewViews.java)
 
 ```java
 record Page<T>(List<T> data, String nextCursor, boolean hasMore)
@@ -342,7 +358,7 @@ record Page<T>(List<T> data, String nextCursor, boolean hasMore)
 
 ### InterviewEventView
 
-[Definition](../../interview-service/src/main/java/com/openhire/interview/application/InterviewViews.java)
+[Definition](../../interview-service/src/main/java/com/openhire/interview/dto/InterviewViews.java)
 
 ```java
 record InterviewEventView(
@@ -361,7 +377,7 @@ record InterviewEventView(
 
 ### UnscheduledRoundView
 
-[Definition](../../interview-service/src/main/java/com/openhire/interview/application/InterviewViews.java)
+[Definition](../../interview-service/src/main/java/com/openhire/interview/dto/InterviewViews.java)
 
 ```java
 record UnscheduledRoundView(
@@ -378,7 +394,7 @@ record UnscheduledRoundView(
 
 ### RoundView
 
-[Definition](../../interview-service/src/main/java/com/openhire/interview/application/InterviewViews.java)
+[Definition](../../interview-service/src/main/java/com/openhire/interview/dto/InterviewViews.java)
 
 ```java
 record RoundView(
@@ -400,7 +416,7 @@ record RoundView(
 
 ### LoopView
 
-[Definition](../../interview-service/src/main/java/com/openhire/interview/application/InterviewViews.java)
+[Definition](../../interview-service/src/main/java/com/openhire/interview/dto/InterviewViews.java)
 
 ```java
 record LoopView(
@@ -414,7 +430,7 @@ record LoopView(
 
 ### ScorecardView
 
-[Definition](../../interview-service/src/main/java/com/openhire/interview/application/InterviewViews.java)
+[Definition](../../interview-service/src/main/java/com/openhire/interview/dto/InterviewViews.java)
 
 ```java
 record ScorecardView(
@@ -429,7 +445,7 @@ record ScorecardView(
 
 ### SubmittedScorecardView
 
-[Definition](../../interview-service/src/main/java/com/openhire/interview/application/InterviewViews.java)
+[Definition](../../interview-service/src/main/java/com/openhire/interview/dto/InterviewViews.java)
 
 ```java
 record SubmittedScorecardView(
@@ -442,7 +458,7 @@ record SubmittedScorecardView(
 
 ### MyInterviewView
 
-[Definition](../../interview-service/src/main/java/com/openhire/interview/application/InterviewViews.java)
+[Definition](../../interview-service/src/main/java/com/openhire/interview/dto/InterviewViews.java)
 
 ```java
 record MyInterviewView(
@@ -460,7 +476,7 @@ record MyInterviewView(
 
 ### SchedulingLinkView
 
-[Definition](../../interview-service/src/main/java/com/openhire/interview/application/InterviewViews.java)
+[Definition](../../interview-service/src/main/java/com/openhire/interview/dto/InterviewViews.java)
 
 ```java
 record SchedulingLinkView(String url, String expiresAt, List<String> slots)
@@ -468,7 +484,7 @@ record SchedulingLinkView(String url, String expiresAt, List<String> slots)
 
 ### PublicSchedulingView
 
-[Definition](../../interview-service/src/main/java/com/openhire/interview/application/InterviewViews.java)
+[Definition](../../interview-service/src/main/java/com/openhire/interview/dto/InterviewViews.java)
 
 ```java
 record PublicSchedulingView(
@@ -484,25 +500,9 @@ record PublicSchedulingView(
             String changeNote)
 ```
 
-### Debrief
-
-[Definition](../../interview-service/src/main/java/com/openhire/interview/domain/DebriefBuilder.java)
-
-```java
-record Debrief(
-            String applicationId,
-            String candidateName,
-            int roundsCompleted,
-            int roundsTotal,
-            List<Point> consistentStrengths,
-            List<Point> concerns,
-            List<Point> disagreements,
-            String generatedBy)
-```
-
 ### PanelInput
 
-[Definition](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/InterviewController.java)
+[Definition](../../interview-service/src/main/java/com/openhire/interview/controller/InterviewController.java)
 
 ```java
 record PanelInput(String name, String email, String role)
@@ -510,26 +510,10 @@ record PanelInput(String name, String email, String role)
 
 ### RatingInput
 
-[Definition](../../interview-service/src/main/java/com/openhire/interview/adapter/in/web/InterviewController.java)
+[Definition](../../interview-service/src/main/java/com/openhire/interview/controller/InterviewController.java)
 
 ```java
 record RatingInput(String competencyId, String rating)
-```
-
-### PanelView
-
-[Definition](../../interview-service/src/main/java/com/openhire/interview/application/InterviewViews.java)
-
-```java
-record PanelView(String name, String email, String role)
-```
-
-### CompetencyView
-
-[Definition](../../interview-service/src/main/java/com/openhire/interview/application/InterviewViews.java)
-
-```java
-record CompetencyView(String id, String label, String rating)
 ```
 
 ### Point
@@ -538,4 +522,20 @@ record CompetencyView(String id, String label, String rating)
 
 ```java
 record Point(String text, List<String> fromRounds)
+```
+
+### PanelView
+
+[Definition](../../interview-service/src/main/java/com/openhire/interview/dto/InterviewViews.java)
+
+```java
+record PanelView(String name, String email, String role)
+```
+
+### CompetencyView
+
+[Definition](../../interview-service/src/main/java/com/openhire/interview/dto/InterviewViews.java)
+
+```java
+record CompetencyView(String id, String label, String rating)
 ```

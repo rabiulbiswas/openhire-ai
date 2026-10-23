@@ -6,11 +6,11 @@ Mapped operations: **8**. Framework-generated Actuator endpoints and gateway-pro
 
 ## CandidateController
 
-Source: [CandidateController](../../candidate-service/src/main/java/com/openhire/candidateservice/CandidateController.java).
+Source: [CandidateController](../../candidate-service/src/main/java/com/openhire/candidateservice/controller/CandidateController.java).
 
 ### POST `/api/v1/internal/candidates/resolve`
 
-- Handler: `resolve` ([source](../../candidate-service/src/main/java/com/openhire/candidateservice/CandidateController.java#L21)).
+- Handler: `resolve` ([source](../../candidate-service/src/main/java/com/openhire/candidateservice/controller/CandidateController.java#L22)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.internal(secret)`.
 - Delegated operations: `service.resolve`.
@@ -23,7 +23,7 @@ public Document resolve(@RequestHeader("X-Internal-Service-Secret") String secre
 
 ### POST `/api/v1/internal/candidates/project`
 
-- Handler: `project` ([source](../../candidate-service/src/main/java/com/openhire/candidateservice/CandidateController.java#L27)).
+- Handler: `project` ([source](../../candidate-service/src/main/java/com/openhire/candidateservice/controller/CandidateController.java#L28)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.internal(secret)`.
 - Delegated operations: `service.project`.
@@ -36,7 +36,7 @@ public Document project(@RequestHeader("X-Internal-Service-Secret") String secre
 
 ### GET `/api/v1/internal/candidates/{id}/canonical`
 
-- Handler: `canonical` ([source](../../candidate-service/src/main/java/com/openhire/candidateservice/CandidateController.java#L33)).
+- Handler: `canonical` ([source](../../candidate-service/src/main/java/com/openhire/candidateservice/controller/CandidateController.java#L34)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.internal(secret)`.
 - Delegated operations: `service.canonical`.
@@ -49,7 +49,7 @@ public Document canonical( @RequestHeader("X-Internal-Service-Secret") String se
 
 ### GET `/api/v1/candidates/{id}/360`
 
-- Handler: `get` ([source](../../candidate-service/src/main/java/com/openhire/candidateservice/CandidateController.java#L42)).
+- Handler: `get` ([source](../../candidate-service/src/main/java/com/openhire/candidateservice/controller/CandidateController.java#L43)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`.
 - Delegated operations: `service.view`.
@@ -62,7 +62,7 @@ public Document get(Authentication auth, @PathVariable String id)
 
 ### PUT `/api/v1/candidates/{id}/owner`
 
-- Handler: `owner` ([source](../../candidate-service/src/main/java/com/openhire/candidateservice/CandidateController.java#L48)).
+- Handler: `owner` ([source](../../candidate-service/src/main/java/com/openhire/candidateservice/controller/CandidateController.java#L49)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`.
 - Delegated operations: `service.owner`.
@@ -75,7 +75,7 @@ public Map<String, String> owner(Authentication auth, @PathVariable String id, @
 
 ### GET `/api/v1/merge-suggestions`
 
-- Handler: `suggestions` ([source](../../candidate-service/src/main/java/com/openhire/candidateservice/CandidateController.java#L55)).
+- Handler: `suggestions` ([source](../../candidate-service/src/main/java/com/openhire/candidateservice/controller/CandidateController.java#L56)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`.
 - Delegated operations: `service.suggestions`.
@@ -88,7 +88,7 @@ public Object suggestions(Authentication auth)
 
 ### POST `/api/v1/merge-suggestions/{id}/dismiss`
 
-- Handler: `dismiss` ([source](../../candidate-service/src/main/java/com/openhire/candidateservice/CandidateController.java#L61)).
+- Handler: `dismiss` ([source](../../candidate-service/src/main/java/com/openhire/candidateservice/controller/CandidateController.java#L62)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`.
 - Delegated operations: `service.dismiss`.
@@ -101,7 +101,7 @@ public Object dismiss(Authentication auth, @PathVariable String id)
 
 ### POST `/api/v1/candidates/merge`
 
-- Handler: `merge` ([source](../../candidate-service/src/main/java/com/openhire/candidateservice/CandidateController.java#L68)).
+- Handler: `merge` ([source](../../candidate-service/src/main/java/com/openhire/candidateservice/controller/CandidateController.java#L69)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`; `access.actor(auth)`.
 - Delegated operations: `service.merge`.

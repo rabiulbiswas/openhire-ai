@@ -30,13 +30,15 @@ public class BffSessionController {
     @org.springframework.beans.factory.annotation.Autowired
     private com.openhire.gateway.security.TenantPortalAccess portals;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.openhire.gateway.security.MemberProfileClient profiles;
+
     private static final Set<String> UI_ROLES = Set.of(
             "recruiter",
             "hr_admin",
             "hiring_manager",
             "interviewer",
             "org_admin",
-            "compliance",
             "employee",
             "agency_recruiter",
             "super_admin",
@@ -63,8 +65,30 @@ public class BffSessionController {
             return Mono.just(localSession(session));
         }
         return principal
-                .map(value -> authenticatedSession(value, session))
+                .flatMap(value -> {
+                    var current = authenticatedSession(value, session);
+                    if (profiles == null) return Mono.just(current);
+                    return profiles.name(value)
+                            .map(name -> {
+                                var user = new LinkedHashMap<String, Object>((Map<String, Object>) current.get("user"));
+                                user.put("name", name);
+                                current.put("user", user);
+                                return current;
+                            })
+                            .defaultIfEmpty(current)
+                            .onErrorReturn(current);
+                })
                 .defaultIfEmpty(Map.of("authenticated", false));
+    }
+
+    /** Nginx auth_request checks host availability without creating a browser/Redis session. */
+    @GetMapping("/portal-status")
+    Mono<ResponseEntity<Void>> portalStatus(org.springframework.web.server.ServerWebExchange exchange) {
+        if (portals == null || !portals.enabled() || !portals.sameHostAuth())
+            return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
+        // Explicit registry lookup here, independently of filter ordering: unknown/suspended hosts fail closed.
+        return portals.resolve(exchange, null)
+                .map(tenant -> ResponseEntity.noContent().<Void>build());
     }
 
     @GetMapping("/csrf")
@@ -73,6 +97,14 @@ public class BffSessionController {
                             "org.springframework.security.web.server.csrf.CsrfToken")
                     Mono<CsrfToken> token) {
         return token.map(value -> Map.of("headerName", value.getHeaderName(), "token", value.getToken()));
+    }
+
+    /** Minimal public branding; never exposes members, integration settings or credentials. */
+    @GetMapping("/public-tenant")
+    Mono<Map<String, Object>> publicTenant(org.springframework.web.server.ServerWebExchange exchange) {
+        if (portals == null || !portals.enabled() || "admin".equals(portals.slug(exchange)))
+            return Mono.error(new org.springframework.web.server.ResponseStatusException(HttpStatus.NOT_FOUND));
+        return portals.resolve(exchange, null).map(tenant -> Map.of("id", tenant.get("id"), "name", tenant.get("name")));
     }
 
     @DeleteMapping("/session")
@@ -188,7 +220,9 @@ public class BffSessionController {
                 : Map.<String, Object>of();
         var subject = stringClaim(attributes, "sub", principal.getName());
         var email = stringClaim(attributes, "email", principal.getName());
-        var displayName = stringClaim(attributes, "name", stringClaim(attributes, "preferred_username", email));
+        var displayName = session.getAttributeOrDefault(
+                "openhire.profile.name",
+                stringClaim(attributes, "name", stringClaim(attributes, "preferred_username", email)));
         var tenant = com.openhire.gateway.security.TenantClaims.resolve(attributes);
         response.put("user", Map.of("id", subject, "name", displayName, "email", email));
         var roles = new LinkedHashSet<String>();
@@ -236,7 +270,6 @@ public class BffSessionController {
                                 "hr_admin",
                                 "hiring_manager",
                                 "interviewer",
-                                "compliance",
                                 "employee",
                                 "agency_recruiter",
                                 "candidate")
@@ -262,7 +295,7 @@ public class BffSessionController {
 
     private String normalizeRole(String role) {
         var normalized = role.toLowerCase();
-        return "compliance_officer".equals(normalized) ? "compliance" : normalized;
+        return normalized;
     }
 
     // Mirrors what the services enforce today; offers and talent permissions arrive with their services.
@@ -270,8 +303,7 @@ public class BffSessionController {
             "job:create",
             "job:edit",
             "job:publish",
-            "approval:decide",
-            "approval:delegate",
+            "approval:read",
             "application:read",
             "candidate:read",
             "candidate:edit",
@@ -298,21 +330,31 @@ public class BffSessionController {
                         "ops:dlq:replay",
                         "ai:prompt:promote",
                         "offer:approve",
+                        "approval:read",
+                        "approval:decide",
+                        "approval:delegate",
                         "compliance:audit:read",
                         "compliance:fairness:read",
                         "compliance:consent:manage",
-                        "compliance:retention:manage");
+                        "compliance:retention:manage",
+                        "privacy:execute",
+                        "assessment:read",
+                        "candidate:export");
             case "recruiter" -> RECRUITER;
             case "hr_admin" -> {
                 var permissions = new LinkedHashSet<>(RECRUITER);
                 permissions.add("application:decide");
                 permissions.add("offer:approve");
                 permissions.add("offer:rescind");
+                permissions.add("approval:decide");
+                permissions.add("approval:delegate");
                 yield Set.copyOf(permissions);
             }
             case "hiring_manager" ->
                 Set.of(
                         "job:approve",
+                        "approval:read",
+                        "approval:delegate",
                         "application:read",
                         "application:decide",
                         "assessment:read",
@@ -322,13 +364,6 @@ public class BffSessionController {
                         "interview:scorecard:read_all",
                         "offer:approve");
             case "interviewer" -> Set.of("interview:scorecard:submit");
-            case "compliance" ->
-                Set.of(
-                        "compliance:audit:read",
-                        "compliance:fairness:read",
-                        "compliance:consent:manage",
-                        "compliance:retention:manage",
-                        "privacy:execute");
             case "employee" -> Set.of("internal:apply", "referral:create");
             case "agency_recruiter" -> Set.of("partner:submit");
             default -> Set.of();

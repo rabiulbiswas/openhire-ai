@@ -87,7 +87,7 @@ public class GatewaySecurityConfiguration {
     SecurityWebFilterChain oidcSecurity(
             ServerHttpSecurity http,
             org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository registrations,
-            @Value("${openhire.ui.staff-url:http://localhost:5173/}") String staffUiUrl,
+            @Value("${openhire.ui.staff-url:http://localhost:5173/today}") String staffUiUrl,
             @Value("${openhire.ui.partner-url:http://localhost:5174/jobs}") String partnerUiUrl,
             @Value("${openhire.ui.platform-url:http://localhost:5175/organizations}") String platformUiUrl,
             @Value("${openhire.ui.candidate-url:http://localhost:3000/portal}") String candidateUiUrl) {
@@ -95,7 +95,8 @@ public class GatewaySecurityConfiguration {
                 (filter, authentication) -> {
                     if (portals != null && portals.enabled()) {
                         return portals.completeLogin(filter.getExchange(), authentication)
-                                .then(MonoRedirect.redirect(filter.getExchange(), portals.landing(authentication)))
+                                .then(filter.getExchange().getSession().flatMap(session -> MonoRedirect.redirect(filter.getExchange(),
+                                        CandidateLoginReturn.consume(session, authentication, portals.landing(authentication)))))
                                 .onErrorResume(
                                         org.springframework.web.server.ResponseStatusException.class,
                                         error -> filter.getExchange()
@@ -137,14 +138,17 @@ public class GatewaySecurityConfiguration {
                                         "/api/v1/public/applications/**",
                                         "/api/v1/public/api-applications",
                                         "/api/v1/public/scheduling/**",
-                                        "/api/v1/public/offers/**")))))
+                                        "/api/v1/public/offers/**",
+                                        "/api/v1/public/candidate-registrations/**")))))
                 .authorizeExchange(exchange -> exchange
                         // The SPA must be able to ask whether a session exists. When there is no
                         // authenticated principal, BffSessionController returns
                         // {"authenticated": false}; the browser then starts the staff login flow.
                         // Keeping this endpoint public also prevents a fetch request from silently
                         // following Spring Security's HTML login redirect.
-                        .pathMatchers(HttpMethod.GET, "/bff/session")
+                        .pathMatchers(HttpMethod.GET, "/bff/session", "/bff/public-tenant", "/bff/candidate-login")
+                        .permitAll()
+                        .pathMatchers(HttpMethod.GET, "/bff/portal-status")
                         .permitAll()
                         .pathMatchers(HttpMethod.GET, "/bff/logout")
                         .permitAll()

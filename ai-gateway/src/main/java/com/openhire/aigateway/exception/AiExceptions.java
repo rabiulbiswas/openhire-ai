@@ -16,6 +16,18 @@ public final class AiExceptions {
         }
     }
 
+    public static class AiTimeout extends AiUnavailable {
+        public AiTimeout() {
+            super("The AI response took too long. Please retry.");
+        }
+    }
+
+    public static class AiInvalidResponse extends AiUnavailable {
+        public AiInvalidResponse() {
+            super("The AI response could not be validated. Please retry.");
+        }
+    }
+
     /** The tenant's monthly budget for non-local providers is used up. */
     public static class BudgetExhausted extends RuntimeException {
         public BudgetExhausted(String message) {

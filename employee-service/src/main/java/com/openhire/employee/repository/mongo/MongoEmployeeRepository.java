@@ -68,4 +68,36 @@ class MongoEmployeeRepository implements EmployeeRepository {
                         .limit(limit),
                 Employee.class);
     }
+
+    @Override
+    public List<Employee> page(
+            String tenantId,
+            EmployeeStatus status,
+            String joiningFrom,
+            String date,
+            String id,
+            boolean before,
+            int limit) {
+        var filters = new java.util.ArrayList<Criteria>();
+        filters.add(Criteria.where("tenantId").is(tenantId));
+        if (status != null) filters.add(Criteria.where("status").is(status));
+        if (joiningFrom != null) filters.add(Criteria.where("joiningDate").gte(joiningFrom));
+        if (date != null)
+            filters.add(new Criteria()
+                    .orOperator(
+                            before
+                                    ? Criteria.where("joiningDate").gt(date)
+                                    : Criteria.where("joiningDate").lt(date),
+                            new Criteria()
+                                    .andOperator(
+                                            Criteria.where("joiningDate").is(date),
+                                            before
+                                                    ? Criteria.where("_id").gt(id)
+                                                    : Criteria.where("_id").lt(id))));
+        return mongo.find(
+                Query.query(new Criteria().andOperator(filters.toArray(Criteria[]::new)))
+                        .with(Sort.by(before ? Sort.Direction.ASC : Sort.Direction.DESC, "joiningDate", "_id"))
+                        .limit(limit),
+                Employee.class);
+    }
 }

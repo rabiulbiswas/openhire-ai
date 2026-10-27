@@ -19,6 +19,13 @@ import reactor.core.publisher.Mono;
 /** All tenant decisions come from a configured host and a verified identity, never browser headers. */
 @Component
 public class TenantPortalAccess {
+    @Value("${openhire.portals.same-host-auth:false}")
+    private boolean sameHostAuth;
+
+    public boolean sameHostAuth() {
+        return sameHostAuth;
+    }
+
     private final boolean enabled;
     private final String domain;
     private final WebClient identity;
@@ -85,6 +92,12 @@ public class TenantPortalAccess {
             claims = jwt.getToken().getClaims();
             client = jwt.getToken().getClaimAsString("azp");
         } else return Mono.error(denied("Unsupported identity"));
+        if (sameHostAuth
+                && !claims.getOrDefault("iss", "")
+                        .toString()
+                        .equals(LocalPortalIssuerValidator.origin(
+                                        loginUri(exchange).toString()) + "/auth/realms/openhire-staff"))
+            return Mono.error(denied("Identity belongs to another portal host"));
         var authenticatedTenant = TenantClaims.resolve(claims);
         var roles = claims.get("realm_access") instanceof Map<?, ?> realm
                         && realm.get("roles") instanceof Collection<?> values
@@ -118,13 +131,14 @@ public class TenantPortalAccess {
                     "HR_ADMIN",
                     "HIRING_MANAGER",
                     "INTERVIEWER",
-                    "COMPLIANCE_OFFICER",
                     "EMPLOYEE",
                     "AGENCY_RECRUITER",
                     "CANDIDATE");
             var tokenRoles =
                     roles.stream().filter(businessRoles::contains).collect(java.util.stream.Collectors.toSet());
-            if (current.isEmpty() || !current.equals(tokenRoles))
+            var currentRoles =
+                    current.stream().filter(businessRoles::contains).collect(java.util.stream.Collectors.toSet());
+            if (currentRoles.isEmpty() || !currentRoles.equals(tokenRoles))
                 return Mono.error(denied("Roles changed; sign in again"));
             return Mono.empty();
         });
@@ -136,11 +150,9 @@ public class TenantPortalAccess {
                 && realm.get("roles") instanceof Collection<?> roles) {
             if (roles.contains("SUPER_ADMIN")) return "/tenants";
             if (roles.contains("ORG_ADMIN")) return "/admin/team";
-            if (roles.contains("RECRUITER") || roles.contains("HR_ADMIN")) return "/";
-            if (roles.contains("HIRING_MANAGER")
-                    || roles.contains("INTERVIEWER")
-                    || roles.contains("COMPLIANCE_OFFICER")
-                    || roles.contains("EMPLOYEE")) return "/";
+            if (roles.contains("RECRUITER") || roles.contains("HR_ADMIN")) return "/today";
+            if (roles.contains("HIRING_MANAGER") || roles.contains("INTERVIEWER") || roles.contains("EMPLOYEE"))
+                return "/today";
             if (roles.contains("AGENCY_RECRUITER")) return "/partner/jobs";
             if (roles.contains("CANDIDATE")) return "/candidate/portal";
         }

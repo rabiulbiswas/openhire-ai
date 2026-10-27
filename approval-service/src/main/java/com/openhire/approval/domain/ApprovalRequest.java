@@ -28,10 +28,23 @@ public class ApprovalRequest {
     private List<ApprovalStep> steps;
     private List<FieldChange> diff;
     private Integer rescoredApplicants;
+    private Integer previousVersion;
+    private Integer proposedVersion;
+    private HeadcountException headcountException;
     private List<Term> terms;
     private Instant createdAt;
     private Instant updatedAt;
     private String decisionReason;
+    private String decisionActor;
+
+    public String decisionActor() {
+        return decisionActor;
+    }
+
+    public String decisionReason() {
+        return decisionReason;
+    }
+
     private Instant lastReminderAt;
 
     protected ApprovalRequest() {}
@@ -82,6 +95,25 @@ public class ApprovalRequest {
         return value;
     }
 
+    public void assignLegacy(String user, String role) {
+        requirePending();
+        var current = currentStep();
+        if (!"me".equalsIgnoreCase(current.approver()) && !"RECRUITER".equalsIgnoreCase(current.role()))
+            throw new IllegalStateException("This request already has a named approver");
+        steps.set(
+                steps.indexOf(current),
+                new ApprovalStep(
+                        current.id(),
+                        user,
+                        role,
+                        current.group(),
+                        current.status(),
+                        current.at(),
+                        current.dueAt(),
+                        current.approver()));
+        refreshStepLabel();
+    }
+
     public void approve() {
         approveCurrent(currentStep());
     }
@@ -89,10 +121,11 @@ public class ApprovalRequest {
     public void approve(String actor) {
         var current = steps.stream()
                 .filter(step -> step.status() == StepStatus.CURRENT)
-                .filter(step -> step.approver().equals(actor) || "me".equalsIgnoreCase(step.approver()))
+                .filter(step -> step.approver().equals(actor) && !requestedBy.equals(actor))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Approval is not assigned to " + actor));
         approveCurrent(current);
+        decisionActor = actor;
     }
 
     private void approveCurrent(ApprovalStep current) {
@@ -133,6 +166,7 @@ public class ApprovalRequest {
     public void reject(String actor, String reason) {
         requireAssigned(actor);
         reject(reason);
+        decisionActor = actor;
     }
 
     public void requestChanges(String reason) {
@@ -147,6 +181,7 @@ public class ApprovalRequest {
     public void requestChanges(String actor, String reason) {
         requireAssigned(actor);
         requestChanges(reason);
+        decisionActor = actor;
     }
 
     public void delegate(String approver) {
@@ -205,7 +240,7 @@ public class ApprovalRequest {
     private void requireAssigned(String actor) {
         var assigned = steps.stream()
                 .filter(step -> step.status() == StepStatus.CURRENT)
-                .anyMatch(step -> step.approver().equals(actor) || "me".equalsIgnoreCase(step.approver()));
+                .anyMatch(step -> step.approver().equals(actor) && !requestedBy.equals(actor));
         if (!assigned) throw new IllegalStateException("Approval is not assigned to " + actor);
     }
 
@@ -260,6 +295,44 @@ public class ApprovalRequest {
 
     public Integer rescoredApplicants() {
         return rescoredApplicants;
+    }
+
+    public void compareVersions(int previous, int proposed) {
+        if (!"JOB_VERSION_CHANGE".equals(type) || previous < 1 || proposed <= previous)
+            throw new IllegalArgumentException("Invalid job version comparison");
+        previousVersion = previous;
+        proposedVersion = proposed;
+    }
+
+    public Integer previousVersion() {
+        return previousVersion;
+    }
+
+    /** Snapshot request context only; approval does not silently alter a job's headcount. */
+    public void describeHeadcount(String jobTitle, int current, int requested, String reason) {
+        if (!"HEADCOUNT_EXCEPTION".equals(type)
+                || jobTitle == null
+                || jobTitle.isBlank()
+                || current < 0
+                || requested <= current
+                || reason == null
+                || reason.isBlank()
+                || reason.length() > 4000)
+            throw new IllegalArgumentException(
+                    "A headcount exception needs a job title, an increased requested total and a reason");
+        headcountException = new HeadcountException(jobTitle.trim(), current, requested, reason.trim());
+        int additional = requested - current;
+        title = jobTitle.trim() + ", +" + additional + (additional == 1 ? " seat" : " seats");
+    }
+
+    public HeadcountException headcountException() {
+        return headcountException;
+    }
+
+    public record HeadcountException(String jobTitle, int currentHeadcount, int requestedHeadcount, String reason) {}
+
+    public Integer proposedVersion() {
+        return proposedVersion;
     }
 
     public List<Term> terms() {

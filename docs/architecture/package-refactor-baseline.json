@@ -2020,6 +2020,7 @@
         "@PostMapping(\"/internal/candidates/project\")",
         "@GetMapping(\"/internal/candidates/{id}/canonical\")",
         "@GetMapping(\"/candidates/{id}/360\")",
+        "@GetMapping(\"/candidates\")",
         "@PutMapping(\"/candidates/{id}/owner\")",
         "@GetMapping(\"/merge-suggestions\")",
         "@PostMapping(\"/merge-suggestions/{id}/dismiss\")",
@@ -2266,6 +2267,9 @@
         "@PostMapping(\"/platform/organizations/{id}/admin-invitations\")",
         "@PatchMapping(\"/platform/organizations/{id}/status\")",
         "@GetMapping(\"/users\")",
+        "@GetMapping(\"/users/display-names\")",
+        "@GetMapping(\"/internal/member-profile\")",
+        "@PatchMapping(\"/internal/member-profile\")",
         "@PatchMapping(\"/users/{id}/roles\")",
         "@DeleteMapping(\"/users/{id}\")",
         "@GetMapping(\"/roles\")",
@@ -2453,6 +2457,7 @@
       "annotations": [
         "@RequestMapping(\"/bff\")",
         "@GetMapping(\"/session\")",
+        "@GetMapping(\"/portal-status\")",
         "@GetMapping(\"/csrf\")",
         "@DeleteMapping(\"/session\")",
         "@GetMapping(\"/logout\")"

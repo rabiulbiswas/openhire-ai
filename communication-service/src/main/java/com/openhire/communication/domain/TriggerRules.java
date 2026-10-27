@@ -42,6 +42,7 @@ public final class TriggerRules {
             "interview.scheduling-link.issued.v1",
             "interview.feedback-overdue.v1",
             "offer.approval.requested.v1",
+            "offer.approval.step-approved.v1",
             "offer.approval.rejected.v1",
             "offer.approved.v1",
             "offer.sent.v1",
@@ -140,9 +141,9 @@ public final class TriggerRules {
                 yield new Plan(wasBooked ? new CandidateMessage("interview-cancelled", vars, true) : null, alerts);
             }
             case "offer.approval.requested.v1" -> {
-                for (var role : strings(payload.get("currentApprovers")))
+                for (var assignee : strings(payload.get("currentApprovers")))
                     alerts.add(new StaffAlert(
-                            role.equals("FINANCE") ? "role:ORG_ADMIN" : "role:" + role,
+                            "user:" + assignee,
                             "APPROVAL_REQUESTED",
                             NotificationEventKey.APPROVAL_REQUESTED,
                             "Offer approval needed",
@@ -151,26 +152,31 @@ public final class TriggerRules {
                             Map.of("offerId", text(payload, "offerId", ""))));
                 yield new Plan(null, alerts);
             }
-            case "offer.approved.v1" -> {
-                owner(payload)
-                        .ifPresent(owner -> alerts.add(offerAlert(
-                                owner,
-                                "APPROVAL_DECIDED",
-                                "Offer approved: " + who,
-                                "Ready to send to the candidate.",
-                                payload,
-                                NotificationEventKey.APPROVAL_REQUESTED)));
+            case "offer.approved.v1", "offer.approval.step-approved.v1" -> {
+                for (var recipient : ownerAndHr(payload))
+                    alerts.add(offerAlert(
+                            recipient,
+                            "APPROVAL_DECIDED",
+                            (eventType.equals("offer.approved.v1")
+                                            ? "Offer approved: "
+                                            : "Offer approval step completed: ")
+                                    + who,
+                            eventType.equals("offer.approved.v1")
+                                    ? "Ready to send to the candidate."
+                                    : "The offer is progressing through its assigned approval steps.",
+                            payload,
+                            NotificationEventKey.APPROVAL_REQUESTED));
                 yield new Plan(null, alerts);
             }
             case "offer.approval.rejected.v1" -> {
-                owner(payload)
-                        .ifPresent(owner -> alerts.add(offerAlert(
-                                owner,
-                                "APPROVAL_DECIDED",
-                                "Offer rejected: " + who,
-                                text(payload, "reason", "An approver rejected the offer."),
-                                payload,
-                                NotificationEventKey.APPROVAL_REQUESTED)));
+                for (var recipient : ownerAndHr(payload))
+                    alerts.add(offerAlert(
+                            recipient,
+                            "APPROVAL_DECIDED",
+                            "Offer rejected: " + who,
+                            text(payload, "reason", "An approver rejected the offer."),
+                            payload,
+                            NotificationEventKey.APPROVAL_REQUESTED));
                 yield new Plan(null, alerts);
             }
             case "offer.sent.v1" -> new Plan(new CandidateMessage("offer-sent", vars, true), List.of());
@@ -298,7 +304,7 @@ public final class TriggerRules {
         var requester = text(payload, "requestedBy", "");
         var outcome =
                 switch (eventType) {
-                    case "approval.approved.v1" -> status.equals("APPROVED") ? "Approved" : null;
+                    case "approval.approved.v1" -> status.equals("APPROVED") ? "Approved" : "Approval step completed";
                     case "approval.rejected.v1" -> "Rejected";
                     case "approval.changes-requested.v1" -> "Changes requested";
                     default -> null;
@@ -316,6 +322,22 @@ public final class TriggerRules {
                             "Your approval request has a decision.",
                             "approvals",
                             Map.of("id", id, "scope", "requested_by_me")));
+                if (outcome != null) {
+                    var notified = new LinkedHashSet<>(
+                            alerts.stream().map(StaffAlert::recipient).toList());
+                    for (var participant : strings(payload.get("participants"))) {
+                        var recipient = "user:" + participant;
+                        if (!participant.isBlank() && !"me".equalsIgnoreCase(participant) && notified.add(recipient))
+                            alerts.add(new StaffAlert(
+                                    recipient,
+                                    "APPROVAL_DECIDED",
+                                    NotificationEventKey.APPROVAL_REQUESTED,
+                                    outcome + ": " + title,
+                                    "An approval request assigned to you has been updated.",
+                                    "approvals",
+                                    Map.of("id", id)));
+                    }
+                }
                 yield alerts;
             }
             default -> List.of();
@@ -327,11 +349,8 @@ public final class TriggerRules {
         if (payload.get("currentApprovers") instanceof List<?> list)
             for (var item : list) {
                 var approver = item == null ? "" : item.toString();
-                // An unassigned step ("me") can be taken by anyone holding the approver role.
-                result.add(
-                        approver.isBlank() || approver.equalsIgnoreCase("me")
-                                ? "role:HIRING_MANAGER"
-                                : "user:" + approver);
+                // Legacy unassigned requests must be assigned explicitly, never broadcast.
+                if (!approver.isBlank() && !approver.equalsIgnoreCase("me")) result.add("user:" + approver);
             }
         return List.copyOf(result);
     }
@@ -351,7 +370,7 @@ public final class TriggerRules {
     private static List<String> ownerAndHr(Map<String, Object> payload) {
         var result = new LinkedHashSet<String>();
         owner(payload).ifPresent(result::add);
-        result.add("role:HR_ADMIN");
+        for (var id : strings(payload.get("approvalParticipants"))) result.add("user:" + id);
         return List.copyOf(result);
     }
 

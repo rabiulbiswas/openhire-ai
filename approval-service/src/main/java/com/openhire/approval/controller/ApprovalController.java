@@ -85,7 +85,7 @@ public class ApprovalController {
 
     @PostMapping("/approvals/{id}/approve")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER','HIRING_MANAGER')")
+    @PreAuthorize("hasAnyRole('ORG_ADMIN','HR_ADMIN','HIRING_MANAGER')")
     void approve(
             @PathVariable String id, @RequestHeader(name = "X-Actor-Id", defaultValue = "local-admin") String actor) {
         service.approve(tenant(), id, actor);
@@ -93,7 +93,7 @@ public class ApprovalController {
 
     @PostMapping("/approvals/{id}/reject")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER','HIRING_MANAGER')")
+    @PreAuthorize("hasAnyRole('ORG_ADMIN','HR_ADMIN','HIRING_MANAGER')")
     void reject(
             @PathVariable String id,
             @RequestHeader(name = "X-Actor-Id", defaultValue = "local-admin") String actor,
@@ -103,7 +103,7 @@ public class ApprovalController {
 
     @PostMapping("/approvals/{id}/request-changes")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER','HIRING_MANAGER')")
+    @PreAuthorize("hasAnyRole('ORG_ADMIN','HR_ADMIN','HIRING_MANAGER')")
     void requestChanges(
             @PathVariable String id,
             @RequestHeader(name = "X-Actor-Id", defaultValue = "local-admin") String actor,
@@ -120,11 +120,26 @@ public class ApprovalController {
 
     @PostMapping("/approval-delegations")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER','HIRING_MANAGER')")
+    @PreAuthorize("hasAnyRole('ORG_ADMIN','HR_ADMIN','HIRING_MANAGER')")
     void delegate(
             @RequestHeader(name = "X-Actor-Id", defaultValue = "local-admin") String actor,
             @Valid @RequestBody DelegationRequest request) {
         service.delegate(tenant(), request.id(), actor, request.toUser());
+    }
+
+    public record Assignment(@jakarta.validation.constraints.NotBlank String assigneeId, String role) {}
+
+    @PostMapping("/approvals/{id}/assignment")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAnyRole('ORG_ADMIN','HR_ADMIN','RECRUITER')")
+    void assignLegacy(
+            @PathVariable String id,
+            @Valid @RequestBody Assignment input,
+            @RequestHeader("X-Actor-Id") String actor,
+            org.springframework.security.core.Authentication auth) {
+        var administrator = auth != null
+                && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ORG_ADMIN"));
+        service.assignLegacy(tenant(), id, actor, input.assigneeId(), input.role(), administrator);
     }
 
     private String tenant() {

@@ -27,7 +27,12 @@ class ComplianceListeners {
 
     @KafkaListener(topics = "audit.events.v1", groupId = "compliance-audit-v1")
     void onAudit(String message) {
-        ledger.ingest(parse(message));
+        // Earlier identity producers JSON-encoded an already encoded audit string. Accept exactly
+        // one legacy layer so those retained records can be replayed without editing audit content.
+        var value = json.readTree(message);
+        if (value.isTextual()) value = json.readTree(value.asString());
+        if (!value.isObject()) throw new IllegalArgumentException("Audit envelope must be a JSON object");
+        ledger.ingest(json.convertValue(value, Map.class));
     }
 
     @KafkaListener(

@@ -95,7 +95,8 @@ class PrivacyDataTest {
     @Test
     void anUploadForAnErasedApplicationIsRefused() throws Exception {
         data.erase("t1", "req-1", "cand-1");
-        var pipeline = new ResumePipeline(mongo.template, dir.toString(), "http://tika", "localhost", 3310);
+        var pipeline =
+                new ResumePipeline(mongo.template, dir.toString(), (bytes, mime, ocr) -> "", "localhost", 3310, 1);
         pipeline.setTombstones(tombstones);
 
         assertThatThrownBy(() -> pipeline.upload("t1", "app-1", "cv.pdf", "%PDF-1.4 x".getBytes()))

@@ -69,6 +69,36 @@ class EmployeeApplicationServiceTest {
     }
 
     @Test
+    void paginatesNewHiresInBothDirectionsWithStableTiesAndTenantFilters() {
+        for (int i = 0; i < 5; i++) hire("page-offer-" + i, "page-application-" + i);
+        var first = service.listPage("t1", null, null, "", "", 2);
+        assertThat(first.data()).hasSize(2);
+        assertThat(first.hasMore()).isTrue();
+        assertThat(first.hasPrevious()).isFalse();
+        var second = service.listPage("t1", null, null, first.nextCursor(), "", 2);
+        assertThat(second.data()).hasSize(2).doesNotContainAnyElementsOf(first.data());
+        assertThat(second.hasPrevious()).isTrue();
+        assertThat(service.listPage("t1", null, null, "", second.previousCursor(), 2)
+                        .data())
+                .isEqualTo(first.data());
+        var last = service.listPage("t1", null, null, second.nextCursor(), "", 2);
+        assertThat(last.data()).hasSize(1);
+        assertThat(last.hasMore()).isFalse();
+        assertThat(service.listPage("other-tenant", null, null, first.nextCursor(), "", 2)
+                        .data())
+                .isEmpty();
+        assertThat(service.listPage("t1", "ACTIVE", null, "", "", 100).data()).isEmpty();
+        assertThat(service.listPage("t1", null, "2027-01-01", "", "", 100).data())
+                .isEmpty();
+        assertThatThrownBy(() -> service.listPage("t1", null, null, "bad", "", 25))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.listPage("t1", null, null, "a", "b", 25))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.listPage("t1", null, null, "", "", 101))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     void myChecklistMatchesTheTokenEmailIgnoringCase() {
         var id = hire("off-1", "app-1");
 

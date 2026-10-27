@@ -53,6 +53,15 @@ public class OllamaProvider implements ModelProvider {
 
     @Override
     public ChatResult chat(ChatRequest request) {
+        return chat(request, client);
+    }
+
+    @Override
+    public ChatResult chat(ChatRequest request, Duration timeout) {
+        return chat(request, ProviderSupport.client(baseUrl, timeout, null));
+    }
+
+    private ChatResult chat(ChatRequest request, RestClient http) {
         var body = new LinkedHashMap<String, Object>();
         body.put("model", request.model());
         body.put("stream", false);
@@ -71,7 +80,7 @@ public class OllamaProvider implements ModelProvider {
                         "num_predict", request.maxTokens(),
                         "num_ctx", request.contextTokens()));
         try {
-            var reply = client.post().uri("/api/chat").body(body).retrieve().body(Map.class);
+            var reply = http.post().uri("/api/chat").body(body).retrieve().body(Map.class);
             var message = Json.map(reply == null ? null : reply.get("message"));
             var content = Json.string(message.get("content"));
             if (content.isBlank()) throw new ProviderException("Empty reply", false);

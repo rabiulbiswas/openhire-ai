@@ -92,7 +92,11 @@ class OfferApplicationServiceTest {
     }
 
     private OfferApplicationService serviceAuditedBy(AuditRecorder recorder) {
-        return new OfferApplicationService(offers, templates, applications, jobs, tokens, settings, clock, recorder);
+        var service =
+                new OfferApplicationService(offers, templates, applications, jobs, tokens, settings, clock, recorder);
+        var staff = org.mockito.Mockito.mock(com.openhire.platform.security.TenantStaffDirectory.class);
+        org.springframework.test.util.ReflectionTestUtils.setField(service, "staff", staff);
+        return service;
     }
 
     private static Viewer viewer(String subject, String... roles) {
@@ -110,7 +114,8 @@ class OfferApplicationServiceTest {
 
     private String approvedOffer(TermsInput terms) {
         var created = service.create(TENANT, recruiter, "app-1", null, terms, "Welcome");
-        service.submit(TENANT, recruiter, created.id());
+        service.submit(
+                TENANT, recruiter, created.id(), Map.of("HIRING_MANAGER", "hm", "HR_ADMIN", "hr", "FINANCE", "fin"));
         service.approve(TENANT, manager, created.id(), "s1");
         var detail = service.approve(TENANT, hr, created.id(), "s2");
         if (detail.approvalSteps().size() == 3)
@@ -121,6 +126,51 @@ class OfferApplicationServiceTest {
 
     private TermsInput base(String value) {
         return new TermsInput(null, new BigDecimal(value), null, null, null, null, null, null, null, null);
+    }
+
+    @Test
+    void paginatesForwardBackwardWithTiedDatesAndIsolatesTenantAndSearch() {
+        for (int i = 0; i < 5; i++) service.create(TENANT, recruiter, "page-app-" + i, null, null, "Welcome");
+        service.create("other-tenant", recruiter, "foreign-app", null, null, "Welcome");
+        var first = service.listPage(TENANT, recruiter, null, "", "", "", 2);
+        assertThat(first.data()).hasSize(2);
+        assertThat(first.hasMore()).isTrue();
+        assertThat(first.hasPrevious()).isFalse();
+        var second = service.listPage(TENANT, recruiter, null, "", first.nextCursor(), "", 2);
+        assertThat(second.data()).hasSize(2).doesNotContainAnyElementsOf(first.data());
+        assertThat(second.hasPrevious()).isTrue();
+        var back = service.listPage(TENANT, recruiter, null, "", "", second.previousCursor(), 2);
+        assertThat(back.data()).isEqualTo(first.data());
+        assertThat(back.hasPrevious()).isFalse();
+        var last = service.listPage(TENANT, recruiter, null, "", second.nextCursor(), "", 2);
+        assertThat(last.data()).hasSize(1);
+        assertThat(last.hasMore()).isFalse();
+        assertThat(service.listPage(TENANT, recruiter, "DRAFT", "priya", "", "", 100)
+                        .data())
+                .hasSize(5);
+        assertThat(service.listPage(TENANT, recruiter, "SENT", "", "", "", 100).data())
+                .isEmpty();
+        assertThat(service.listPage(TENANT, recruiter, null, ".*", "", "", 100).data())
+                .isEmpty();
+        assertThat(service.listPage("empty-tenant", recruiter, null, "", first.nextCursor(), "", 100)
+                        .data())
+                .isEmpty();
+    }
+
+    @Test
+    void rejectsInvalidPaginationAndKeepsReadPermissions() {
+        assertThatThrownBy(() -> service.listPage(TENANT, recruiter, null, "", "bad", "", 25))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.listPage(TENANT, recruiter, null, "", "a", "b", 25))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.listPage(TENANT, recruiter, null, "", "", "", 101))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.listPage(TENANT, recruiter, null, "", "", "", 0))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.listPage(TENANT, recruiter, null, "a".repeat(201), "", "", 25))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.listPage(TENANT, viewer("x", "INTERVIEWER"), null, "", "", "", 25))
+                .isInstanceOf(AccessDenied.class);
     }
 
     @Test
@@ -155,7 +205,11 @@ class OfferApplicationServiceTest {
                 new TermsInput(null, null, null, null, null, null, " ", "", null, null),
                 null);
 
-        assertThatThrownBy(() -> service.submit(TENANT, recruiter, created.id()))
+        assertThatThrownBy(() -> service.submit(
+                        TENANT,
+                        recruiter,
+                        created.id(),
+                        Map.of("HIRING_MANAGER", "hm", "HR_ADMIN", "hr", "FINANCE", "fin")))
                 .hasMessageContaining("reports to");
         service.update(
                 TENANT,
@@ -163,7 +217,11 @@ class OfferApplicationServiceTest {
                 created.id(),
                 new TermsInput(null, null, null, null, null, null, "Meera Nair", "", null, null),
                 null);
-        assertThatThrownBy(() -> service.submit(TENANT, recruiter, created.id()))
+        assertThatThrownBy(() -> service.submit(
+                        TENANT,
+                        recruiter,
+                        created.id(),
+                        Map.of("HIRING_MANAGER", "hm", "HR_ADMIN", "hr", "FINANCE", "fin")))
                 .hasMessageContaining("location");
         service.update(
                 TENANT,
@@ -171,7 +229,13 @@ class OfferApplicationServiceTest {
                 created.id(),
                 new TermsInput(null, null, null, null, null, null, null, "Bengaluru", null, null),
                 null);
-        assertThat(service.submit(TENANT, recruiter, created.id()).status()).isEqualTo("PENDING_APPROVAL");
+        assertThat(service.submit(
+                                TENANT,
+                                recruiter,
+                                created.id(),
+                                Map.of("HIRING_MANAGER", "hm", "HR_ADMIN", "hr", "FINANCE", "fin"))
+                        .status())
+                .isEqualTo("PENDING_APPROVAL");
     }
 
     @Test
@@ -179,7 +243,11 @@ class OfferApplicationServiceTest {
         var named = new Viewer("5b1c-uuid", "meera@x.test", "Meera Nair", Set.of("HIRING_MANAGER"));
         var author = new Viewer("9f2d-uuid", "arjun@x.test", "Arjun Mehta", Set.of("RECRUITER"));
         var created = service.create(TENANT, author, "app-1", null, null, null);
-        service.submit(TENANT, author, created.id());
+        service.submit(
+                TENANT,
+                author,
+                created.id(),
+                Map.of("HIRING_MANAGER", named.subject(), "HR_ADMIN", "hr", "FINANCE", "fin"));
 
         var detail = service.approve(TENANT, named, created.id(), "s1");
 
@@ -285,8 +353,10 @@ class OfferApplicationServiceTest {
         assertThat(service.publicView(token).terms().joiningDate()).isEqualTo("2026-11-30");
 
         var richer = service.update(TENANT, recruiter, id, base("27"), null);
-        assertThat(richer.status()).isEqualTo("PENDING_APPROVAL");
-        assertThat(richer.approvalSteps()).hasSize(3);
+        assertThat(richer.status()).isEqualTo("DRAFT");
+        assertThat(richer.approvalSteps()).isEmpty();
+        service.submit(TENANT, recruiter, id, Map.of("HIRING_MANAGER", "hm", "HR_ADMIN", "hr", "FINANCE", "fin"));
+        assertThat(offers.byId(id).offer.approvalSteps()).hasSize(3);
         assertThat(richer.versions()).hasSize(3);
     }
 
@@ -387,6 +457,14 @@ class OfferApplicationServiceTest {
     // ---- In-memory ports ------------------------------------------------------------------------
 
     static final class MemoryOffers implements OfferRepository {
+        public List<Offer> approvalInbox(String tenant, Viewer viewer, String scope, int limit) {
+            throw new UnsupportedOperationException();
+        }
+
+        public long countApprovalInbox(String tenant, Viewer viewer, String scope) {
+            throw new UnsupportedOperationException();
+        }
+
         private final Map<String, Offer> rows = new LinkedHashMap<>();
         int saves;
 
@@ -417,6 +495,26 @@ class OfferApplicationServiceTest {
         public List<Offer> list(String tenantId, Status status, int limit) {
             return rows.values().stream()
                     .filter(o -> status == null || o.status() == status)
+                    .limit(limit)
+                    .toList();
+        }
+
+        public List<Offer> page(
+                String tenantId, Status status, String search, Instant at, String id, boolean before, int limit) {
+            var order = java.util.Comparator.comparing(Offer::createdAt).thenComparing(Offer::id);
+            return rows.values().stream()
+                    .filter(o -> o.tenantId().equals(tenantId))
+                    .filter(o -> status == null || o.status() == status)
+                    .filter(o -> (o.candidateName() + " " + o.jobTitle())
+                            .toLowerCase(java.util.Locale.ROOT)
+                            .contains(search.toLowerCase(java.util.Locale.ROOT)))
+                    .filter(o -> at == null
+                            || (before
+                                    ? o.createdAt().compareTo(at) > 0
+                                            || o.createdAt().equals(at) && o.id().compareTo(id) > 0
+                                    : o.createdAt().compareTo(at) < 0
+                                            || o.createdAt().equals(at) && o.id().compareTo(id) < 0))
+                    .sorted(before ? order : order.reversed())
                     .limit(limit)
                     .toList();
         }
@@ -512,7 +610,7 @@ class OfferApplicationServiceTest {
     void everyStaffStepOfTheOfferLifecycleIsAuditedWithTheActorAndNoPersonalData() {
         var created = service.create(TENANT, recruiter, "app-1", null, null, "Welcome Priya");
         var id = created.id();
-        service.submit(TENANT, recruiter, id);
+        service.submit(TENANT, recruiter, id, Map.of("HIRING_MANAGER", "hm", "HR_ADMIN", "hr", "FINANCE", "fin"));
         service.approve(TENANT, manager, id, "s1");
         service.approve(TENANT, hr, id, "s2");
         service.send(TENANT, recruiter, id);
@@ -534,7 +632,7 @@ class OfferApplicationServiceTest {
     @Test
     void aRejectionIsAuditedWithTheStepRoleButNotTheReason() {
         var id = service.create(TENANT, recruiter, "app-1", null, null, null).id();
-        service.submit(TENANT, recruiter, id);
+        service.submit(TENANT, recruiter, id, Map.of("HIRING_MANAGER", "hm", "HR_ADMIN", "hr", "FINANCE", "fin"));
 
         service.reject(TENANT, manager, id, "s1", "Compensation is too high");
 
@@ -558,7 +656,7 @@ class OfferApplicationServiceTest {
         var declining = serviceAuditedBy(declinedAudit.recorder);
         offers.clear();
         var id = declining.create(TENANT, recruiter, "app-1", null, null, null).id();
-        declining.submit(TENANT, recruiter, id);
+        declining.submit(TENANT, recruiter, id, Map.of("HIRING_MANAGER", "hm", "HR_ADMIN", "hr", "FINANCE", "fin"));
         declining.approve(TENANT, manager, id, "s1");
         declining.approve(TENANT, hr, id, "s2");
         declining.send(TENANT, recruiter, id);
@@ -597,7 +695,7 @@ class OfferApplicationServiceTest {
         var guarded = serviceAuditedBy(new AuditProbe().failing().recorder);
 
         var id = guarded.create(TENANT, recruiter, "app-1", null, null, null).id();
-        guarded.submit(TENANT, recruiter, id);
+        guarded.submit(TENANT, recruiter, id, Map.of("HIRING_MANAGER", "hm", "HR_ADMIN", "hr", "FINANCE", "fin"));
         guarded.approve(TENANT, manager, id, "s1");
         guarded.approve(TENANT, hr, id, "s2");
 

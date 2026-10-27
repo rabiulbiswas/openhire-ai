@@ -27,6 +27,8 @@ public final class IdentityRepositories {
     public interface Members {
         Member save(Member value);
 
+        boolean updateDisplayName(String tenantId, String id, String displayName);
+
         Optional<Member> findMemberById(String organizationId, String id);
 
         Optional<Member> findByEmail(String organizationId, String email);

@@ -31,10 +31,13 @@ public class Job {
     private JobStatus status;
     private int currentVersion;
     private int approvedVersion;
+    private Integer submittedVersion;
     private List<JobVersion> versions;
     private List<HiringTeamMember> hiringTeam;
     private List<Activity> activity;
     private Instant publishedAt;
+    // Saved atomically with the career publication. Recovery can rebuild outbox entries after a crash.
+    private boolean publicationPending;
     private Instant createdAt;
     private Instant updatedAt;
 
@@ -96,6 +99,7 @@ public class Job {
     public void edit(int expectedVersion, JobContent content, String actor) {
         requireVersion(expectedVersion);
         requireStatus(JobStatus.DRAFT);
+        if (submittedVersion == null && approvedVersion > 0) submittedVersion = approvedVersion;
         currentVersion++;
         apply(content);
         versions.add(JobVersion.from(currentVersion, content, Instant.now()));
@@ -126,13 +130,27 @@ public class Job {
                         content.knockoutQuestions(),
                         content.rubric(),
                         content.description(),
-                        rounds),
+                        rounds,
+                        content.headcount(),
+                        content.positionType(),
+                        content.hiringReason(),
+                        content.classification(),
+                        content.qualification(),
+                        content.goodToHaveSkills()),
                 actor);
     }
 
     public void submit(String actor) {
         requireStatus(JobStatus.DRAFT);
+        var details = currentSnapshot();
+        // Legacy jobs without these additive fields remain usable. Once a caller
+        // supplies requisition details, require the full context before approval.
+        if ((details.headcount() != null || details.positionType() != null || details.hiringReason() != null)
+                && (details.headcount() == null || details.positionType() == null || details.hiringReason() == null)) {
+            throw new IllegalStateException("Headcount, position type and hiring reason are required before approval");
+        }
         status = JobStatus.PENDING_APPROVAL;
+        submittedVersion = currentVersion;
         record(actor, "Submitted version " + currentVersion + " for approval");
     }
 
@@ -145,6 +163,7 @@ public class Job {
 
     public void requestChanges(String actor, String reason) {
         requireStatus(JobStatus.PENDING_APPROVAL);
+        submittedVersion = currentVersion;
         status = JobStatus.DRAFT;
         approvedVersion = 0;
         record(actor, "Changes requested: " + reason);
@@ -155,6 +174,7 @@ public class Job {
         if (approvedVersion != currentVersion) throw new IllegalStateException("Current job version is not approved");
         status = JobStatus.OPEN;
         publishedAt = Instant.now();
+        publicationPending = true;
         record(actor, "Published version " + currentVersion);
     }
 
@@ -204,7 +224,13 @@ public class Job {
                 version.knockoutQuestions(),
                 version.rubric(),
                 version.description(),
-                version.interviewPlan());
+                version.interviewPlan(),
+                version.headcount(),
+                version.positionType(),
+                version.hiringReason(),
+                version.classification(),
+                version.qualification(),
+                version.goodToHaveSkills());
     }
 
     private void requireVersion(int expectedVersion) {
@@ -303,6 +329,10 @@ public class Job {
         return approvedVersion;
     }
 
+    public int submittedVersion() {
+        return submittedVersion == null ? approvedVersion : submittedVersion;
+    }
+
     public List<JobVersion> versions() {
         return List.copyOf(versions);
     }
@@ -339,9 +369,134 @@ public class Job {
             List<KnockoutQuestion> knockoutQuestions,
             List<RubricCriterion> rubric,
             String description,
-            List<InterviewRound> interviewPlan) {
+            List<InterviewRound> interviewPlan,
+            Integer headcount,
+            String positionType,
+            String hiringReason,
+            Classification classification,
+            String qualification,
+            List<String> goodToHaveSkills) {
+        public JobContent(
+                String title,
+                String team,
+                String level,
+                String location,
+                BigDecimal salaryMin,
+                BigDecimal salaryMax,
+                String currency,
+                List<String> mustHaveSkills,
+                List<KnockoutQuestion> knockoutQuestions,
+                List<RubricCriterion> rubric,
+                String description,
+                List<InterviewRound> interviewPlan,
+                Integer headcount,
+                String positionType,
+                String hiringReason,
+                Classification classification) {
+            this(
+                    title,
+                    team,
+                    level,
+                    location,
+                    salaryMin,
+                    salaryMax,
+                    currency,
+                    mustHaveSkills,
+                    knockoutQuestions,
+                    rubric,
+                    description,
+                    interviewPlan,
+                    headcount,
+                    positionType,
+                    hiringReason,
+                    classification,
+                    null,
+                    List.of());
+        }
+
+        public JobContent(
+                String title,
+                String team,
+                String level,
+                String location,
+                BigDecimal salaryMin,
+                BigDecimal salaryMax,
+                String currency,
+                List<String> mustHaveSkills,
+                List<KnockoutQuestion> knockoutQuestions,
+                List<RubricCriterion> rubric,
+                String description,
+                List<InterviewRound> interviewPlan,
+                Integer headcount,
+                String positionType,
+                String hiringReason) {
+            this(
+                    title,
+                    team,
+                    level,
+                    location,
+                    salaryMin,
+                    salaryMax,
+                    currency,
+                    mustHaveSkills,
+                    knockoutQuestions,
+                    rubric,
+                    description,
+                    interviewPlan,
+                    headcount,
+                    positionType,
+                    hiringReason,
+                    null);
+        }
+
+        public JobContent(
+                String title,
+                String team,
+                String level,
+                String location,
+                BigDecimal salaryMin,
+                BigDecimal salaryMax,
+                String currency,
+                List<String> mustHaveSkills,
+                List<KnockoutQuestion> knockoutQuestions,
+                List<RubricCriterion> rubric,
+                String description,
+                List<InterviewRound> interviewPlan) {
+            this(
+                    title,
+                    team,
+                    level,
+                    location,
+                    salaryMin,
+                    salaryMax,
+                    currency,
+                    mustHaveSkills,
+                    knockoutQuestions,
+                    rubric,
+                    description,
+                    interviewPlan,
+                    null,
+                    null,
+                    null);
+        }
+
         public JobContent {
-            mustHaveSkills = List.copyOf(mustHaveSkills == null ? List.of() : mustHaveSkills);
+            if (headcount != null && headcount < 1) throw new IllegalArgumentException("Headcount must be positive");
+            if (positionType != null && !List.of("NEW_POSITION", "REPLACEMENT").contains(positionType))
+                throw new IllegalArgumentException("Invalid position type");
+            if (hiringReason != null && hiringReason.length() > 4000)
+                throw new IllegalArgumentException("Hiring reason is too long");
+            hiringReason = hiringReason == null || hiringReason.isBlank() ? null : hiringReason.trim();
+            qualification = qualification == null || qualification.isBlank() ? null : qualification.trim();
+            if (qualification != null
+                    && (qualification.length() > 1000 || qualification.chars().anyMatch(Character::isISOControl)))
+                throw new IllegalArgumentException("Qualification must be plain text, at most 1,000 characters");
+            mustHaveSkills = normalizeSkills(mustHaveSkills);
+            goodToHaveSkills = normalizeSkills(goodToHaveSkills);
+            for (var skill : goodToHaveSkills) {
+                if (mustHaveSkills.stream().anyMatch(required -> required.equalsIgnoreCase(skill)))
+                    throw new IllegalArgumentException("A skill cannot be both must-have and good-to-have: " + skill);
+            }
             knockoutQuestions = List.copyOf(knockoutQuestions == null ? List.of() : knockoutQuestions);
             rubric = List.copyOf(rubric == null ? List.of() : rubric);
             interviewPlan = List.copyOf(interviewPlan == null ? List.of() : interviewPlan);
@@ -355,7 +510,70 @@ public class Job {
             List<KnockoutQuestion> knockoutQuestions,
             List<RubricCriterion> rubric,
             List<InterviewRound> interviewPlan,
-            Instant createdAt) {
+            Instant createdAt,
+            Integer headcount,
+            String positionType,
+            String hiringReason,
+            Classification classification,
+            String qualification,
+            List<String> goodToHaveSkills) {
+        public JobVersion(
+                int version,
+                String description,
+                List<String> mustHaveSkills,
+                List<KnockoutQuestion> knockoutQuestions,
+                List<RubricCriterion> rubric,
+                List<InterviewRound> interviewPlan,
+                Instant createdAt,
+                Integer headcount,
+                String positionType,
+                String hiringReason,
+                Classification classification) {
+            this(
+                    version,
+                    description,
+                    mustHaveSkills,
+                    knockoutQuestions,
+                    rubric,
+                    interviewPlan,
+                    createdAt,
+                    headcount,
+                    positionType,
+                    hiringReason,
+                    classification,
+                    null,
+                    List.of());
+        }
+
+        public JobVersion {
+            goodToHaveSkills = goodToHaveSkills == null ? List.of() : List.copyOf(goodToHaveSkills);
+        }
+
+        public JobVersion(
+                int version,
+                String description,
+                List<String> mustHaveSkills,
+                List<KnockoutQuestion> knockoutQuestions,
+                List<RubricCriterion> rubric,
+                List<InterviewRound> interviewPlan,
+                Instant createdAt,
+                Integer headcount,
+                String positionType,
+                String hiringReason) {
+            this(
+                    version,
+                    description,
+                    mustHaveSkills,
+                    knockoutQuestions,
+                    rubric,
+                    interviewPlan,
+                    createdAt,
+                    headcount,
+                    positionType,
+                    hiringReason,
+                    null);
+        }
+
         static JobVersion from(int version, JobContent content, Instant at) {
             return new JobVersion(
                     version,
@@ -364,11 +582,35 @@ public class Job {
                     content.knockoutQuestions(),
                     content.rubric(),
                     content.interviewPlan(),
-                    at);
+                    at,
+                    content.headcount(),
+                    content.positionType(),
+                    content.hiringReason(),
+                    content.classification(),
+                    content.qualification(),
+                    content.goodToHaveSkills());
         }
     }
 
+    public static List<String> normalizeSkills(List<String> skills) {
+        if (skills == null) return List.of();
+        if (skills.size() > 15) throw new IllegalArgumentException("Use at most 15 skills per group");
+        var normalized = new ArrayList<String>();
+        for (var skill : skills) {
+            if (skill == null
+                    || skill.isBlank()
+                    || skill.trim().length() > 60
+                    || skill.chars().anyMatch(Character::isISOControl))
+                throw new IllegalArgumentException("Each skill must contain 1 to 60 plain-text characters");
+            var value = skill.trim();
+            if (normalized.stream().noneMatch(existing -> existing.equalsIgnoreCase(value))) normalized.add(value);
+        }
+        return List.copyOf(normalized);
+    }
+
     public record KnockoutQuestion(String id, String question, String requiredAnswer) {}
+
+    public record Classification(String categoryId, String categoryName, String workMode) {}
 
     public record RubricCriterion(String id, String label, int weight) {}
 

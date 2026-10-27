@@ -1,7 +1,6 @@
 package com.openhire.employee.controller;
 
 import com.openhire.employee.dto.EmployeeViews.EmployeeDetail;
-import com.openhire.employee.dto.EmployeeViews.EmployeeSummary;
 import com.openhire.employee.dto.EmployeeViews.MyOnboardingView;
 import com.openhire.employee.dto.EmployeeViews.OnboardingView;
 import com.openhire.employee.dto.EmployeeViews.Page;
@@ -42,12 +41,15 @@ class EmployeeController {
     }
 
     @GetMapping("/employees")
-    Page<EmployeeSummary> list(
+    com.openhire.employee.dto.EmployeeViews.EmployeePage list(
             Authentication auth,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) String joiningFrom) {
+            @RequestParam(required = false) String joiningFrom,
+            @RequestParam(defaultValue = "") String after,
+            @RequestParam(defaultValue = "") String before,
+            @RequestParam(defaultValue = "25") int limit) {
         viewers.staff(auth);
-        return employees.list(viewers.tenant(auth), status, joiningFrom);
+        return employees.listPage(viewers.tenant(auth), status, joiningFrom, after, before, limit);
     }
 
     @GetMapping("/employees/{id}")

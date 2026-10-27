@@ -1,6 +1,8 @@
 # Package the exact JAR tested/built by CI; do not compile a second time.
 FROM eclipse-temurin:25-jre
+ARG SERVICE
 RUN apt-get update && apt-get install --no-install-recommends -y curl \
+    && if [ "$SERVICE" = "resume-processor" ]; then apt-get install --no-install-recommends -y tesseract-ocr tesseract-ocr-eng; fi \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --system --gid 10001 openhire \
     && useradd --system --uid 10001 --gid openhire --home-dir /app --shell /usr/sbin/nologin openhire \
@@ -9,4 +11,5 @@ WORKDIR /app
 COPY --chown=openhire:openhire application.jar application.jar
 USER openhire
 ENV JVM_RAM_PERCENT=60
+ENV OMP_THREAD_LIMIT=1
 ENTRYPOINT ["sh", "-c", "exec java -XX:MaxRAMPercentage=${JVM_RAM_PERCENT} -XX:+ExitOnOutOfMemoryError -jar /app/application.jar"]

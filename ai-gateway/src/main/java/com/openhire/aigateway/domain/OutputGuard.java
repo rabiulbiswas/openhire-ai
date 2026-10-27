@@ -216,6 +216,11 @@ public final class OutputGuard {
     // ---- job description draft ----
 
     public static Map<String, Object> jobDraft(Map<String, Object> json, String title, List<String> mustHaveSkills) {
+        return jobDraft(json, title, mustHaveSkills, List.of());
+    }
+
+    public static Map<String, Object> jobDraft(
+            Map<String, Object> json, String title, List<String> mustHaveSkills, List<String> goodToHaveSkills) {
         var out = new LinkedHashMap<String, Object>();
         var description = Json.string(json.get("description")).replaceAll("\\r\\n?", "\n");
         if (description.isBlank()) throw new GuardRejection("The description is empty.");
@@ -228,6 +233,9 @@ public final class OutputGuard {
             if (label.isBlank() || rubric.size() >= 8) continue;
             label = Character.toUpperCase(label.charAt(0)) + label.substring(1);
             var requirement = "NICE".equalsIgnoreCase(Json.string(row.get("requirement"))) ? "NICE" : "MUST";
+            var criterion = Text.normalize(label);
+            if (goodToHaveSkills.stream().anyMatch(skill -> criterion.contains(Text.normalize(skill))))
+                requirement = "NICE";
             rubric.add(rubricRow(slug(label, ids), label, number(row.get("weight"), 10), requirement));
         }
         for (var skill : mustHaveSkills) {
@@ -246,6 +254,9 @@ public final class OutputGuard {
             var row = Json.map(item);
             var question = clip(Json.string(row.get("question")), 240);
             if (question.isBlank() || knockouts.size() >= 5) continue;
+            // Optional skills must never become hard screening gates.
+            if (goodToHaveSkills.stream()
+                    .anyMatch(skill -> Text.normalize(question).contains(Text.normalize(skill)))) continue;
             var answer = Json.string(row.get("requiredAnswer"));
             var entry = new LinkedHashMap<String, Object>();
             entry.put("question", question);

@@ -14,11 +14,23 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${MAIL_AUTH:false}
+      mail.smtp.starttls.enable: ${MAIL_STARTTLS:false}
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+      # Both domain events and the audit outbox send already encoded JSON strings.
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
   security:
     oauth2:
       resourceserver:
@@ -27,6 +39,9 @@ spring:
           jwk-set-uri: ${OIDC_JWK_SET_URI:http://localhost:8180/realms/openhire-staff/protocol/openid-connect/certs}
 
 openhire:
+  candidates:
+    verification-secret: ${CANDIDATE_VERIFICATION_SECRET:${INTERNAL_SERVICE_SECRET:local-development-secret}}
+    mail-from: ${MAIL_FROM:noreply@openhire.local}
   internal:
     secret: ${INTERNAL_SERVICE_SECRET:local-development-secret}
   tenant:

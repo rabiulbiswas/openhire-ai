@@ -8,6 +8,40 @@ import org.junit.jupiter.api.Test;
 
 class ApprovalRequestTest {
     @Test
+    void headcountSnapshotValidatesCountsReasonAndPluralizesWithoutInventingLegacyValues() {
+        var value = ApprovalRequest.create(
+                "tenant-a",
+                "HEADCOUNT_EXCEPTION",
+                "job-1",
+                "SRE",
+                "requester",
+                List.of(new ApprovalRequest.ApprovalStep(
+                        "one", "manager", "Hiring manager", ApprovalRequest.StepStatus.PENDING, null)),
+                List.of(),
+                null,
+                List.of());
+        assertThat(value.headcountException()).isNull();
+        value.describeHeadcount("SRE", 0, 3, "Build an on-call team");
+        assertThat(value.title()).isEqualTo("SRE, +3 seats");
+        assertThat(value.headcountException().currentHeadcount()).isZero();
+        assertThatThrownBy(() -> value.describeHeadcount("SRE", -1, 2, "Reason"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> value.describeHeadcount("SRE", 1, 0, "Reason"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> value.describeHeadcount("SRE", 1, 2, " "))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> request().describeHeadcount("SRE", 1, 2, "Reason"))
+                .isInstanceOf(IllegalArgumentException.class);
+        try (var factory = jakarta.validation.Validation.buildDefaultValidatorFactory()) {
+            var incomplete =
+                    new com.openhire.approval.dto.ApprovalDtos.HeadcountExceptionInput("SRE", null, 2, "Reason");
+            assertThat(factory.getValidator().validate(incomplete))
+                    .extracting(v -> v.getPropertyPath().toString())
+                    .contains("currentHeadcount");
+        }
+    }
+
+    @Test
     void sequentialChainAdvancesThenCompletes() {
         var request = request();
 

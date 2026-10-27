@@ -66,6 +66,15 @@ class CommunicationServiceTest {
             clock,
             audit.recorder());
 
+    @org.junit.jupiter.api.BeforeEach
+    void membershipDirectory() {
+        var staff = org.mockito.Mockito.mock(com.openhire.platform.security.TenantStaffDirectory.class);
+        org.mockito.Mockito.when(staff.members("t1"))
+                .thenReturn(List.of(new com.openhire.platform.security.TenantStaffDirectory.Member(
+                        "sub-r", "r@x.test", "Riya", Set.of("RECRUITER"))));
+        org.springframework.test.util.ReflectionTestUtils.setField(service, "staff", staff);
+    }
+
     private Map<String, Object> scheduled() {
         return Map.of(
                 "applicationId", "app-1",
@@ -74,6 +83,76 @@ class CommunicationServiceTest {
                 "timezone", "Asia/Kolkata",
                 "ownerId", "sub-r",
                 "panel", List.of(Map.of("name", "Asha", "email", "asha@x.test")));
+    }
+
+    @Test
+    void namedApprovalEmailsUseCurrentMembershipWithoutPreferencesAndAreDeduplicated() {
+        var payload = Map.<String, Object>of(
+                "approvalId",
+                "approval-1",
+                "title",
+                "Backend Engineer",
+                "status",
+                "PENDING",
+                "requestedBy",
+                "other-requester",
+                "currentApprovers",
+                List.of("sub-r"));
+        service.handleApprovalEvent("approval-event-1", "approval.requested.v1", "t1", payload);
+        service.handleApprovalEvent("approval-event-1", "approval.requested.v1", "t1", payload);
+        assertThat(memory.messages).singleElement().satisfies(m -> {
+            assertThat(m.recipient().email()).isEqualTo("r@x.test");
+            assertThat(m.subject()).isEqualTo("Approval needed");
+        });
+    }
+
+    @Test
+    void removedMemberNeverReceivesAnApprovalEmail() {
+        service.handleApprovalEvent(
+                "approval-event-2",
+                "approval.requested.v1",
+                "t1",
+                Map.of(
+                        "approvalId",
+                        "approval-2",
+                        "title",
+                        "Backend Engineer",
+                        "status",
+                        "PENDING",
+                        "currentApprovers",
+                        List.of("removed-user")));
+        assertThat(memory.messages).isEmpty();
+    }
+
+    @Test
+    void acceptedOfferEmailsOnlyItsRequesterAndNamedParticipantsNotEveryHrUser() {
+        var directory = (com.openhire.platform.security.TenantStaffDirectory)
+                org.springframework.test.util.ReflectionTestUtils.getField(service, "staff");
+        org.mockito.Mockito.when(directory.members("t1"))
+                .thenReturn(List.of(
+                        new com.openhire.platform.security.TenantStaffDirectory.Member(
+                                "sub-r", "r@x.test", "Riya", Set.of("RECRUITER")),
+                        new com.openhire.platform.security.TenantStaffDirectory.Member(
+                                "assigned-hm", "hm@x.test", "Manager", Set.of("HIRING_MANAGER")),
+                        new com.openhire.platform.security.TenantStaffDirectory.Member(
+                                "assigned-hr", "hr@x.test", "HR", Set.of("HR_ADMIN")),
+                        new com.openhire.platform.security.TenantStaffDirectory.Member(
+                                "unassigned-hr", "other@x.test", "Other", Set.of("HR_ADMIN"))));
+        var payload = Map.<String, Object>of(
+                "offerId",
+                "offer-1",
+                "ownerId",
+                "sub-r",
+                "approvalParticipants",
+                List.of("assigned-hm", "assigned-hr"),
+                "terms",
+                Map.of("joiningDate", "2026-11-02"));
+        service.handleEvent("accepted-1", "offer.accepted.v1", "t1", "app-1", payload);
+        service.handleEvent("accepted-1", "offer.accepted.v1", "t1", "app-1", payload);
+        assertThat(memory.messages.stream()
+                        .filter(m -> m.audience() == Audience.STAFF)
+                        .map(m -> m.recipient().email()))
+                .containsExactlyInAnyOrder("r@x.test", "hm@x.test", "hr@x.test");
     }
 
     @Test
@@ -96,7 +175,7 @@ class CommunicationServiceTest {
                 .singleElement()
                 .satisfies(n -> assertThat(n.type()).isEqualTo("INTERVIEW_SCHEDULED"));
         assertThat(memory.messages.stream().filter(m -> m.audience() == Audience.STAFF))
-                .hasSize(1);
+                .hasSize(2);
     }
 
     @Test

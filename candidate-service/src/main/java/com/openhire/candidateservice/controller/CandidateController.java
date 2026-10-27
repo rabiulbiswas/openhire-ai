@@ -46,10 +46,28 @@ public class CandidateController {
         return service.view(access.tenant(auth), id);
     }
 
+    @GetMapping("/candidates")
+    public Map<String, Object> list(
+            Authentication auth,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String after,
+            @RequestParam(required = false) String before,
+            @RequestParam(defaultValue = "25") int limit) {
+        access.requireStaff(auth);
+        return service.list(access.tenant(auth), q, after, before, limit);
+    }
+
     @PutMapping("/candidates/{id}/owner")
     public Map<String, String> owner(Authentication auth, @PathVariable String id, @RequestBody Document body) {
         access.requireStaff(auth);
         service.owner(access.tenant(auth), id, Records.required(body, "owner", 100));
+        return Map.of("status", "UPDATED");
+    }
+
+    @PatchMapping("/candidates/{id}/profile")
+    public Map<String, String> profile(Authentication auth, @PathVariable String id, @RequestBody Document body) {
+        access.requireStaff(auth);
+        service.profile(access.tenant(auth), id, access.actor(auth), body);
         return Map.of("status", "UPDATED");
     }
 

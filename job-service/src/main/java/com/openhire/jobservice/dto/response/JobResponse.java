@@ -25,7 +25,10 @@ public record JobResponse(
         JobVersion currentVersion,
         List<HiringTeamMember> hiringTeam,
         List<Object> channels,
-        List<Activity> activity) {
+        List<Activity> activity,
+        String categoryId,
+        String categoryName,
+        String workMode) {
 
     public static JobResponse from(Job job) {
         return new JobResponse(
@@ -59,14 +62,28 @@ public record JobResponse(
                         job.currentSnapshot().interviewPlan().stream()
                                 .map(value -> new InterviewRound(
                                         value.id(), value.name(), value.durationMin(), value.interviewerNames()))
-                                .toList()),
+                                .toList(),
+                        job.currentSnapshot().headcount(),
+                        job.currentSnapshot().positionType(),
+                        job.currentSnapshot().hiringReason(),
+                        job.currentSnapshot().qualification(),
+                        job.currentSnapshot().goodToHaveSkills()),
                 job.hiringTeam().stream()
                         .map(value -> new HiringTeamMember(value.userId(), value.name(), value.role()))
                         .toList(),
                 List.of(),
                 job.activity().stream()
                         .map(value -> new Activity(value.id(), value.at(), value.actor(), value.text()))
-                        .toList());
+                        .toList(),
+                job.currentSnapshot().classification() == null
+                        ? null
+                        : job.currentSnapshot().classification().categoryId(),
+                job.currentSnapshot().classification() == null
+                        ? null
+                        : job.currentSnapshot().classification().categoryName(),
+                job.currentSnapshot().classification() == null
+                        ? null
+                        : job.currentSnapshot().classification().workMode());
     }
 
     private static String versionStatus(Job job) {
@@ -96,7 +113,12 @@ public record JobResponse(
             List<String> mustHaveSkills,
             List<KnockoutQuestion> knockoutQuestions,
             List<RubricCriterion> rubric,
-            List<InterviewRound> interviewPlan) {}
+            List<InterviewRound> interviewPlan,
+            Integer headcount,
+            String positionType,
+            String hiringReason,
+            String qualification,
+            List<String> goodToHaveSkills) {}
 
     public record Activity(String id, Instant at, String actor, String text) {}
 }

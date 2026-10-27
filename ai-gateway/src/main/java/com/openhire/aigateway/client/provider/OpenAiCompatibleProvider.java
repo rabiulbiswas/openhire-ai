@@ -22,9 +22,11 @@ public class OpenAiCompatibleProvider implements ModelProvider {
     private final boolean local;
     private final RestClient client;
     private final RestClient probe;
+    private final String apiKey;
 
     public OpenAiCompatibleProvider(String id, String baseUrl, String apiKey, Duration timeout) {
         this.id = id;
+        this.apiKey = apiKey;
         this.baseUrl = ProviderSupport.trimmed(baseUrl);
         this.local = ProviderSupport.isLocal(baseUrl);
         this.client = ProviderSupport.client(baseUrl, timeout, apiKey);
@@ -53,6 +55,15 @@ public class OpenAiCompatibleProvider implements ModelProvider {
 
     @Override
     public ChatResult chat(ChatRequest request) {
+        return chat(request, client);
+    }
+
+    @Override
+    public ChatResult chat(ChatRequest request, Duration timeout) {
+        return chat(request, ProviderSupport.client(baseUrl, timeout, apiKey));
+    }
+
+    private ChatResult chat(ChatRequest request, RestClient http) {
         var body = new LinkedHashMap<String, Object>();
         body.put("model", request.model());
         body.put("temperature", request.temperature());
@@ -73,7 +84,7 @@ public class OpenAiCompatibleProvider implements ModelProvider {
                                 "json_schema",
                                 Map.of("name", "answer", "strict", false, "schema", request.schema())));
         try {
-            var reply = client.post()
+            var reply = http.post()
                     .uri("/v1/chat/completions")
                     .body(body)
                     .retrieve()

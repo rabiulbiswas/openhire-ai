@@ -24,6 +24,15 @@ public final class EmployeePorts {
 
         List<Employee> list(String tenantId, EmployeeStatus status, String joiningFrom, int limit);
 
+        List<Employee> page(
+                String tenantId,
+                EmployeeStatus status,
+                String joiningFrom,
+                String date,
+                String id,
+                boolean before,
+                int limit);
+
         /** Pre-boarding employees across tenants whose joining date (yyyy-MM-dd) is on or before the day. */
         List<Employee> findPreBoardingDue(String today, int limit);
     }

@@ -59,7 +59,9 @@ components:
       description: >-
         At-least-once, keyed by offerId. Common payload fields are offerId, applicationId, candidateId, jobId,
         jobTitle, candidateName, versionNo, status and ownerId (the recruiter who created the offer).
-        offer.approval.requested.v1 adds stepId, currentApprovers (role codes) and title. offer.sent.v1 adds
+        offer.approval.requested.v1 adds stepId, currentApprovers (named user ids) and title.
+        approvalParticipants contains only explicitly assigned participants; never expand roles into mailing lists.
+        offer.approval.step-approved.v1 records an intermediate decision and adds stepId and approvedBy. offer.sent.v1 adds
         offerUrl, expiresAt, expiryDate, joiningDate and designation. offer.accepted.v1 adds terms
         (base, currency, variable, bonus, joiningDate, location, designation, reportsTo), acceptedAt and acceptedBy.
         offer.negotiation.requested.v1 adds message; declined and rescinded add an optional reason;
@@ -71,7 +73,7 @@ components:
             properties:
               aggregateType: { const: Offer }
               eventType:
-                enum: [offer.created.v1, offer.approval.requested.v1, offer.approval.rejected.v1, offer.approved.v1, offer.sent.v1, offer.viewed.v1, offer.negotiation.requested.v1, offer.revised.v1, offer.accepted.v1, offer.declined.v1, offer.expired.v1, offer.rescinded.v1]
+                enum: [offer.created.v1, offer.approval.requested.v1, offer.approval.step-approved.v1, offer.approval.rejected.v1, offer.approved.v1, offer.sent.v1, offer.viewed.v1, offer.negotiation.requested.v1, offer.revised.v1, offer.accepted.v1, offer.declined.v1, offer.expired.v1, offer.rescinded.v1]
     EmployeeEvent:
       description: >-
         At-least-once, keyed by employeeId. Carries ids, the employee number, joining date and designation only;

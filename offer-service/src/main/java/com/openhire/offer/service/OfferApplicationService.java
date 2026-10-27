@@ -73,6 +73,48 @@ public class OfferApplicationService {
     private final Clock clock;
     private final AuditRecorder audit;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.openhire.platform.security.TenantStaffDirectory staff;
+
+    public OfferDetail submit(String tenantId, Viewer viewer, String offerId, java.util.Map<String, String> assignees) {
+        assignApprovers(tenantId, viewer, offerId, assignees);
+        return submit(tenantId, viewer, offerId);
+    }
+
+    private void validateAssignments(Offer offer, java.util.Map<String, String> assignees) {
+        var seen = new java.util.HashSet<String>();
+        for (var step : CompensationPolicy.chain(offer.latest().terms(), offer.band())) {
+            var id = assignees == null ? null : assignees.get(step.role());
+            if (id == null || id.isBlank())
+                throw new IllegalArgumentException("Select an approver for " + step.label());
+            if (id.equals(offer.ownerId()) || !seen.add(id))
+                throw new IllegalArgumentException(
+                        "Each approval step needs a different person, excluding the requester");
+            staff.require(offer.tenantId(), id, step.role());
+        }
+    }
+
+    private void validateDecision(Offer offer, Viewer viewer) {
+        var step = offer.currentStep();
+        if (step == null || !offer.assigned(step, viewer)) throw new AccessDenied("This offer is not assigned to you");
+        staff.require(offer.tenantId(), viewer.subject(), step.role());
+    }
+
+    public OfferDetail assignApprovers(
+            String tenant, Viewer viewer, String id, java.util.Map<String, String> assignees) {
+        requireCreate(viewer);
+        var offer = require(tenant, id);
+        if (!viewer.subject().equals(offer.ownerId()) && !viewer.roles().contains("ORG_ADMIN"))
+            throw new AccessDenied("Only the requester or organisation admin may assign approvers");
+        validateAssignments(offer, assignees);
+        var selected = new java.util.LinkedHashMap<String, String>();
+        for (var step : CompensationPolicy.chain(offer.latest().terms(), offer.band()))
+            selected.put(step.role(), assignees.get(step.role()));
+        offer.assignApprovers(selected);
+        offers.save(offer);
+        return detail(offer);
+    }
+
     public OfferApplicationService(
             OfferRepository offers,
             TemplateStore templates,
@@ -94,18 +136,67 @@ public class OfferApplicationService {
 
     // ---- Staff reads ----------------------------------------------------------------------------
 
-    public Page<OfferSummary> list(String tenantId, Viewer viewer, String status) {
+    public com.openhire.offer.dto.OfferViews.OfferPage listPage(
+            String tenantId, Viewer viewer, String status, String q, String after, String before, int limit) {
         requireRead(viewer);
-        Status filter = null;
-        if (status != null && !status.isBlank()) {
+        if (limit < 1 || limit > 100) throw new IllegalArgumentException("Limit must be between 1 and 100");
+        if (q.length() > 200
+                || after.length() > 512
+                || before.length() > 512
+                || (!after.isBlank() && !before.isBlank()))
+            throw new IllegalArgumentException("Invalid offer page parameters");
+        Status filter = status == null || status.isBlank() ? null : Status.valueOf(status.toUpperCase(Locale.ROOT));
+        boolean reverse = !before.isBlank();
+        var cursor = reverse ? before : after;
+        Instant at = null;
+        String id = null;
+        if (!cursor.isBlank()) {
             try {
-                filter = Status.valueOf(status.toUpperCase(Locale.ROOT));
-            } catch (IllegalArgumentException unknown) {
-                throw new IllegalArgumentException("Unknown status " + status);
+                var parts = new String(java.util.Base64.getUrlDecoder().decode(cursor), StandardCharsets.UTF_8)
+                        .split("\\|", -1);
+                if (parts.length != 2 || parts[1].isBlank() || parts[1].length() > 200)
+                    throw new IllegalArgumentException();
+                at = Instant.parse(parts[0]);
+                id = parts[1];
+            } catch (RuntimeException invalid) {
+                throw new IllegalArgumentException("Invalid offer cursor");
             }
         }
-        return Page.of(
-                offers.list(tenantId, filter, 200).stream().map(this::summary).toList());
+        var fetched = offers.page(tenantId, filter, q.trim(), at, id, reverse, limit + 1);
+        var rows = new java.util.ArrayList<>(fetched.subList(0, Math.min(limit, fetched.size())));
+        if (reverse) java.util.Collections.reverse(rows);
+        boolean hasPrevious = false, hasMore = false;
+        if (!rows.isEmpty()) {
+            var first = rows.getFirst();
+            var last = rows.getLast();
+            hasPrevious = reverse
+                    ? fetched.size() > limit
+                    : !cursor.isBlank()
+                            && !offers.page(tenantId, filter, q.trim(), first.createdAt(), first.id(), true, 1)
+                                    .isEmpty();
+            hasMore = reverse
+                    ? !offers.page(tenantId, filter, q.trim(), last.createdAt(), last.id(), false, 1)
+                            .isEmpty()
+                    : fetched.size() > limit;
+        }
+        return new com.openhire.offer.dto.OfferViews.OfferPage(
+                rows.stream().map(this::summary).toList(),
+                hasMore ? pageCursor(rows.getLast()) : null,
+                hasMore,
+                hasPrevious ? pageCursor(rows.getFirst()) : null,
+                hasPrevious,
+                limit);
+    }
+
+    private static String pageCursor(Offer offer) {
+        return java.util.Base64.getUrlEncoder()
+                .withoutPadding()
+                .encodeToString((offer.createdAt() + "|" + offer.id()).getBytes(StandardCharsets.UTF_8));
+    }
+
+    public Page<OfferSummary> list(String tenantId, Viewer viewer, String status) {
+        var page = listPage(tenantId, viewer, status, "", "", "", 25);
+        return new Page<>(page.data(), page.nextCursor(), page.hasMore());
     }
 
     public OfferDetail get(String tenantId, Viewer viewer, String offerId) {
@@ -215,6 +306,7 @@ public class OfferApplicationService {
             throw new IllegalArgumentException("Say who the new hire reports to before submitting for approval");
         if (terms.location() == null || terms.location().isBlank())
             throw new IllegalArgumentException("Add the work location before submitting for approval");
+        validateAssignments(offer, offer.approvalAssignees());
         offer.submit(clock.instant());
         offers.save(offer);
         audit.record(staff(tenantId, "OFFER_SUBMITTED", viewer, offer)
@@ -224,8 +316,23 @@ public class OfferApplicationService {
     }
 
     public OfferDetail approve(String tenantId, Viewer viewer, String offerId, String stepId) {
+        return approve(tenantId, viewer, offerId, stepId, null);
+    }
+
+    public OfferDetail approve(String tenantId, Viewer viewer, String offerId, String stepId, Integer expectedVersion) {
         requireRead(viewer);
         var offer = require(tenantId, offerId);
+        requireVersion(offer, expectedVersion);
+        var recorded = offer.approvalSteps().stream()
+                .filter(s -> s.id().equals(stepId)
+                        && s.status() == com.openhire.offer.domain.OfferTypes.StepStatus.DONE
+                        && viewer.subject().equals(s.decidedBy()))
+                .findFirst();
+        if (recorded.isPresent()) {
+            staff.require(tenantId, viewer.subject(), recorded.get().role());
+            return detail(offer);
+        }
+        validateDecision(offer, viewer);
         var stepRole = stepRole(offer, stepId);
         if (offer.approve(stepId, viewer, clock.instant())) {
             offers.save(offer);
@@ -237,15 +344,27 @@ public class OfferApplicationService {
     }
 
     public OfferDetail reject(String tenantId, Viewer viewer, String offerId, String stepId, String reason) {
+        return reject(tenantId, viewer, offerId, stepId, reason, null);
+    }
+
+    public OfferDetail reject(
+            String tenantId, Viewer viewer, String offerId, String stepId, String reason, Integer expectedVersion) {
         requireRead(viewer);
         var offer = require(tenantId, offerId);
+        requireVersion(offer, expectedVersion);
         var stepRole = stepRole(offer, stepId);
+        validateDecision(offer, viewer);
         offer.reject(stepId, viewer, reason, clock.instant());
         offers.save(offer);
         audit.record(staff(tenantId, "OFFER_REJECTED", viewer, offer)
                 .detail("stepRole", stepRole)
                 .build());
         return detail(offer);
+    }
+
+    private static void requireVersion(Offer offer, Integer expected) {
+        if (expected != null && expected != offer.latest().versionNo())
+            throw new IllegalStateException("Offer version changed; reload before deciding");
     }
 
     public OfferDetail send(String tenantId, Viewer viewer, String offerId) {
@@ -629,7 +748,8 @@ public class OfferApplicationService {
                         step.status().name(),
                         step.decidedAt() == null ? null : step.decidedAt().toString(),
                         step.decidedName() != null ? step.decidedName() : step.decidedBy(),
-                        step.comment()))
+                        step.comment(),
+                        offer.approvalAssignees().get(step.role())))
                 .toList();
         var versions = offer.versions().stream()
                 .map(version -> new VersionView(

@@ -45,7 +45,7 @@ final class Fixtures {
     }
 
     static Offer draft(String base) {
-        return Offer.create(
+        var offer = Offer.create(
                 "t1",
                 "app-1",
                 "cand-1",
@@ -56,6 +56,8 @@ final class Fixtures {
                 BAND,
                 version(terms(base)),
                 NOW);
+        offer.assignApprovers(java.util.Map.of("HIRING_MANAGER", "hm", "HR_ADMIN", "hr", "FINANCE", "fin"));
+        return offer;
     }
 
     static Viewer viewer(String subject, String... roles) {

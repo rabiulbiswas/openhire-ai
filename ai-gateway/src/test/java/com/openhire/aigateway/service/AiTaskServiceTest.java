@@ -405,10 +405,60 @@ class AiTaskServiceTest {
 
     // ---- jd draft ----
 
+    private String validDraftJson() {
+        return Json.write(Map.of(
+                "description",
+                com.openhire.aigateway.Fixtures.jdSections("Summary: Build reliable services."),
+                "rubric",
+                List.of(Map.of("label", "Java", "weight", 100, "requirement", "MUST")),
+                "knockoutQuestions",
+                List.of(),
+                "interviewPlan",
+                List.of(Map.of("name", "Technical", "durationMin", 60)),
+                "biasFlags",
+                List.of()));
+    }
+
+    @Test
+    void draftingUsesOneSharedThreeMinuteBudgetAndSmallerOutput() {
+        rig.local.reply = r -> {
+            if (rig.local.calls.size() == 1) {
+                rig.clock.advance(java.time.Duration.ofSeconds(150));
+                return "invalid JSON";
+            }
+            return validDraftJson();
+        };
+        rig.tasks.staffDraft(T, new JdRequest("Engineer", null, null, null, List.of("Java"), null));
+        assertThat(rig.local.taskTimeouts)
+                .containsExactly(java.time.Duration.ofSeconds(180), java.time.Duration.ofSeconds(30));
+        assertThat(rig.local.calls)
+                .allSatisfy(request -> assertThat(request.maxTokens()).isEqualTo(1400));
+        assertThat(rig.guards.of("ollama").bulkhead().available()).isEqualTo(2);
+    }
+
+    @Test
+    void exhaustedDraftBudgetStopsBeforeAnotherProviderCallAndRecordsTimeout() {
+        rig.local.reply = r -> {
+            rig.clock.advance(java.time.Duration.ofSeconds(181));
+            return "invalid JSON";
+        };
+        assertThatThrownBy(() ->
+                        rig.tasks.staffDraft(T, new JdRequest("Engineer", null, null, null, List.of("Java"), null)))
+                .isInstanceOf(com.openhire.aigateway.exception.AiExceptions.AiTimeout.class);
+        assertThat(rig.local.calls).hasSize(1);
+        assertThat(rig.requests.rows).singleElement().satisfies(row -> {
+            assertThat(row.errorCode()).isEqualTo("AI_TIMEOUT");
+            assertThat(row.outcome()).isEqualTo("TIMED_OUT");
+        });
+        assertThat(rig.guards.of("ollama").bulkhead().available()).isEqualTo(2);
+    }
+
     @Test
     void jdDraftNormalisesRubricWeightsAndFlagsBiasedWording() {
         rig.local.reply = r -> Json.write(Map.of(
-                "description", "We seek a young rockstar backend engineer for our payments team.",
+                "description",
+                        com.openhire.aigateway.Fixtures.jdSections(
+                                "We seek a young rockstar backend engineer for our payments team."),
                 "rubric",
                         List.of(
                                 Map.of("id", "java", "label", "Java", "weight", 50, "requirement", "MUST"),
@@ -429,7 +479,9 @@ class AiTaskServiceTest {
     @Test
     void staffDraftHasTheConsoleShape() {
         rig.local.reply = r -> Json.write(Map.of(
-                "description", "We are hiring a backend engineer to build payment services.",
+                "description",
+                        com.openhire.aigateway.Fixtures.jdSections(
+                                "We are hiring a backend engineer to build payment services."),
                 "rubric", List.of(Map.of("label", "Java", "weight", 100, "requirement", "MUST")),
                 "knockoutQuestions", List.of(),
                 "interviewPlan",
@@ -448,6 +500,64 @@ class AiTaskServiceTest {
     }
 
     // ---- message draft ----
+    @Test
+    void structuredDraftUsesQualificationAndOptionalSkillsWithoutMakingThemMandatory() {
+        rig.local.reply = r -> {
+            var prompt = r.messages().toString();
+            assertThat(prompt)
+                    .contains(
+                            "About the job",
+                            "Summary",
+                            "Roles & Responsibilities",
+                            "Professional & Technical Skills",
+                            "Additional Information",
+                            "Degree or equivalent experience",
+                            "Azure",
+                            "HYBRID",
+                            "omit minimum years");
+            return Json.write(Map.of(
+                    "description",
+                    com.openhire.aigateway.Fixtures.jdSections("Build reliable services using Java."),
+                    "rubric",
+                    List.of(
+                            Map.of("label", "Java", "weight", 70, "requirement", "MUST"),
+                            Map.of("label", "Azure", "weight", 30, "requirement", "MUST")),
+                    "knockoutQuestions",
+                    List.of(),
+                    "interviewPlan",
+                    List.of(Map.of("name", "Technical", "durationMin", 60)),
+                    "biasFlags",
+                    List.of()));
+        };
+        var draft = rig.tasks.staffDraft(
+                T,
+                new JdRequest(
+                        "Engineer",
+                        "Platform",
+                        "L4",
+                        "Pune",
+                        List.of("Java"),
+                        null,
+                        "Degree or equivalent experience",
+                        List.of("Azure"),
+                        "HYBRID"));
+        assertThat(draft.description()).contains("Roles & Responsibilities", "Additional Information");
+        assertThat(draft.rubric())
+                .anySatisfy(
+                        row -> assertThat(row).containsEntry("label", "Azure").containsEntry("requirement", "NICE"));
+        assertThat(draft.provenance().promptVersion()).isEqualTo(4);
+        assertThat(draft.description())
+                .contains(
+                        "About the job",
+                        "Project Role: Engineer",
+                        "Educational Qualification: Degree or equivalent experience",
+                        "Good-to-have skills (optional): Azure");
+        assertThatThrownBy(() -> rig.tasks.staffDraft(
+                        T,
+                        new JdRequest(
+                                "Engineer", null, null, null, List.of("Java"), null, "Degree", List.of("JAVA"), null)))
+                .hasMessageContaining("separate");
+    }
 
     @Test
     void messageDraftReturnsTextAndNeverEchoesInstructionsFromTheThread() {

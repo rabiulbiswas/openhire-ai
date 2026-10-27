@@ -156,9 +156,11 @@ public class SubmissionController {
                                     .is(true)),
                             "agency_assignments"))
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Job is not assigned to this agency account");
+            input.put("owner", "");
             return;
         }
         if (Set.of("INTERNAL", "REFERRAL").contains(source) && access.role(auth, "EMPLOYEE")) {
+            input.put("owner", "");
             if (source.equals("INTERNAL")) {
                 if (!(auth
                                 instanceof
@@ -177,30 +179,31 @@ public class SubmissionController {
     @PostMapping(value = "/public/applications", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Object career(
             @RequestHeader("Idempotency-Key") String key,
+            @RequestHeader(value = "X-Public-Tenant-Id", required = false) String hostTenant,
             @RequestParam Map<String, String> fields,
             @RequestPart MultipartFile resume)
             throws Exception {
-        var input = new Document();
-        input.putAll(fields);
-        String tenant = required(input, "tenantId", 100);
-        String receipt = required(input, "receiptToken", 200);
-        if (receipt.length() < 32)
-            throw new IllegalArgumentException("Receipt token must contain at least 32 random characters");
-        input.put("source", "CAREER");
-        if (fields.containsKey("answers")) input.put("answers", Answers.parse(fields.get("answers")));
-        var row = service.submit(
-                tenant, "career:" + hash(required(input, "email", 254).toLowerCase(Locale.ROOT)), key, input, resume);
-        if (!hash(receipt).equals(text(row, "receiptHash")))
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Receipt does not match submission");
-        return Map.of("id", row.getString("_id"), "stage", row.getString("stage"));
+        // Receipt-based tracking/withdrawal still works, but anonymous intake is retired.
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Register and sign in with a verified candidate account before applying");
     }
 
     private Document receipt(String tenant, String id, String token) {
         var row = service.get(tenant, id);
-        if (!java.security.MessageDigest.isEqual(
+        boolean original = java.security.MessageDigest.isEqual(
                 hash(token).getBytes(java.nio.charset.StandardCharsets.UTF_8),
-                text(row, "receiptHash").getBytes(java.nio.charset.StandardCharsets.UTF_8)))
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid application receipt");
+                text(row, "receiptHash").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        boolean login = row.getList("portalReceipts", Document.class, java.util.List.of()).stream()
+                .anyMatch(grant -> {
+                    try {
+                        return java.time.Instant.parse(text(grant, "expiresAt")).isAfter(java.time.Instant.now())
+                                && java.security.MessageDigest.isEqual(
+                                        hash(token).getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                                        text(grant, "hash").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    } catch (RuntimeException invalid) {
+                        return false;
+                    }
+                });
+        if (!original && !login) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid application receipt");
         return row;
     }
 
@@ -213,6 +216,12 @@ public class SubmissionController {
         return Map.of(
                 "id",
                 id,
+                "name",
+                text(row, "name"),
+                "email",
+                text(row, "email"),
+                "phone",
+                text(row, "phone"),
                 "jobTitle",
                 text(row, "jobTitle"),
                 "stage",
@@ -270,11 +279,12 @@ public class SubmissionController {
             Authentication auth,
             @PathVariable String id,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "100") int size) {
+            @RequestParam(defaultValue = "100") int size,
+            @RequestParam(required = false) String channel) {
         access.requireStaff(auth);
         return Map.of(
                 "data",
-                service.list(access.tenant(auth), id, null, null, page, size).stream()
+                service.list(access.tenant(auth), id, null, null, page, size, channel).stream()
                         .map(service::card)
                         .toList());
     }
@@ -414,52 +424,5 @@ public class SubmissionController {
                                 .set("active", Boolean.TRUE.equals(input.get("active"))),
                         "agency_assignments");
         return Map.of("status", "UPDATED");
-    }
-
-    @GetMapping("/partner/jobs")
-    public Object assigned(Authentication auth) {
-        String tenant = access.tenant(auth), actor = access.actor(auth);
-        if (!access.role(auth, "AGENCY_RECRUITER") && !access.staff(auth))
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-        var assignments = service.store()
-                .find(
-                        Query.query(Criteria.where("tenantId")
-                                        .is(tenant)
-                                        .and("actorId")
-                                        .is(actor)
-                                        .and("active")
-                                        .is(true))
-                                .limit(100),
-                        Document.class,
-                        "agency_assignments");
-        return Map.of(
-                "data",
-                assignments.stream()
-                        .map(r -> service.job(tenant, r.getString("jobId")))
-                        .filter(j -> "OPEN".equals(text(j, "status")))
-                        .map(j ->
-                                Map.of("id", text(j, "id"), "title", text(j, "title"), "location", text(j, "location")))
-                        .toList());
-    }
-
-    @GetMapping({"/partner/submissions", "/me/referrals"})
-    public Object mySubmissions(Authentication auth) {
-        if (!access.staff(auth) && !access.role(auth, "AGENCY_RECRUITER") && !access.role(auth, "EMPLOYEE"))
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-        return Map.of(
-                "data",
-                service.list(access.tenant(auth), null, access.actor(auth), null, 0, 100).stream()
-                        .map(r -> Map.of(
-                                "id",
-                                text(r, "_id"),
-                                "name",
-                                text(r, "name"),
-                                "jobTitle",
-                                text(r, "jobTitle"),
-                                "stage",
-                                text(r, "stage"),
-                                "submittedAt",
-                                text(r, "submittedAt")))
-                        .toList());
     }
 }

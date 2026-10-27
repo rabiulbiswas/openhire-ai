@@ -9,6 +9,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.core.KafkaTemplate;
+import tools.jackson.databind.ObjectMapper;
 
 @Configuration
 public class IdentityEventConfiguration {
@@ -22,10 +23,11 @@ public class IdentityEventConfiguration {
 
     @Bean
     @ConditionalOnProperty(name = "openhire.events.publisher", havingValue = "kafka")
-    IdentityEventPublisher kafkaEvents(KafkaTemplate<String, Object> kafka, Clock clock) {
+    IdentityEventPublisher kafkaEvents(KafkaTemplate<String, String> kafka, Clock clock, ObjectMapper json) {
         return (type, tenant, aggregate, payload) -> kafka.send(
                 "openhire.identity.events",
                 tenant,
-                DomainEventEnvelope.create(type, tenant, "identity", aggregate, null, Map.copyOf(payload)));
+                json.writeValueAsString(
+                        DomainEventEnvelope.create(type, tenant, "identity", aggregate, null, Map.copyOf(payload))));
     }
 }

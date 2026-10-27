@@ -64,6 +64,8 @@ openhire:
     mode: ${SECURITY_MODE:local}
   approval:
     base-url: ${APPROVAL_SERVICE_URL:http://localhost:8083}
+  application:
+    base-url: ${APPLICATION_SERVICE_URL:http://localhost:8084}
   internal-secret: ${INTERNAL_SERVICE_SECRET:local-development-secret}
 
 # Opt-in only. UI is hosted centrally by api-gateway.

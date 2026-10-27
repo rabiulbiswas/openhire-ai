@@ -24,6 +24,9 @@ public class ApprovalApplicationService {
     private final DelegationResolver delegations;
     private final AuditRecorder audit;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.openhire.platform.security.TenantStaffDirectory staff;
+
     public ApprovalApplicationService(
             ApprovalRepository approvals,
             ApprovalEventPublisher events,
@@ -38,10 +41,17 @@ public class ApprovalApplicationService {
     }
 
     public ApprovalDetail create(String tenantId, String actorId, CreateApprovalRequest input) {
+        verifyActor(tenantId, actorId);
         var now = java.time.Instant.now();
         var steps = input.steps().stream()
                 .map(step -> {
+                    if (actorId.equals(step.approver()))
+                        throw new IllegalArgumentException("You cannot approve your own request");
+                    validateAssignee(tenantId, step.approver(), step.role());
                     var approver = delegations.resolve(tenantId, step.approver(), now);
+                    if (actorId.equals(approver))
+                        throw new IllegalArgumentException("You cannot approve your own request");
+                    validateAssignee(tenantId, approver, step.role());
                     return new ApprovalRequest.ApprovalStep(
                             step.id(),
                             approver,
@@ -53,7 +63,7 @@ public class ApprovalApplicationService {
                             approver.equals(step.approver()) ? null : step.approver());
                 })
                 .toList();
-        var value = approvals.save(ApprovalRequest.create(
+        var request = ApprovalRequest.create(
                 tenantId,
                 input.type(),
                 input.subjectId(),
@@ -70,12 +80,24 @@ public class ApprovalApplicationService {
                         ? List.of()
                         : input.terms().stream()
                                 .map(item -> new ApprovalRequest.Term(item.label(), item.value()))
-                                .toList()));
+                                .toList());
+        if (input.comparison() != null)
+            request.compareVersions(
+                    input.comparison().previousVersion(), input.comparison().proposedVersion());
+        if (input.headcountException() != null) {
+            var details = input.headcountException();
+            if (details.currentHeadcount() == null || details.requestedHeadcount() == null)
+                throw new IllegalArgumentException("Both recorded headcount totals are required");
+            request.describeHeadcount(
+                    details.jobTitle(), details.currentHeadcount(), details.requestedHeadcount(), details.reason());
+        }
+        var value = approvals.save(request);
         publish("approval.requested.v1", value);
         return ApprovalDetail.from(value);
     }
 
     public List<ApprovalSummary> list(String tenantId, String actorId, String scope, String status) {
+        verifyActor(tenantId, actorId);
         return approvals.findAll(tenantId).stream()
                 .filter(value -> status == null
                         || status.isBlank()
@@ -123,37 +145,140 @@ public class ApprovalApplicationService {
     public void approve(String tenantId, String id, String actor) {
         var existing = require(tenantId, id);
         if (existing.status() == ApprovalStatus.APPROVED) {
+            authoriseRecordedDecision(existing, actor);
             if (existing.type().startsWith("JOB_")) {
-                jobs.decision(tenantId, existing.subjectId(), "APPROVED", null, actor);
+                jobDecision(existing, "APPROVED", null, actor);
             }
             return;
         }
+        authorise(existing, actor);
         var value = change(tenantId, id, item -> item.approve(actor), "approval.approved.v1");
         recordAudit("APPROVAL_APPROVED", value, actor, null);
         if (value.status() == ApprovalStatus.APPROVED && value.type().startsWith("JOB_")) {
-            jobs.decision(tenantId, value.subjectId(), "APPROVED", null, actor);
+            jobDecision(value, "APPROVED", null, actor);
         }
     }
 
     public void reject(String tenantId, String id, String reason, String actor) {
+        var existing = require(tenantId, id);
+        if (existing.status() == ApprovalStatus.REJECTED) {
+            authoriseRecordedDecision(existing, actor);
+            if (existing.type().startsWith("JOB_")) jobDecision(existing, "REJECTED", existing.decisionReason(), actor);
+            return;
+        }
+        authorise(require(tenantId, id), actor);
         var value = change(tenantId, id, item -> item.reject(actor, reason), "approval.rejected.v1");
         recordAudit("APPROVAL_REJECTED", value, actor, null);
-        if (value.type().startsWith("JOB_")) jobs.decision(tenantId, value.subjectId(), "REJECTED", reason, actor);
+        if (value.type().startsWith("JOB_")) jobDecision(value, "REJECTED", reason, actor);
     }
 
     public void requestChanges(String tenantId, String id, String reason, String actor) {
+        var existing = require(tenantId, id);
+        if (existing.status() == ApprovalStatus.CHANGES_REQUESTED) {
+            authoriseRecordedDecision(existing, actor);
+            if (existing.type().startsWith("JOB_"))
+                jobDecision(existing, "CHANGES_REQUESTED", existing.decisionReason(), actor);
+            return;
+        }
+        authorise(require(tenantId, id), actor);
         var value = change(tenantId, id, item -> item.requestChanges(actor, reason), "approval.changes-requested.v1");
-        if (value.type().startsWith("JOB_"))
-            jobs.decision(tenantId, value.subjectId(), "CHANGES_REQUESTED", reason, actor);
+        if (value.type().startsWith("JOB_")) jobDecision(value, "CHANGES_REQUESTED", reason, actor);
     }
 
     public void undo(String tenantId, String id) {
-        change(tenantId, id, ApprovalRequest::undo, "approval.decision-undone.v1");
+        throw new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.FORBIDDEN,
+                "Submit a new approval request to revise a recorded decision");
+    }
+
+    private void jobDecision(ApprovalRequest value, String decision, String reason, String actor) {
+        if (value.proposedVersion() == null)
+            jobs.decision(value.tenantId(), value.subjectId(), decision, reason, actor);
+        else jobs.decision(value.tenantId(), value.subjectId(), decision, reason, actor, value.proposedVersion());
     }
 
     public void delegate(String tenantId, String id, String actor, String toUser) {
+        var request = require(tenantId, id);
+        authorise(request, actor);
+        if (request.requestedBy().equals(toUser))
+            throw new IllegalArgumentException("The requester cannot approve their own request");
+        request.steps().stream()
+                .filter(s -> s.status() == ApprovalRequest.StepStatus.CURRENT
+                        && s.approver().equals(actor))
+                .forEach(s -> validateAssignee(tenantId, toUser, s.role()));
         var value = change(tenantId, id, item -> item.delegate(actor, toUser), "approval.delegated.v1");
         recordAudit("APPROVAL_DELEGATED", value, actor, toUser);
+    }
+
+    public void assignLegacy(
+            String tenant, String id, String actor, String assignee, String role, boolean administrator) {
+        verifyActor(tenant, actor);
+        var request = require(tenant, id);
+        if (!request.requestedBy().equals(actor) && !administrator)
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.FORBIDDEN);
+        var step = request.steps().stream()
+                .filter(s -> s.status() == ApprovalRequest.StepStatus.CURRENT)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("No approval is pending"));
+        if (request.requestedBy().equals(assignee))
+            throw new IllegalArgumentException("The requester cannot approve their own request");
+        var assignedRole = "RECRUITER".equalsIgnoreCase(step.role()) ? role : step.role();
+        if (assignedRole == null || assignedRole.isBlank())
+            throw new IllegalArgumentException("Choose the approver role");
+        validateAssignee(tenant, assignee, assignedRole);
+        change(tenant, id, item -> item.assignLegacy(assignee, assignedRole), "approval.delegated.v1");
+        recordAudit("APPROVAL_ASSIGNED", request, actor, assignee);
+    }
+
+    private void validateAssignee(String tenant, String id, String role) {
+        var normalized = role.trim().toUpperCase(java.util.Locale.ROOT).replace(' ', '_');
+        if (!java.util.Set.of("HIRING_MANAGER", "HR_ADMIN", "ORG_ADMIN").contains(normalized))
+            throw new IllegalArgumentException("Approval role must be Hiring manager, HR admin or Organisation admin");
+        if (id == null || id.isBlank() || "me".equalsIgnoreCase(id))
+            throw new IllegalArgumentException("Select a named approver before submitting");
+        staff.require(tenant, id, normalized);
+    }
+
+    private void authoriseRecordedDecision(ApprovalRequest request, String actor) {
+        verifyActor(request.tenantId(), actor);
+        if (!actor.equals(request.decisionActor()) || request.requestedBy().equals(actor))
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.FORBIDDEN);
+        var step = request.steps().stream()
+                .filter(s -> s.approver().equals(actor))
+                .findFirst()
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.FORBIDDEN));
+        validateAssignee(request.tenantId(), actor, step.role());
+    }
+
+    private void authorise(ApprovalRequest request, String actor) {
+        verifyActor(request.tenantId(), actor);
+        if (request.requestedBy().equals(actor))
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.FORBIDDEN, "You cannot approve your own request");
+        var step = request.steps().stream()
+                .filter(s -> s.status() == ApprovalRequest.StepStatus.CURRENT
+                        && s.approver().equals(actor))
+                .findFirst()
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.FORBIDDEN, "This request is not assigned to you"));
+        validateAssignee(request.tenantId(), actor, step.role());
+    }
+
+    private static void verifyActor(String tenant, String actor) {
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication();
+        if (auth
+                        instanceof
+                        org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken jwt
+                && (!actor.equals(jwt.getName())
+                        || !tenant.equals(com.openhire.platform.tenant.TenantClaims.resolve(
+                                jwt.getToken().getClaims()))))
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.FORBIDDEN,
+                    "Actor and organisation must match the authenticated user");
     }
 
     private void recordAudit(String action, ApprovalRequest value, String actor, String delegateTo) {
@@ -182,7 +307,7 @@ public class ApprovalApplicationService {
     }
 
     private void publish(String event, ApprovalRequest value) {
-        // Current approvers let consumers notify the right people; "me" marks a step anyone with the role may take.
+        // Only named participants are emitted; legacy placeholders are never recipient groups.
         var current = value.steps().stream()
                 .filter(step -> step.status() == ApprovalRequest.StepStatus.CURRENT)
                 .map(ApprovalRequest.ApprovalStep::approver)
@@ -196,6 +321,13 @@ public class ApprovalApplicationService {
         payload.put("title", value.title() == null ? "" : value.title());
         payload.put("requestedBy", value.requestedBy());
         payload.put("currentApprovers", current);
+        payload.put(
+                "participants",
+                value.steps().stream()
+                        .map(ApprovalRequest.ApprovalStep::approver)
+                        .filter(id -> !"me".equalsIgnoreCase(id))
+                        .distinct()
+                        .toList());
         events.publish(event, value.tenantId(), value.id(), payload);
     }
 
@@ -212,7 +344,8 @@ public class ApprovalApplicationService {
     private boolean isAssigned(ApprovalRequest value, String actorId) {
         return value.steps().stream()
                 .anyMatch(step -> step.status() == ApprovalRequest.StepStatus.CURRENT
-                        && (step.approver().equals(actorId) || "me".equalsIgnoreCase(step.approver())));
+                        && step.approver().equals(actorId)
+                        && !value.requestedBy().equals(actorId));
     }
 
     private long count(List<ApprovalRequest> values, java.util.function.Predicate<ApprovalRequest> predicate) {

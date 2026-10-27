@@ -115,8 +115,18 @@ class AiConfiguration {
             CostMeter meter,
             ProvenanceWriter provenance,
             AiDefaults defaults,
-            Clock clock) {
-        return new ModelGateway(router, prompts, guards, cache, meter, provenance, defaults, clock);
+            Clock clock,
+            @Value("${openhire.ai.job-draft-timeout-seconds:180}") long draftTimeoutSeconds) {
+        return new ModelGateway(
+                router,
+                prompts,
+                guards,
+                cache,
+                meter,
+                provenance,
+                defaults,
+                clock,
+                Duration.ofSeconds(draftTimeoutSeconds));
     }
 
     @Bean

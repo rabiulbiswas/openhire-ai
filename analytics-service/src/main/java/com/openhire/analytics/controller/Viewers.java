@@ -13,7 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Component
 class Viewers {
     private static final Set<String> RECRUITING_STAFF =
-            Set.of("RECRUITER", "HR_ADMIN", "HIRING_MANAGER", "ORG_ADMIN", "COMPLIANCE_OFFICER", "SUPER_ADMIN");
+            Set.of("RECRUITER", "HR_ADMIN", "HIRING_MANAGER", "ORG_ADMIN", "SUPER_ADMIN");
 
     private final Access access;
     private final boolean local;

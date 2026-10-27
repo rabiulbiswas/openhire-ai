@@ -48,7 +48,6 @@ openhire:
     topic: candidate.events.v1
   resume:
     directory: ${RESUME_DIRECTORY:./.openhire-resumes}
-    tika-url: ${TIKA_URL:http://localhost:9998}
     clamav-host: ${CLAMAV_HOST:localhost}
     clamav-port: ${CLAMAV_PORT:3310}
 management:

@@ -45,7 +45,13 @@ openhire:
   resume:
     scan-enabled: ${RESUME_SCAN_ENABLED:true}
     directory: ${RESUME_DIRECTORY:./.openhire-resumes}
-    tika-url: ${TIKA_URL:http://localhost:9998}
+    extraction:
+      concurrency: ${RESUME_EXTRACTION_CONCURRENCY:1}
+      timeout-seconds: ${RESUME_EXTRACTION_TIMEOUT_SECONDS:80}
+      max-pages: ${RESUME_EXTRACTION_MAX_PAGES:20}
+      max-characters: ${RESUME_EXTRACTION_MAX_CHARACTERS:1000000}
+      ocr-timeout-seconds: ${RESUME_OCR_TIMEOUT_SECONDS:30}
+      ocr-language: ${RESUME_OCR_LANGUAGE:eng}
     clamav-host: ${CLAMAV_HOST:localhost}
     clamav-port: ${CLAMAV_PORT:3310}
 management:

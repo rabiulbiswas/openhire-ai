@@ -55,7 +55,7 @@ test('all applications build before startup and logs, without destructive operat
   const apps = result.calls.findIndex(line => line.includes('--force-recreate'));
   const logs = result.calls.findIndex(line => line.includes('logs --follow'));
   assert.ok(build >= 0 && infra > build && apps > infra && logs > apps);
-  assert.match(result.calls[infra], /keycloak redis kafka tika clamav mailpit$/);
+  assert.match(result.calls[infra], /keycloak redis kafka clamav mailpit$/);
   assert.match(result.calls[infra], /mailpit/);
   assert.match(result.calls[apps], /integration-hub api-gateway$/);
   assert.match(result.calls[logs], /--timestamps --tail 20/);

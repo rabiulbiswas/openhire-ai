@@ -155,7 +155,8 @@ public class JobController {
             @RequestHeader("X-Internal-Service-Secret") String secret,
             @Valid @RequestBody DecisionRequest request) {
         if (!internalSecret.equals(secret)) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-        return service.decision(tenant(), id, request.decision(), request.actorId(), request.reason());
+        return service.decision(
+                tenant(), id, request.decision(), request.actorId(), request.reason(), request.expectedVersion());
     }
 
     @GetMapping("/internal/{id}/intake")

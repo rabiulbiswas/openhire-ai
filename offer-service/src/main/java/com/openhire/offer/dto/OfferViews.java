@@ -6,6 +6,14 @@ import java.util.List;
 public final class OfferViews {
     private OfferViews() {}
 
+    public record OfferPage(
+            List<OfferSummary> data,
+            String nextCursor,
+            boolean hasMore,
+            String previousCursor,
+            boolean hasPrevious,
+            int limit) {}
+
     public record Page<T>(List<T> data, String nextCursor, boolean hasMore) {
         public static <T> Page<T> of(List<T> data) {
             return new Page<>(data, null, false);
@@ -24,7 +32,14 @@ public final class OfferViews {
             int version) {}
 
     public record StepView(
-            String id, String approver, String role, String status, String at, String decidedBy, String comment) {}
+            String id,
+            String approver,
+            String role,
+            String status,
+            String at,
+            String decidedBy,
+            String comment,
+            String assigneeId) {}
 
     public record TermsView(
             String currency,

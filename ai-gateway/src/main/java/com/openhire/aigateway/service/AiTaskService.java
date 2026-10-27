@@ -176,7 +176,8 @@ public class AiTaskService {
         var skills = new ArrayList<String>();
         if (request.mustHaveSkills() != null)
             for (var skill : request.mustHaveSkills()) {
-                if (blank(skill)) continue;
+                if (blank(skill) || skill.length() > 60)
+                    throw new IllegalArgumentException("Each required skill must contain 1 to 60 characters");
                 if (skills.size() >= 15) throw new IllegalArgumentException("mustHaveSkills allows at most 15 entries");
                 skills.add(oneLine(skill, 60));
             }
@@ -186,6 +187,30 @@ public class AiTaskService {
         vars.put("level", orNone(request.level()));
         vars.put("location", orNone(request.location()));
         vars.put("skills", skills.isEmpty() ? "(none given)" : String.join(", ", skills));
+        if (request.qualification() != null
+                && (request.qualification().isBlank() || request.qualification().length() > 1000))
+            throw new IllegalArgumentException("Qualification must contain 1 to 1,000 characters");
+        var optionalSkills = new ArrayList<String>();
+        if (request.goodToHaveSkills() != null) {
+            if (request.goodToHaveSkills().size() > 15)
+                throw new IllegalArgumentException("goodToHaveSkills allows at most 15 entries");
+            for (var skill : request.goodToHaveSkills()) {
+                if (blank(skill) || skill.length() > 60)
+                    throw new IllegalArgumentException("Each optional skill must contain 1 to 60 characters");
+                var cleaned = oneLine(skill, 60);
+                if (skills.stream().anyMatch(required -> required.equalsIgnoreCase(cleaned)))
+                    throw new IllegalArgumentException("Must-have and good-to-have skills must be separate");
+                if (optionalSkills.stream().noneMatch(existing -> existing.equalsIgnoreCase(cleaned)))
+                    optionalSkills.add(cleaned);
+            }
+        }
+        vars.put(
+                "qualification",
+                blank(request.qualification()) ? "(not specified)" : oneLine(request.qualification(), 1000));
+        vars.put("goodToHaveSkills", optionalSkills.isEmpty() ? "(none given)" : String.join(", ", optionalSkills));
+        if (request.workMode() != null && !List.of("REMOTE", "ONSITE", "HYBRID").contains(request.workMode()))
+            throw new IllegalArgumentException("Invalid work mode");
+        vars.put("workMode", orNone(request.workMode()));
         vars.put("tone", blank(request.tone()) ? "professional and friendly" : oneLine(request.tone(), 60));
         vars.replaceAll((k, v) -> InputGuard.neutralizeDelimiters(v));
         var title = request.title().strip();
@@ -193,11 +218,17 @@ public class AiTaskService {
                 tenantId,
                 AiTask.JD_DRAFT,
                 null,
-                ModelGateway.keyOf(title, skills),
+                ModelGateway.keyOf("structured-jd-v4", vars),
                 vars,
-                1800,
+                1400,
                 false,
-                json -> OutputGuard.jobDraft(json, title, skills),
+                json -> {
+                    var prepared = new LinkedHashMap<String, Object>(json);
+                    prepared.put(
+                            "description",
+                            JobDraftDescription.render(json.get("description"), request, skills, optionalSkills));
+                    return OutputGuard.jobDraft(prepared, title, skills, optionalSkills);
+                },
                 out -> Map.of("biasFlags", ((List<?>) out.get("biasFlags")).size())));
         var result = new LinkedHashMap<>(outcome.value());
         result.put("provenance", outcome.provenance());

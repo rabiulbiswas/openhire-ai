@@ -137,6 +137,21 @@ class AiControllersTest {
     }
 
     @Test
+    void draftProviderTimeoutIsASpecific504AndInvalidOutputIs502() throws Exception {
+        rig.local.failure =
+                new com.openhire.aigateway.domain.AiTypes.ProviderTimeout(new java.net.SocketTimeoutException());
+        var body = Map.of("title", "Engineer", "mustHaveSkills", List.of("Java"));
+        mvc.perform(json(post("/api/v1/jobs/ai-draft").principal(as("RECRUITER")), body))
+                .andExpect(status().isGatewayTimeout())
+                .andExpect(jsonPath("$.code").value("AI_TIMEOUT"));
+        rig.local.failure = null;
+        rig.local.reply = r -> "not JSON";
+        mvc.perform(json(post("/api/v1/jobs/ai-draft").principal(as("RECRUITER")), body))
+                .andExpect(status().isBadGateway())
+                .andExpect(jsonPath("$.code").value("AI_INVALID_RESPONSE"));
+    }
+
+    @Test
     void invalidJsonAfterRepairIsA503() throws Exception {
         rig.local.reply = r -> "not json";
         mvc.perform(internal("judge", JUDGE_BODY))
@@ -198,7 +213,7 @@ class AiControllersTest {
                 return Json.write(Map.of("whyFitNow", List.of(), "historicalEvidence", List.of()));
             return Json.write(Map.of(
                     "description",
-                    "A backend engineer builds payment services.",
+                    com.openhire.aigateway.Fixtures.jdSections("A backend engineer builds payment services."),
                     "rubric",
                     List.of(Map.of("label", "Java", "weight", 100, "requirement", "MUST")),
                     "knockoutQuestions",
@@ -242,7 +257,7 @@ class AiControllersTest {
     void aiDraftIsOpenToRecruitersAndHrButNotToInterviewers() throws Exception {
         rig.local.reply = r -> Json.write(Map.of(
                 "description",
-                "A backend engineer builds payment services.",
+                com.openhire.aigateway.Fixtures.jdSections("A backend engineer builds payment services."),
                 "rubric",
                 List.of(Map.of("label", "Java", "weight", 100, "requirement", "MUST")),
                 "knockoutQuestions",
@@ -298,8 +313,9 @@ class AiControllersTest {
     }
 
     @Test
-    void promptsAreReadableByComplianceButChangeableOnlyByAdmins() throws Exception {
-        mvc.perform(get("/api/v1/prompts").principal(as("COMPLIANCE_OFFICER")))
+    void promptsAreReadableByAdminsAndRetiredRoleIsDenied() throws Exception {
+        mvc.perform(get("/api/v1/prompts").principal(as("COMPLIANCE_OFFICER"))).andExpect(status().isForbidden());
+        mvc.perform(get("/api/v1/prompts").principal(as("ORG_ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(7))
                 .andExpect(

@@ -33,6 +33,11 @@ public final class AiPorts {
 
         ChatResult chat(ChatRequest request);
 
+        /** A bounded task-specific timeout; the normal timeout still applies to other operations. */
+        default ChatResult chat(ChatRequest request, Duration timeout) {
+            return chat(request);
+        }
+
         EmbedResult embed(String model, List<String> inputs);
 
         Health health();

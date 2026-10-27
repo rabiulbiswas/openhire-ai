@@ -49,6 +49,7 @@ All paths below start with `/api/v1`.
 
 | Method | Path | Behaviour |
 |---|---|---|
+| GET | `/candidates?q=&after=&limit=25` | Tenant-only summaries; literal name/email search, keyset cursor, limit 1–100; excludes merged aliases and erased profiles |
 | GET | `/candidates/{id}/360` | Canonical candidate, provenance, applications, documents, timeline and consent |
 | PUT | `/candidates/{id}/owner` | Change owner; rejects concurrent merge |
 | GET | `/merge-suggestions` | Up to 100 unresolved tenant-local suggestions |
@@ -60,6 +61,25 @@ All paths below start with `/api/v1`.
 
 Internal endpoints are not routed by the gateway. All persistence lookups include tenant identity.
 Merge has no user-facing undo operation. Raw resume text is not returned by Candidate 360.
+
+## Candidate 360 directory navigation
+
+The console sidebar opens `/candidates`, not the mock candidate `cand_0`. The directory
+uses `GET /api/v1/candidates` and links to real returned IDs. Tenant identity comes from
+the authenticated principal, never from a caller-supplied directory parameter. Summaries
+exclude documents, phone numbers, provenance and other full-profile content. Empty tenants
+show an Add candidates action; obsolete profile links offer Browse candidates.
+
+Deploy the updated candidate-service (including service-support's tenant/ID index) and
+refresh the updated console. For the local tenant portal stack:
+
+```sh
+./run-backend.sh deploy --tenant-portals --no-scan candidate-service --follow
+```
+
+`--no-scan` is only for trusted local test uploads. No Keycloak role or mapper change is
+required for this navigation fix. The backend still enforces its existing staff access
+and tenant boundary; other-tenant or nonexistent profile IDs continue to return 404.
 
 ## Patterns
 

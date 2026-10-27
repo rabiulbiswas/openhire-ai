@@ -27,6 +27,23 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import tools.jackson.databind.ObjectMapper;
 
 class StaffControllerTest {
+    @Test
+    void retiredComplianceRoleHasNoReadOrMutationAccess() throws Exception {
+        var retired = as("t1", "COMPLIANCE_OFFICER");
+        for (var path : new String[] {
+            "/api/v1/compliance/overview",
+            "/api/v1/audit-events",
+            "/api/v1/ai-decisions",
+            "/api/v1/consent-texts",
+            "/api/v1/retention-policies"
+        }) mvc.perform(get(path).principal(retired)).andExpect(status().isForbidden());
+        mvc.perform(post("/api/v1/privacy/requests")
+                        .principal(retired)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"candidateId\":\"cand_1\",\"type\":\"EXPORT\",\"reason\":\"test\"}"))
+                .andExpect(status().isForbidden());
+    }
+
     private static final String SECRET = "test-secret";
     private final ObjectMapper json = new ObjectMapper();
     private Rig rig;
@@ -121,7 +138,7 @@ class StaffControllerTest {
                 .andExpect(status().isForbidden());
         mvc.perform(
                         post("/api/v1/consent-texts")
-                                .principal(as("t1", "COMPLIANCE_OFFICER"))
+                                .principal(as("t1", "ORG_ADMIN"))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         "{\"purpose\":\"PROCESSING\",\"locale\":\"en\",\"text\":\"I agree to the processing of my application.\"}"))
@@ -131,7 +148,7 @@ class StaffControllerTest {
 
     @Test
     void theAuditListIsTenantScopedAndPaged() throws Exception {
-        mvc.perform(get("/api/v1/audit-events").principal(as("t1", "COMPLIANCE_OFFICER")))
+        mvc.perform(get("/api/v1/audit-events").principal(as("t1", "ORG_ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(1))
                 .andExpect(jsonPath("$.data[0].resource.id").value("off_1"))
@@ -157,7 +174,7 @@ class StaffControllerTest {
     @Test
     void otherTenantsCannotSeePrivacyRequestsHoldsOrDecisions() throws Exception {
         var created = mvc.perform(post("/api/v1/privacy/requests")
-                        .principal(as("t1", "COMPLIANCE_OFFICER"))
+                        .principal(as("t1", "ORG_ADMIN"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"candidateId\":\"cand_1\",\"type\":\"EXPORT\",\"reason\":\"asked\"}"))
                 .andExpect(status().isCreated())
@@ -165,7 +182,7 @@ class StaffControllerTest {
         var id = json.readTree(created.getResponse().getContentAsString())
                 .get("id")
                 .asString();
-        var other = as("t2", "COMPLIANCE_OFFICER");
+        var other = as("t2", "ORG_ADMIN");
 
         mvc.perform(get("/api/v1/privacy/requests/" + id).principal(other)).andExpect(status().isNotFound());
         mvc.perform(get("/api/v1/privacy/requests").principal(other))
@@ -274,7 +291,7 @@ class StaffControllerTest {
 
     @Test
     void theOverviewHasTheContractedFields() throws Exception {
-        mvc.perform(get("/api/v1/compliance/overview").principal(as("t1", "COMPLIANCE_OFFICER")))
+        mvc.perform(get("/api/v1/compliance/overview").principal(as("t1", "ORG_ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.auditRecords30d").value(1))
                 .andExpect(jsonPath("$.chainValid").value(true))

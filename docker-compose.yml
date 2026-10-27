@@ -85,6 +85,14 @@ services:
     environment:
       OPENHIRE_API_DOCS_ENABLED: ${OPENHIRE_API_DOCS_ENABLED:-false}
       IDENTITY_PORT: 8081
+      MAIL_HOST: ${MAIL_HOST:-mailpit}
+      MAIL_PORT: ${MAIL_PORT:-1025}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_AUTH: ${MAIL_AUTH:-false}
+      MAIL_STARTTLS: ${MAIL_STARTTLS:-false}
+      MAIL_FROM: ${MAIL_FROM:-noreply@openhire.local}
+      CANDIDATE_VERIFICATION_SECRET: ${CANDIDATE_VERIFICATION_SECRET:-${INTERNAL_SERVICE_SECRET:-local-development-secret}}
       # MongoDB runs on the host and can be inspected with MongoDB Compass.
       MONGODB_URI: ${MONGODB_URI:-mongodb://host.docker.internal:27017/openhire_identity}
       REDIS_HOST: redis
@@ -146,6 +154,7 @@ services:
       OPENHIRE_LLM_MODEL: ${OPENHIRE_LLM_MODEL:-qwen3:8b}
       OPENHIRE_LLM_API_STYLE: ${OPENHIRE_LLM_API_STYLE:-ollama}
       APPROVAL_SERVICE_URL: http://approval-service:8083
+      APPLICATION_SERVICE_URL: http://application-service:8084
       INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-local-development-secret}
       SECURITY_MODE: ${SECURITY_MODE:-oidc}
       OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
@@ -292,7 +301,7 @@ services:
       args:
         SERVICE: resume-processor
     image: openhire/resume-processor:local
-    # Bounds memory so the stack fits Docker Desktop's default 8 GB; the JVM sizes its heap at 75% of this limit.
+    # Container ceiling only; reserve native OCR headroom with the 60% heap share below.
     mem_limit: 768m
     restart: unless-stopped
     ports: ["${RESUME_PROCESSOR_PORT:-8086}:8086"]
@@ -307,7 +316,15 @@ services:
       OIDC_ISSUER_URI: ${STAFF_OIDC_ISSUER:-http://localhost:8180/realms/openhire-staff}
       OIDC_JWK_SET_URI: http://keycloak:8080/realms/openhire-staff/protocol/openid-connect/certs
       RESUME_DIRECTORY: /app/resumes
-      TIKA_URL: http://tika:9998
+      # Native OCR shares this container; leave memory for Tesseract and PDF rendering.
+      JVM_RAM_PERCENT: 60
+      OMP_THREAD_LIMIT: 1
+      RESUME_EXTRACTION_CONCURRENCY: ${RESUME_EXTRACTION_CONCURRENCY:-1}
+      RESUME_EXTRACTION_TIMEOUT_SECONDS: ${RESUME_EXTRACTION_TIMEOUT_SECONDS:-80}
+      RESUME_EXTRACTION_MAX_PAGES: ${RESUME_EXTRACTION_MAX_PAGES:-20}
+      RESUME_EXTRACTION_MAX_CHARACTERS: ${RESUME_EXTRACTION_MAX_CHARACTERS:-1000000}
+      RESUME_OCR_TIMEOUT_SECONDS: ${RESUME_OCR_TIMEOUT_SECONDS:-30}
+      RESUME_OCR_LANGUAGE: ${RESUME_OCR_LANGUAGE:-eng}
       CLAMAV_HOST: clamav
       RESUME_SCAN_ENABLED: ${RESUME_SCAN_ENABLED:-true}
       CLAMAV_PORT: 3310
@@ -318,23 +335,10 @@ services:
         condition: service_healthy
       keycloak:
         condition: service_healthy
-      tika:
-        condition: service_healthy
       clamav:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8086/actuator/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 20
-      start_period: 30s
-
-  tika:
-    profiles: [phase3]
-    image: ${TIKA_IMAGE:-apache/tika:3.3.0.0-full}
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:9998/tika"]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -547,6 +551,7 @@ services:
       APPLICATION_SERVICE_URL: http://application-service:8084
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       AI_CHAT_MODEL: ${AI_CHAT_MODEL:-qwen2.5:3b-instruct}
+      AI_JOB_DRAFT_TIMEOUT_SECONDS: ${AI_JOB_DRAFT_TIMEOUT_SECONDS:-180}
       AI_EMBEDDING_MODEL: ${AI_EMBEDDING_MODEL:-nomic-embed-text}
       AI_LOCAL_ONLY: ${AI_LOCAL_ONLY:-true}
     extra_hosts:
@@ -923,7 +928,7 @@ services:
       NOTIFICATION_DISPATCHER_URL: http://notification-dispatcher:8089
       SECURITY_MODE: ${SECURITY_MODE:-oidc}
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-oidc}
-      STAFF_UI_URL: ${STAFF_UI_URL:-http://localhost:5173/}
+      STAFF_UI_URL: ${STAFF_UI_URL:-http://localhost:5173/today}
       PARTNER_UI_URL: ${PARTNER_UI_URL:-http://localhost:5174/jobs}
       AUTH_UI_URL: ${AUTH_UI_URL:-http://localhost:5176/login}
       CANDIDATE_AUTH_UI_URL: ${CANDIDATE_AUTH_UI_URL:-http://localhost:5176/login}
@@ -972,6 +977,7 @@ services:
       INTEGRATION_ENCRYPTION_KEY: ${INTEGRATION_ENCRYPTION_KEY:-}
       INTEGRATION_SECRETS_DIRECTORY: ${INTEGRATION_SECRETS_DIRECTORY:-}
       INTEGRATION_WEBHOOKS_ENABLED: ${INTEGRATION_WEBHOOKS_ENABLED:-false}
+      INTEGRATION_JOB_PORTALS_ENABLED: ${INTEGRATION_JOB_PORTALS_ENABLED:-false}
       INTEGRATION_CALENDAR_WRITES_ENABLED: ${INTEGRATION_CALENDAR_WRITES_ENABLED:-false}
       INTEGRATION_REQUESTS_PER_MINUTE: ${INTEGRATION_REQUESTS_PER_MINUTE:-300}
       INTEGRATION_CALENDAR_CHANGES_PER_DAY: ${INTEGRATION_CALENDAR_CHANGES_PER_DAY:-10000}

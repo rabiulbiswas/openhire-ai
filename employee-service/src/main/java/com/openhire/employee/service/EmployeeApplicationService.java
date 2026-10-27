@@ -72,6 +72,18 @@ public class EmployeeApplicationService {
     }
 
     public Page<EmployeeSummary> list(String tenantId, String status, String joiningFrom) {
+        var page = listPage(tenantId, status, joiningFrom, "", "", 25);
+        return new Page<>(page.data(), page.nextCursor(), page.hasMore());
+    }
+
+    public com.openhire.employee.dto.EmployeeViews.EmployeePage listPage(
+            String tenantId, String status, String joiningFrom, String after, String before, int limit) {
+        if (limit < 1
+                || limit > 100
+                || after.length() > 512
+                || before.length() > 512
+                || (!after.isBlank() && !before.isBlank()))
+            throw new IllegalArgumentException("Invalid employee page parameters");
         EmployeeStatus filter = null;
         if (status != null && !status.isBlank()) {
             try {
@@ -88,9 +100,56 @@ public class EmployeeApplicationService {
                 throw new IllegalArgumentException("joiningFrom must be a date such as 2026-11-02");
             }
         }
-        return Page.of(employees.list(tenantId, filter, from, LIMIT).stream()
-                .map(this::summary)
-                .toList());
+        boolean reverse = !before.isBlank();
+        var cursor = reverse ? before : after;
+        String date = null, id = null;
+        if (!cursor.isBlank()) {
+            try {
+                var parts = new String(
+                                java.util.Base64.getUrlDecoder().decode(cursor),
+                                java.nio.charset.StandardCharsets.UTF_8)
+                        .split("\\|", -1);
+                if (parts.length != 2 || parts[1].isBlank() || parts[1].length() > 200)
+                    throw new IllegalArgumentException();
+                date = LocalDate.parse(parts[0]).toString();
+                id = parts[1];
+            } catch (RuntimeException invalid) {
+                throw new IllegalArgumentException("Invalid employee cursor");
+            }
+        }
+        var fetched = employees.page(tenantId, filter, from, date, id, reverse, limit + 1);
+        var rows = new java.util.ArrayList<>(fetched.subList(0, Math.min(limit, fetched.size())));
+        if (reverse) java.util.Collections.reverse(rows);
+        boolean hasPrevious = false, hasMore = false;
+        if (!rows.isEmpty()) {
+            var first = rows.getFirst();
+            var last = rows.getLast();
+            hasPrevious = reverse
+                    ? fetched.size() > limit
+                    : !cursor.isBlank()
+                            && !employees
+                                    .page(tenantId, filter, from, first.joiningDate(), first.id(), true, 1)
+                                    .isEmpty();
+            hasMore = reverse
+                    ? !employees
+                            .page(tenantId, filter, from, last.joiningDate(), last.id(), false, 1)
+                            .isEmpty()
+                    : fetched.size() > limit;
+        }
+        return new com.openhire.employee.dto.EmployeeViews.EmployeePage(
+                rows.stream().map(this::summary).toList(),
+                hasMore ? pageCursor(rows.getLast()) : null,
+                hasMore,
+                hasPrevious ? pageCursor(rows.getFirst()) : null,
+                hasPrevious,
+                limit);
+    }
+
+    private static String pageCursor(Employee employee) {
+        return java.util.Base64.getUrlEncoder()
+                .withoutPadding()
+                .encodeToString((employee.joiningDate() + "|" + employee.id())
+                        .getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
     public EmployeeDetail detail(String tenantId, String id) {

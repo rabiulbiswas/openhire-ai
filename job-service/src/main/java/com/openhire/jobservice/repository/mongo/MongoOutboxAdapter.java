@@ -15,6 +15,10 @@ public class MongoOutboxAdapter implements OutboxWriter {
 
     @Override
     public void append(String topic, DomainEventEnvelope event) {
-        repository.save(new OutboxEventDocument(topic, event));
+        try {
+            repository.insert(new OutboxEventDocument(topic, event));
+        } catch (org.springframework.dao.DuplicateKeyException alreadyRecorded) {
+            // Recovered publication event: retain its original published/pending state.
+        }
     }
 }

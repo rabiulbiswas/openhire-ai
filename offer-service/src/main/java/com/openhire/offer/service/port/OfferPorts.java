@@ -5,6 +5,7 @@ import com.openhire.offer.domain.OfferClause;
 import com.openhire.offer.domain.OfferTemplate;
 import com.openhire.offer.domain.OfferTypes.Band;
 import com.openhire.offer.domain.OfferTypes.Status;
+import com.openhire.offer.domain.OfferTypes.Viewer;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -22,7 +23,14 @@ public final class OfferPorts {
 
         List<Offer> list(String tenantId, Status status, int limit);
 
+        List<Offer> page(
+                String tenantId, Status status, String search, Instant at, String id, boolean before, int limit);
+
         List<Offer> findExpired(Instant now, int limit);
+
+        List<Offer> approvalInbox(String tenantId, Viewer viewer, String scope, int limit);
+
+        long countApprovalInbox(String tenantId, Viewer viewer, String scope);
     }
 
     public interface TemplateStore {

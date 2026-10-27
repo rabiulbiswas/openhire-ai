@@ -12,7 +12,7 @@ Start with [end-to-end platform design](END_TO_END_DESIGN.md) and [shared compon
 | Service | Business ownership | Design and components | REST details |
 | --- | --- | --- | --- |
 | identity-service | Tenants, members, policy, SAML and SCIM | [Design](identity-service.md) | [59 operations](identity-service-endpoints.md) |
-| api-gateway | Browser session and external API boundary | [Design](api-gateway.md) | [9 owned operations](api-gateway-endpoints.md) |
+| api-gateway | Browser session and external API boundary | [Design](api-gateway.md) | [10 owned operations](api-gateway-endpoints.md) |
 | job-service | Requisition versions and publication | [Design](job-service.md) | [24 operations](job-service-endpoints.md) |
 | approval-service | Decisions, inbox and delegation | [Design](approval-service.md) | [13 operations](approval-service-endpoints.md) |
 | application-service | Intake, pipeline and human decisions | [Design](application-service.md) | [35 operations](application-service-endpoints.md) |

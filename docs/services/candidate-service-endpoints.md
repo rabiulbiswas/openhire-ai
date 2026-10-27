@@ -2,7 +2,7 @@
 
 Generated from current Java controller annotations. This is a source-level reference, not proof of deployed reachability or live acceptance. See [service design](candidate-service.md) for business rules and end-to-end flows, and [shared conventions](END_TO_END_DESIGN.md#api-and-security-conventions).
 
-Mapped operations: **8**. Framework-generated Actuator endpoints and gateway-proxied routes are not duplicated here. Signatures preserve request headers, query defaults, body types, return types and optional bindings. Java types are not JSON field names: request/response record fields are listed below. Controller checks may delegate additional authorization to application services; an empty extracted-check list does not mean public access.
+Mapped operations: **9**. Framework-generated Actuator endpoints and gateway-proxied routes are not duplicated here. Signatures preserve request headers, query defaults, body types, return types and optional bindings. Java types are not JSON field names: request/response record fields are listed below. Controller checks may delegate additional authorization to application services; an empty extracted-check list does not mean public access.
 
 ## CandidateController
 
@@ -60,9 +60,22 @@ Request bindings and declared response:
 public Document get(Authentication auth, @PathVariable String id)
 ```
 
+### GET `/api/v1/candidates`
+
+- Handler: `list` ([source](../../candidate-service/src/main/java/com/openhire/candidateservice/controller/CandidateController.java#L49)).
+- Success status: 200 (normal return; exceptions may differ).
+- Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`.
+- Delegated operations: `service.list`.
+
+Request bindings and declared response:
+
+```java
+public Map<String, Object> list( Authentication auth, @RequestParam(required = false) String q, @RequestParam(required = false) String after, @RequestParam(defaultValue = "25") int limit)
+```
+
 ### PUT `/api/v1/candidates/{id}/owner`
 
-- Handler: `owner` ([source](../../candidate-service/src/main/java/com/openhire/candidateservice/controller/CandidateController.java#L49)).
+- Handler: `owner` ([source](../../candidate-service/src/main/java/com/openhire/candidateservice/controller/CandidateController.java#L59)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`.
 - Delegated operations: `service.owner`.
@@ -75,7 +88,7 @@ public Map<String, String> owner(Authentication auth, @PathVariable String id, @
 
 ### GET `/api/v1/merge-suggestions`
 
-- Handler: `suggestions` ([source](../../candidate-service/src/main/java/com/openhire/candidateservice/controller/CandidateController.java#L56)).
+- Handler: `suggestions` ([source](../../candidate-service/src/main/java/com/openhire/candidateservice/controller/CandidateController.java#L66)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`.
 - Delegated operations: `service.suggestions`.
@@ -88,7 +101,7 @@ public Object suggestions(Authentication auth)
 
 ### POST `/api/v1/merge-suggestions/{id}/dismiss`
 
-- Handler: `dismiss` ([source](../../candidate-service/src/main/java/com/openhire/candidateservice/controller/CandidateController.java#L62)).
+- Handler: `dismiss` ([source](../../candidate-service/src/main/java/com/openhire/candidateservice/controller/CandidateController.java#L72)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`.
 - Delegated operations: `service.dismiss`.
@@ -101,7 +114,7 @@ public Object dismiss(Authentication auth, @PathVariable String id)
 
 ### POST `/api/v1/candidates/merge`
 
-- Handler: `merge` ([source](../../candidate-service/src/main/java/com/openhire/candidateservice/controller/CandidateController.java#L69)).
+- Handler: `merge` ([source](../../candidate-service/src/main/java/com/openhire/candidateservice/controller/CandidateController.java#L79)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: `access.requireStaff(auth)`; `access.tenant(auth)`; `access.actor(auth)`.
 - Delegated operations: `service.merge`.

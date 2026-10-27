@@ -11,6 +11,10 @@ public interface IdentityProvider {
 
     void disableMember(String providerUserId);
 
+    default String registerVerifiedCandidate(String tenant, String email, String name, String password, String registration) {
+        throw new IllegalStateException("Candidate registration requires the configured identity provider");
+    }
+
     default void configureTenantLogin(String origin) {
         throw new IllegalStateException("Tenant login requires the Keycloak identity provider");
     }

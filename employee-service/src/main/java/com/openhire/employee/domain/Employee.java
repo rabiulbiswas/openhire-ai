@@ -30,6 +30,10 @@ import org.springframework.data.mongodb.core.mapping.Field;
  */
 @Document("employees")
 @CompoundIndexes({
+    @CompoundIndex(name = "tenant_joining_page", def = "{'tenantId': 1, 'joiningDate': -1, '_id': -1}"),
+    @CompoundIndex(
+            name = "tenant_status_joining_page",
+            def = "{'tenantId': 1, 'status': 1, 'joiningDate': -1, '_id': -1}"),
     @CompoundIndex(name = "tenant_offer", def = "{'tenantId': 1, 'offerId': 1}", unique = true),
     @CompoundIndex(name = "tenant_number", def = "{'tenantId': 1, 'employeeNo': 1}", unique = true),
     @CompoundIndex(name = "tenant_email", def = "{'tenantId': 1, 'email': 1}"),

@@ -39,7 +39,7 @@ class StaffAiController {
     private static final Set<String> DRAFTERS =
             Set.of("RECRUITER", "HIRING_MANAGER", "HR_ADMIN", "ORG_ADMIN", "SUPER_ADMIN");
     private static final Set<String> ADMINS = Set.of("ORG_ADMIN", "SUPER_ADMIN");
-    private static final Set<String> PROMPT_READERS = Set.of("ORG_ADMIN", "SUPER_ADMIN", "COMPLIANCE_OFFICER");
+    private static final Set<String> PROMPT_READERS = Set.of("ORG_ADMIN", "SUPER_ADMIN");
 
     record PromoteInput(Integer trafficPct) {}
 

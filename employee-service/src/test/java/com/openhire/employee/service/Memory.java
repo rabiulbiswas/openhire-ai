@@ -119,6 +119,30 @@ final class Memory {
                     .limit(limit)
                     .toList();
         }
+
+        public synchronized List<Employee> page(
+                String tenantId,
+                EmployeeStatus status,
+                String joiningFrom,
+                String date,
+                String id,
+                boolean before,
+                int limit) {
+            var order = Comparator.comparing(Employee::joiningDate).thenComparing(Employee::id);
+            return rows.values().stream()
+                    .filter(e -> e.tenantId().equals(tenantId))
+                    .filter(e -> status == null || e.status() == status)
+                    .filter(e -> joiningFrom == null || e.joiningDate().compareTo(joiningFrom) >= 0)
+                    .filter(e -> date == null
+                            || (before
+                                    ? e.joiningDate().compareTo(date) > 0
+                                            || e.joiningDate().equals(date) && e.id().compareTo(id) > 0
+                                    : e.joiningDate().compareTo(date) < 0
+                                            || e.joiningDate().equals(date) && e.id().compareTo(id) < 0))
+                    .sorted(before ? order : order.reversed())
+                    .limit(limit)
+                    .toList();
+        }
     }
 
     static final class Sagas implements SagaRepository {

@@ -16,8 +16,13 @@ public class Bulkhead {
     }
 
     public Permit acquire() {
+        return acquire(wait);
+    }
+
+    public Permit acquire(Duration maximumWait) {
         try {
-            if (!permits.tryAcquire(wait.toMillis(), TimeUnit.MILLISECONDS))
+            if (!permits.tryAcquire(
+                    Math.min(wait.toMillis(), Math.max(0, maximumWait.toMillis())), TimeUnit.MILLISECONDS))
                 throw new AiUnavailable("The model server is busy; try again shortly");
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 
 const accounts = [
   ['recruiter', 'RECRUITER'], ['hr-admin', 'HR_ADMIN'], ['hiring-manager', 'HIRING_MANAGER'],
-  ['interviewer', 'INTERVIEWER'], ['org-admin', 'ORG_ADMIN'], ['compliance', 'COMPLIANCE_OFFICER'],
+  ['interviewer', 'INTERVIEWER'], ['org-admin', 'ORG_ADMIN'],
   ['super-admin', 'SUPER_ADMIN'], ['agency', 'AGENCY_RECRUITER'], ['employee', 'EMPLOYEE'],
   ['candidate', 'CANDIDATE'],
 ].map(([name, role]) => ({ username: `demo.${name}@openhire.local`, role,

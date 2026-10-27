@@ -496,6 +496,9 @@ public class CommunicationService {
 
     // ---- Internals ---------------------------------------------------------------------------------
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.openhire.platform.security.TenantStaffDirectory staff;
+
     private void alertStaff(
             String tenantId,
             String recipient,
@@ -521,8 +524,21 @@ public class CommunicationService {
                     sourceId + ":" + recipient,
                     clock.instant()));
         var address = recipient.startsWith("email:") ? recipient.substring(6) : prefs.email();
-        if (!prefs.allows(eventKey, DeliveryChannel.EMAIL) || blank(address) || recipient.startsWith("role:")) return;
-        if (prefs.subject() != null && prefs.emailDigest() != NotificationPreferences.Digest.IMMEDIATE) {
+        if (recipient.startsWith("user:")) {
+            var member = staff.members(tenantId).stream()
+                    .filter(m -> m.id().equals(recipient.substring(5)))
+                    .findFirst();
+            if (member.isEmpty()) return;
+            address = member.get().email();
+        }
+        var workflowEmail = eventKey == NotificationEventKey.APPROVAL_REQUESTED
+                || eventKey == NotificationEventKey.OFFER_ACCEPTED_DECLINED;
+        if ((!workflowEmail && !prefs.allows(eventKey, DeliveryChannel.EMAIL))
+                || blank(address)
+                || recipient.startsWith("role:")) return;
+        if (!workflowEmail
+                && prefs.subject() != null
+                && prefs.emailDigest() != NotificationPreferences.Digest.IMMEDIATE) {
             digests.add(DigestItem.create(tenantId, prefs.subject(), title, body, clock.instant()));
             return;
         }
@@ -538,8 +554,10 @@ public class CommunicationService {
                 null,
                 null,
                 "staff:" + sourceId + ":" + recipient,
-                false,
-                prefs.effectiveQuietHours(),
+                workflowEmail,
+                workflowEmail
+                        ? com.openhire.communication.domain.CommunicationTypes.QuietHours.off()
+                        : prefs.effectiveQuietHours(),
                 clock.instant()));
     }
 

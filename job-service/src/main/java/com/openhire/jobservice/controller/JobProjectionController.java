@@ -3,48 +3,38 @@ package com.openhire.jobservice.controller;
 import com.openhire.jobservice.service.JobApplicationService;
 import com.openhire.platform.tenant.TenantContext;
 import java.util.Map;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/v1")
 public class JobProjectionController {
     private final JobApplicationService jobs;
+    private final com.openhire.jobservice.service.PublicCareerCatalog careers;
 
-    public JobProjectionController(JobApplicationService jobs) {
+    public JobProjectionController(
+            JobApplicationService jobs, com.openhire.jobservice.service.PublicCareerCatalog careers) {
         this.jobs = jobs;
+        this.careers = careers;
     }
 
     @GetMapping("/public/jobs")
-    Object publicJobs(@RequestParam String tenantId) {
-        return jobs.list(tenantId, "OPEN");
+    Object publicJobs(
+            @RequestParam String tenantId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "12") int pageSize,
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(defaultValue = "") String location,
+            @RequestParam(defaultValue = "") String categoryId) {
+        return careers.list(tenantId, page, pageSize, keyword, location, categoryId);
     }
 
     @GetMapping("/public/jobs/{id}")
     Object publicJob(@RequestParam String tenantId, @PathVariable String id) {
-        var job = jobs.get(tenantId, id);
-        if (job.status() != com.openhire.jobservice.domain.JobStatus.OPEN)
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        return Map.of(
-                "id",
-                job.id(),
-                "title",
-                job.title(),
-                "location",
-                job.location(),
-                "description",
-                job.currentVersion().description(),
-                "mustHaveSkills",
-                job.currentVersion().mustHaveSkills(),
-                "questions",
-                job.currentVersion().knockoutQuestions().stream()
-                        .map(question -> Map.of("id", question.id(), "question", question.question()))
-                        .toList());
+        return careers.detail(tenantId, id);
     }
 
     @GetMapping("/internal-jobs")

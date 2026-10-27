@@ -2,7 +2,6 @@ package com.openhire.offer.controller;
 
 import com.openhire.offer.dto.OfferViews.ClauseView;
 import com.openhire.offer.dto.OfferViews.OfferDetail;
-import com.openhire.offer.dto.OfferViews.OfferSummary;
 import com.openhire.offer.dto.OfferViews.Page;
 import com.openhire.offer.dto.OfferViews.TemplateView;
 import com.openhire.offer.service.OfferApplicationService;
@@ -38,13 +37,21 @@ class OfferController {
 
     record ReasonInput(String reason) {}
 
+    record SubmitInput(java.util.Map<String, String> assignees) {}
+
     record TemplateInput(String name, String body, List<String> clauseKeys) {}
 
     record ClauseInput(String title, String body) {}
 
     @GetMapping("/offers")
-    Page<OfferSummary> list(Authentication auth, @RequestParam(required = false) String status) {
-        return offers.list(viewers.tenant(auth), viewers.viewer(auth), status);
+    com.openhire.offer.dto.OfferViews.OfferPage list(
+            Authentication auth,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "") String q,
+            @RequestParam(defaultValue = "") String after,
+            @RequestParam(defaultValue = "") String before,
+            @RequestParam(defaultValue = "25") int limit) {
+        return offers.listPage(viewers.tenant(auth), viewers.viewer(auth), status, q, after, before, limit);
     }
 
     @GetMapping("/offers/{id}")
@@ -77,8 +84,15 @@ class OfferController {
     }
 
     @PostMapping("/offers/{id}/submit")
-    OfferDetail submit(Authentication auth, @PathVariable String id) {
-        return offers.submit(viewers.tenant(auth), viewers.viewer(auth), id);
+    OfferDetail submit(Authentication auth, @PathVariable String id, @RequestBody(required = false) SubmitInput input) {
+        return input == null
+                ? offers.submit(viewers.tenant(auth), viewers.viewer(auth), id)
+                : offers.submit(viewers.tenant(auth), viewers.viewer(auth), id, input.assignees());
+    }
+
+    @PutMapping("/offers/{id}/approval-assignees")
+    OfferDetail assignApprovers(Authentication auth, @PathVariable String id, @RequestBody SubmitInput input) {
+        return offers.assignApprovers(viewers.tenant(auth), viewers.viewer(auth), id, input.assignees());
     }
 
     @PostMapping("/offers/{id}/approvals/{stepId}/approve")

@@ -44,6 +44,7 @@ public class ModelGateway {
     private final ProvenanceWriter provenance;
     private final AiDefaults defaults;
     private final Clock clock;
+    private final java.time.Duration draftTimeout;
 
     public ModelGateway(
             TaskRouter router,
@@ -54,6 +55,19 @@ public class ModelGateway {
             ProvenanceWriter provenance,
             AiDefaults defaults,
             Clock clock) {
+        this(router, prompts, guards, cache, meter, provenance, defaults, clock, java.time.Duration.ofSeconds(180));
+    }
+
+    public ModelGateway(
+            TaskRouter router,
+            PromptRegistry prompts,
+            ProviderGuards guards,
+            ResultCache cache,
+            CostMeter meter,
+            ProvenanceWriter provenance,
+            AiDefaults defaults,
+            Clock clock,
+            java.time.Duration draftTimeout) {
         this.router = router;
         this.prompts = prompts;
         this.guards = guards;
@@ -62,6 +76,9 @@ public class ModelGateway {
         this.provenance = provenance;
         this.defaults = defaults;
         this.clock = clock;
+        if (draftTimeout.isNegative() || draftTimeout.isZero() || draftTimeout.toSeconds() > 240)
+            throw new IllegalArgumentException("Job draft timeout must be between 1 and 240 seconds");
+        this.draftTimeout = draftTimeout;
     }
 
     /**
@@ -178,16 +195,27 @@ public class ModelGateway {
                     route.model(), List.copyOf(messages), schema, 0, call.maxTokens(), defaults.contextTokens());
             long t0 = clock.millis();
             com.openhire.aigateway.domain.AiTypes.ChatResult result;
-            try (var permit = guard.bulkhead().acquire()) {
+            try (var permit = call.task() == AiTask.JD_DRAFT
+                    ? guard.bulkhead()
+                            .acquire(
+                                    remainingDraftTime(state).compareTo(java.time.Duration.ofSeconds(15)) < 0
+                                            ? remainingDraftTime(state)
+                                            : java.time.Duration.ofSeconds(15))
+                    : guard.bulkhead().acquire()) {
                 if (!guard.breaker().tryAcquire())
                     throw new AiUnavailable(
                             "The model provider " + provider.id() + " is temporarily disabled after repeated failures");
                 try {
-                    result = provider.chat(request);
+                    result = call.task() == AiTask.JD_DRAFT
+                            ? provider.chat(request, remainingDraftTime(state))
+                            : provider.chat(request);
                     guard.breaker().onSuccess();
                 } catch (ProviderException e) {
                     if (e.circuit()) guard.breaker().onFailure();
                     else guard.breaker().onSuccess();
+                    if (call.task() == AiTask.JD_DRAFT
+                            && e instanceof com.openhire.aigateway.domain.AiTypes.ProviderTimeout)
+                        throw new com.openhire.aigateway.exception.AiExceptions.AiTimeout();
                     throw new AiUnavailable("The model provider " + provider.id() + " failed: " + e.getMessage(), e);
                 }
             } finally {
@@ -217,7 +245,11 @@ public class ModelGateway {
                 state.outcome = "INVALID_OUTPUT";
                 feedback = "The reply was not a valid JSON object.";
             }
-            if (attempt >= 2) throw new AiUnavailable("The model did not produce a valid answer");
+            if (attempt >= 2) {
+                if (call.task() == AiTask.JD_DRAFT)
+                    throw new com.openhire.aigateway.exception.AiExceptions.AiInvalidResponse();
+                throw new AiUnavailable("The model did not produce a valid answer");
+            }
             messages.add(ChatMessage.assistant(result.content()));
             messages.add(ChatMessage.user(REPAIR.formatted(feedback)));
         }
@@ -231,10 +263,21 @@ public class ModelGateway {
         }
     }
 
+    private java.time.Duration remainingDraftTime(State state) {
+        long remaining = draftTimeout.toMillis() - Math.max(0, clock.millis() - state.started);
+        if (remaining <= 0) throw new com.openhire.aigateway.exception.AiExceptions.AiTimeout();
+        return java.time.Duration.ofMillis(remaining);
+    }
+
     private void classify(State state, RuntimeException e) {
         if (e instanceof BudgetExhausted) {
             state.outcome = "BUDGET_EXHAUSTED";
             state.errorCode = "AI_BUDGET_EXHAUSTED";
+        } else if (e instanceof com.openhire.aigateway.exception.AiExceptions.AiTimeout) {
+            state.outcome = "TIMED_OUT";
+            state.errorCode = "AI_TIMEOUT";
+        } else if (e instanceof com.openhire.aigateway.exception.AiExceptions.AiInvalidResponse) {
+            state.errorCode = "AI_INVALID_RESPONSE";
         } else if (e instanceof AiUnavailable) {
             if (state.outcome.equals("OK")) state.outcome = "PROVIDER_ERROR";
             state.errorCode = "AI_UNAVAILABLE";

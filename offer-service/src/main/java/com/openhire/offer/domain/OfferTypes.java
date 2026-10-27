@@ -164,7 +164,7 @@ public final class OfferTypes {
 
         /** FINANCE steps are taken by org admins; SUPER_ADMIN may take any step. */
         public boolean canApprove(String stepRole) {
-            if (roles.contains("SUPER_ADMIN") || roles.contains(stepRole)) return true;
+            if (roles.contains(stepRole)) return true;
             return "FINANCE".equals(stepRole) && roles.contains("ORG_ADMIN");
         }
     }

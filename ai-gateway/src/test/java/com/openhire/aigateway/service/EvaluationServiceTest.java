@@ -224,7 +224,7 @@ class EvaluationServiceTest {
                 null));
         assertThatThrownBy(() -> rig.evaluation.start(T, "match.criterion.judge@2", "admin"))
                 .isInstanceOf(EvaluationBusy.class);
-        assertThatThrownBy(() -> rig.evaluation.start(T, "jd.draft@1", "admin"))
+        assertThatThrownBy(() -> rig.evaluation.start(T, "jd.draft@4", "admin"))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 

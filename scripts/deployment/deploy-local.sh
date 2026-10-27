@@ -120,6 +120,10 @@ if (( LOGS_ONLY )); then
   exit 0
 fi
 
+if (( TENANT_PORTALS )); then
+  OPENHIRE_DOCKER_PROJECT="$PROJECT_NAME" bash "$BACKEND_DIR/scripts/setup/check-portal-keycloak.sh"
+fi
+
 printf 'OpenHire local deployment\nProject: %s\nApplications: %s\n' "$PROJECT_NAME" "${SERVICES[*]}"
 printf 'Host MongoDB is required. Existing infrastructure, images and data volumes are retained.\n'
 printf 'Building/running all services still requires sufficient memory; this script does not change Docker limits.\n'
@@ -138,7 +142,6 @@ fi
 INFRA=(keycloak redis kafka)
 if (( TENANT_PORTALS )) && ! contains notification-dispatcher "${SERVICES[@]}"; then INFRA+=(mailpit); fi
 if contains resume-processor "${SERVICES[@]}"; then
-  INFRA+=(tika)
   if (( ! NO_SCAN )); then INFRA+=(clamav); fi
 fi
 if contains notification-dispatcher "${SERVICES[@]}"; then INFRA+=(mailpit); fi
@@ -175,7 +178,7 @@ fi
 compose ps "${SERVICES[@]}"
 if (( TENANT_PORTALS )); then
   printf '\nStarting tenant proxy; Keycloak clients and exact URLs must be configured by an operator.\n'
-  compose up --detach --no-deps tenant-proxy
+  compose up --detach --no-deps --force-recreate tenant-proxy
 fi
 if [[ "$FOLLOW_LOGS" == 1 ]]; then
   follow_logs

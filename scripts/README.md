@@ -12,6 +12,14 @@ The scripts were reorganized into four folders; use these paths instead of the o
 
 ## Deployment
 
+For `--tenant-portals`, authentication stays on each portal hostname under `/auth/...`; validators use
+fixed internal JWKS with constrained local per-host issuers. `setup/check-portal-keycloak.sh` is a read-only
+deployment gate. Existing local H2 installations
+must explicitly run `bash scripts/setup/prepare-portal-keycloak.sh --apply` and follow the coordinated
+[cutover procedure](../docs/SAME_HOST_AUTH.md) before deployment. That helper temporarily stops Keycloak,
+saves a restricted offline backup, prepares the persistent volume, and leaves the source stopped on success.
+It is never run automatically. No user/client setup is performed. Do not use `down -v`.
+
 For local testing without ClamAV, use the explicit `--no-scan` option:
 
 ```bash

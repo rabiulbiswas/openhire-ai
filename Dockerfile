@@ -38,8 +38,10 @@ RUN --mount=type=cache,id=openhire-gradle-cache,target=/home/gradle/.gradle/cach
 
 FROM eclipse-temurin:25-jre
 
+ARG SERVICE
 RUN apt-get update \
     && apt-get install --no-install-recommends -y curl \
+    && if [ "$SERVICE" = "resume-processor" ]; then apt-get install --no-install-recommends -y tesseract-ocr tesseract-ocr-eng; fi \
     && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd --system --gid 10001 openhire \
@@ -54,4 +56,5 @@ USER openhire
 # Docker Desktop's default 8 GB. These are local-development images.
 # JVM_RAM_PERCENT lowers the heap share for services whose container limit is tight; non-heap memory needs the rest.
 ENV JVM_RAM_PERCENT=75
+ENV OMP_THREAD_LIMIT=1
 ENTRYPOINT ["sh", "-c", "exec java -XX:MaxRAMPercentage=${JVM_RAM_PERCENT} -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss512k -XX:+ExitOnOutOfMemoryError -jar /app/application.jar"]

@@ -181,7 +181,7 @@ class SettingsAndRegistryTest {
                         "match.criterion.judge@1",
                         "match.criterion.judge@2",
                         "resume.structure@1",
-                        "jd.draft@1",
+                        "jd.draft@4",
                         "message.draft@1",
                         "nl.filter@1",
                         "fit.explain@1");
@@ -190,12 +190,12 @@ class SettingsAndRegistryTest {
         assertThat(list).filteredOn(p -> p.status() == PromptStatus.ACTIVE).allMatch(p -> p.trafficPct() == 100);
         assertThat(rig.admin.get(T, "resume.structure@1").outputSchema()).containsKey("properties");
 
-        var edited = rig.prompts.rows.get("t1:jd.draft@1");
+        var edited = rig.prompts.rows.get("t1:jd.draft@4");
         rig.prompts.save(new com.openhire.aigateway.domain.PromptVersion(
                 edited.docId(),
                 T,
                 edited.key(),
-                1,
+                4,
                 PromptStatus.ACTIVE,
                 100,
                 "alice",
@@ -206,7 +206,7 @@ class SettingsAndRegistryTest {
                 null,
                 edited.updatedAt()));
         new PromptRegistry(rig.prompts, rig.clock).ensureSeeded(T);
-        assertThat(rig.admin.get(T, "jd.draft@1").systemTemplate()).isEqualTo("EDITED {{title}}");
+        assertThat(rig.admin.get(T, "jd.draft@4").systemTemplate()).isEqualTo("EDITED {{title}}");
         assertThat(rig.admin.list("other")).hasSize(7);
         assertThat(rig.prompts.list("other")).extracting(p -> p.tenantId()).containsOnly("other");
     }
@@ -225,6 +225,9 @@ class SettingsAndRegistryTest {
                 "level",
                 "location",
                 "skills",
+                "qualification",
+                "goodToHaveSkills",
+                "workMode",
                 "tone",
                 "purpose",
                 "channel",
@@ -242,7 +245,7 @@ class SettingsAndRegistryTest {
             assertThat(p.renderUser(vars)).doesNotContain("{{");
             assertThat(p.schema()).containsEntry("type", "object");
         });
-        assertThatThrownBy(() -> rig.registry.get(T, "jd.draft@1").renderUser(Map.of()))
+        assertThatThrownBy(() -> rig.registry.get(T, "jd.draft@4").renderUser(Map.of()))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 

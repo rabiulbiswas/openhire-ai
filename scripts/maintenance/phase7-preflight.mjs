@@ -13,7 +13,7 @@ export function checkPhase7Dependencies(urls) {
   const rows = output.trim().startsWith('[')
     ? JSON.parse(output)
     : output.trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
-  const required = ['keycloak', 'kafka', 'redis', 'clamav', 'tika', 'mailpit', 'api-gateway',
+  const required = ['keycloak', 'kafka', 'redis', 'clamav', 'mailpit', 'api-gateway',
     'identity-service', 'job-service', 'approval-service', 'application-service', 'candidate-service',
     'resume-processor', 'interview-service', 'offer-service', 'employee-service', 'communication-service',
     'notification-dispatcher', 'ai-gateway', 'ai-workers', 'talent-service', 'compliance-service', 'analytics-service'];

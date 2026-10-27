@@ -34,6 +34,7 @@ public class WorkflowIndexes {
         } else if (collection.equals("resumes")) index("resumes", "status", "leaseUntil", "attempts");
         else if (collection.equals("candidates")) {
             index("candidates", "tenantId", "normalizedName");
+            index("candidates", "tenantId", "_id");
             index("candidates", "tenantId", "phone");
             index("candidate_merges", "status", "locksReleased", "runUntil");
         }

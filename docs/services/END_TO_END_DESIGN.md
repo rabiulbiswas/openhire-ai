@@ -17,7 +17,7 @@ flowchart TB
     BFF --> Ops[Compliance and analytics]
     BFF --> Hub[Integration hub]
     Intake --> Resume[Resume processor]
-    Resume --> Scan[ClamAV and Tika]
+    Resume --> Scan[ClamAV then embedded Tika and native Tesseract]
     Intake --> Kafka[Kafka commands and events]
     Kafka --> Workers[AI workers: matching and integrity]
     Workers --> AI[AI gateway]

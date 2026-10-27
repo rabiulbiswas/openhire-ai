@@ -68,6 +68,16 @@ public class MongoIdentityRepository
     }
 
     @Override
+    public boolean updateDisplayName(String tenantId, String id, String displayName) {
+        var query = tenantQuery(tenantId)
+                .addCriteria(where("_id").is(id))
+                .addCriteria(where("status").ne(com.openhire.identity.domain.IdentityModels.MemberStatus.DISABLED));
+        return mongo.updateFirst(query, new Update().set("displayName", displayName), Member.class, MEMBERS)
+                        .getMatchedCount()
+                == 1;
+    }
+
+    @Override
     public Optional<Member> findMemberById(String organizationId, String id) {
         return findOne(
                 MEMBERS,

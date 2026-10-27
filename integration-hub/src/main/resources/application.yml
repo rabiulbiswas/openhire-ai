@@ -31,6 +31,7 @@ spring:
           jwk-set-uri: ${OIDC_JWK_SET_URI:http://localhost:8180/realms/openhire-staff/protocol/openid-connect/certs}
 openhire:
   integration:
+    job-portals-enabled: ${INTEGRATION_JOB_PORTALS_ENABLED:false}
     quotas:
       requests-per-minute: ${INTEGRATION_REQUESTS_PER_MINUTE:300}
       calendar-changes-per-day: ${INTEGRATION_CALENDAR_CHANGES_PER_DAY:10000}

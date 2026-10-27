@@ -32,10 +32,11 @@ class ViewersTest {
 
     @Test
     void anyRecruitingStaffRoleReadsAnalyticsForItsOwnTenantOnly() {
-        for (var role : new String[] {
-            "RECRUITER", "HR_ADMIN", "HIRING_MANAGER", "ORG_ADMIN", "COMPLIANCE_OFFICER", "SUPER_ADMIN"
-        }) assertThat(viewers.analyticsTenant(token("t1", role))).isEqualTo("t1");
+        for (var role : new String[] {"RECRUITER", "HR_ADMIN", "HIRING_MANAGER", "ORG_ADMIN", "SUPER_ADMIN"})
+            assertThat(viewers.analyticsTenant(token("t1", role))).isEqualTo("t1");
         assertThatThrownBy(() -> viewers.analyticsTenant(token("t1", "EMPLOYEE")))
+                .isInstanceOf(ResponseStatusException.class);
+        assertThatThrownBy(() -> viewers.analyticsTenant(token("t1", "COMPLIANCE_OFFICER")))
                 .isInstanceOf(ResponseStatusException.class);
         assertThatThrownBy(() -> viewers.analyticsTenant(token(null, "RECRUITER")))
                 .isInstanceOf(ResponseStatusException.class);

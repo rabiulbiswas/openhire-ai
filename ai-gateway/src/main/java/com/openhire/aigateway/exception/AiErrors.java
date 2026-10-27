@@ -1,6 +1,8 @@
 package com.openhire.aigateway.exception;
 
 import com.openhire.aigateway.exception.AiExceptions.AccessDenied;
+import com.openhire.aigateway.exception.AiExceptions.AiInvalidResponse;
+import com.openhire.aigateway.exception.AiExceptions.AiTimeout;
 import com.openhire.aigateway.exception.AiExceptions.AiUnavailable;
 import com.openhire.aigateway.exception.AiExceptions.BudgetExhausted;
 import com.openhire.aigateway.exception.AiExceptions.EvaluationBusy;
@@ -22,6 +24,16 @@ public class AiErrors {
     @ExceptionHandler(AiUnavailable.class)
     ResponseEntity<ProblemDetail> unavailable(AiUnavailable e) {
         return problem(HttpStatus.SERVICE_UNAVAILABLE, "AI_UNAVAILABLE", e.getMessage());
+    }
+
+    @ExceptionHandler(AiTimeout.class)
+    ResponseEntity<ProblemDetail> timeout(AiTimeout e) {
+        return problem(HttpStatus.GATEWAY_TIMEOUT, "AI_TIMEOUT", e.getMessage());
+    }
+
+    @ExceptionHandler(AiInvalidResponse.class)
+    ResponseEntity<ProblemDetail> invalidResponse(AiInvalidResponse e) {
+        return problem(HttpStatus.BAD_GATEWAY, "AI_INVALID_RESPONSE", e.getMessage());
     }
 
     @ExceptionHandler(BudgetExhausted.class)

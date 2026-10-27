@@ -107,6 +107,12 @@ public final class AiTypes {
         }
     }
 
+    public static class ProviderTimeout extends ProviderException {
+        public ProviderTimeout(Throwable cause) {
+            super("The model response timed out", true, cause);
+        }
+    }
+
     /** The model reply was well formed but a guard rejected it; the gateway may retry once with feedback. */
     public static class GuardRejection extends RuntimeException {
         public GuardRejection(String message) {

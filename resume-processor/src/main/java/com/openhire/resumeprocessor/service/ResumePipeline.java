@@ -2,9 +2,9 @@ package com.openhire.resumeprocessor.service;
 
 import static com.openhire.support.Records.*;
 
+import com.openhire.resumeprocessor.service.port.ResumeTextExtractor;
 import java.io.*;
 import java.net.*;
-import java.net.http.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.*;
@@ -21,7 +21,8 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class ResumePipeline {
-    private final java.util.concurrent.Semaphore capacity = new java.util.concurrent.Semaphore(8);
+    private final java.util.concurrent.Semaphore capacity;
+    private final int concurrency;
     private final java.util.concurrent.ExecutorService workers =
             java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor();
 
@@ -33,7 +34,8 @@ public class ResumePipeline {
     public static final int MAX_BYTES = 10 * 1024 * 1024;
     private final MongoTemplate mongo;
     private final Path root;
-    private final String tika, clamHost;
+    private final ResumeTextExtractor extractor;
+    private final String clamHost;
     private final int clamPort;
 
     @Value("${openhire.resume.scan-enabled:true}")
@@ -60,13 +62,17 @@ public class ResumePipeline {
     public ResumePipeline(
             MongoTemplate mongo,
             @Value("${openhire.resume.directory}") String directory,
-            @Value("${openhire.resume.tika-url}") String tika,
+            ResumeTextExtractor extractor,
             @Value("${openhire.resume.clamav-host}") String clamHost,
-            @Value("${openhire.resume.clamav-port}") int clamPort)
+            @Value("${openhire.resume.clamav-port}") int clamPort,
+            @Value("${openhire.resume.extraction.concurrency:1}") int concurrency)
             throws IOException {
+        if (concurrency < 1 || concurrency > 4) throw new IllegalArgumentException("Invalid resume concurrency");
+        this.concurrency = concurrency;
+        this.capacity = new java.util.concurrent.Semaphore(concurrency);
         this.mongo = mongo;
         this.root = Path.of(directory).toAbsolutePath().normalize();
-        this.tika = tika;
+        this.extractor = extractor;
         this.clamHost = clamHost;
         this.clamPort = clamPort;
         Files.createDirectories(root);
@@ -195,7 +201,7 @@ public class ResumePipeline {
     @Scheduled(fixedDelay = 250)
     public void work() {
         if (workers.isShutdown()) return;
-        for (int i = 0; i < 8 && capacity.tryAcquire(); i++) {
+        for (int i = 0; i < concurrency && capacity.tryAcquire(); i++) {
             try {
                 workers.submit(() -> {
                     try {
@@ -256,10 +262,10 @@ public class ResumePipeline {
             } else {
                 steps.put("virusScan", "SKIPPED_LOCAL_DEV");
             }
-            text = extract(bytes, row.getString("mime"), "no_ocr");
+            text = extractor.extract(bytes, row.getString("mime"), false);
             steps.put("extract", "PASSED");
             if (text.strip().length() < 30 && "application/pdf".equals(row.getString("mime"))) {
-                text = extract(bytes, row.getString("mime"), "ocr_only");
+                text = extractor.extract(bytes, row.getString("mime"), true);
                 steps.put("ocr", "PASSED");
             }
             if (text.strip().length() < 30) throw new IOException("NO_EXTRACTABLE_TEXT");
@@ -379,42 +385,6 @@ public class ResumePipeline {
                 || exception instanceof java.net.SocketTimeoutException
                 || exception instanceof java.net.UnknownHostException
                 || exception instanceof java.net.NoRouteToHostException;
-    }
-
-    private String extract(byte[] bytes, String mime, String strategy) throws Exception {
-        var connection = (HttpURLConnection) URI.create(tika + "/tika").toURL().openConnection();
-        connection.setConnectTimeout(5000);
-        connection.setReadTimeout(75000);
-        connection.setRequestMethod("PUT");
-        connection.setInstanceFollowRedirects(false);
-        connection.setDoOutput(true);
-        connection.setFixedLengthStreamingMode(bytes.length);
-        connection.setRequestProperty("Content-Type", mime);
-        connection.setRequestProperty("Accept", "text/plain");
-        connection.setRequestProperty("X-Tika-PDFOcrStrategy", strategy);
-        long deadline = System.nanoTime() + Duration.ofSeconds(80).toNanos();
-        try {
-            try (var output = connection.getOutputStream()) {
-                output.write(bytes);
-            }
-            int code = connection.getResponseCode();
-            if (code >= 500) throw new Unavailable("EXTRACTION_UNAVAILABLE");
-            if (code != 200) throw new IOException("EXTRACTION_FAILED");
-            connection.setReadTimeout(5000);
-            try (var input = connection.getInputStream();
-                    var output = new ByteArrayOutputStream()) {
-                byte[] buffer = new byte[8192];
-                int read;
-                while ((read = input.read(buffer)) != -1) {
-                    if (System.nanoTime() > deadline) throw new IOException("EXTRACTION_TIMEOUT");
-                    if (output.size() + read > 1024 * 1024) throw new IOException("TEXT_LIMIT_EXCEEDED");
-                    output.write(buffer, 0, read);
-                }
-                return output.toString(StandardCharsets.UTF_8);
-            }
-        } finally {
-            connection.disconnect();
-        }
     }
 
     private static class Infected extends IOException {}

@@ -75,15 +75,18 @@ class OfferTest {
                 .containsExactly(
                         "offer.created.v1",
                         "offer.approval.requested.v1",
+                        "offer.approval.step-approved.v1",
                         "offer.approval.requested.v1",
+                        "offer.approval.step-approved.v1",
                         "offer.approval.requested.v1",
                         "offer.approved.v1");
-        assertThat(events(offer).get(1).payload()).containsEntry("currentApprovers", List.of("HIRING_MANAGER"));
+        assertThat(events(offer).get(1).payload()).containsEntry("currentApprovers", List.of("hm"));
     }
 
     @Test
     void theRequesterCannotApproveAndNobodyApprovesTwoSteps() {
         var offer = draft("24");
+        offer.assignApprovers(Map.of("HIRING_MANAGER", "both", "HR_ADMIN", "both"));
         offer.submit(NOW);
 
         assertThatThrownBy(() -> offer.approve("s1", viewer("recruiter", "HIRING_MANAGER"), NOW))
@@ -94,14 +97,18 @@ class OfferTest {
     }
 
     @Test
-    void aStepIsOnlyTakenByTheRightRoleAndSuperAdminsMayTakeAny() {
+    void onlyTheNamedRoleHolderMayApproveAndSuperAdminsCannotBypassAssignment() {
         var offer = draft("24");
         offer.submit(NOW);
 
         assertThatThrownBy(() -> offer.approve("s1", viewer("x", "RECRUITER"), NOW))
                 .hasMessageContaining("Hiring manager");
         assertThatThrownBy(() -> offer.approve("s2", hr(), NOW)).hasMessageContaining("not awaiting approval");
-        offer.approve("s1", viewer("root", "SUPER_ADMIN"), NOW);
+        assertThatThrownBy(() -> offer.approve("s1", viewer("root", "SUPER_ADMIN"), NOW))
+                .hasMessageContaining("assigned");
+        assertThatThrownBy(() -> offer.approve("s1", viewer("other-manager", "HIRING_MANAGER"), NOW))
+                .hasMessageContaining("assigned");
+        offer.approve("s1", hiringManager(), NOW);
         assertThat(offer.approvalSteps().getFirst().status()).isEqualTo(StepStatus.DONE);
     }
 
@@ -410,7 +417,9 @@ class OfferTest {
                     var step = offer.currentStep();
                     offer.approve(
                             step.id(),
-                            viewer("approver-" + step.id() + "-" + random.nextInt(3), step.role(), "SUPER_ADMIN"),
+                            viewer(
+                                    offer.approvalAssignees().get(step.role()),
+                                    "FINANCE".equals(step.role()) ? "ORG_ADMIN" : step.role()),
                             clock);
                 }
                 case APPROVED -> offer.send(clock.plus(WEEK), "u", clock);

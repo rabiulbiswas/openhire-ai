@@ -23,7 +23,42 @@ public final class ApprovalDtos {
             @NotEmpty List<@Valid StepInput> steps,
             List<@Valid FieldChangeInput> diff,
             ImpactInput impact,
-            List<@Valid TermInput> terms) {}
+            List<@Valid TermInput> terms,
+            @Valid VersionComparison comparison,
+            @Valid HeadcountExceptionInput headcountException) {
+        public CreateApprovalRequest(
+                String type,
+                String subjectId,
+                String title,
+                List<StepInput> steps,
+                List<FieldChangeInput> diff,
+                ImpactInput impact,
+                List<TermInput> terms,
+                VersionComparison comparison) {
+            this(type, subjectId, title, steps, diff, impact, terms, comparison, null);
+        }
+
+        public CreateApprovalRequest(
+                String type,
+                String subjectId,
+                String title,
+                List<StepInput> steps,
+                List<FieldChangeInput> diff,
+                ImpactInput impact,
+                List<TermInput> terms) {
+            this(type, subjectId, title, steps, diff, impact, terms, null);
+        }
+    }
+
+    public record HeadcountExceptionInput(
+            @NotBlank String jobTitle,
+            @jakarta.validation.constraints.NotNull @jakarta.validation.constraints.Min(0) Integer currentHeadcount,
+            @jakarta.validation.constraints.NotNull @jakarta.validation.constraints.Min(1) Integer requestedHeadcount,
+            @NotBlank @jakarta.validation.constraints.Size(max = 4000) String reason) {}
+
+    public record VersionComparison(
+            @jakarta.validation.constraints.Min(1) int previousVersion,
+            @jakarta.validation.constraints.Min(2) int proposedVersion) {}
 
     public record StepInput(
             @NotBlank String id, @NotBlank String approver, @NotBlank String role, Integer group, Integer slaHours) {}
@@ -71,7 +106,9 @@ public final class ApprovalDtos {
             List<ApprovalStep> steps,
             List<FieldChange> diff,
             Impact impact,
-            List<Term> terms) {
+            List<Term> terms,
+            VersionComparison comparison,
+            HeadcountExceptionInput headcountException) {
         public static ApprovalDetail from(ApprovalRequest value) {
             return new ApprovalDetail(
                     value.id(),
@@ -98,7 +135,17 @@ public final class ApprovalDtos {
                     value.rescoredApplicants() == null ? null : new Impact(value.rescoredApplicants()),
                     value.terms().stream()
                             .map(item -> new Term(item.label(), item.value()))
-                            .toList());
+                            .toList(),
+                    value.previousVersion() == null || value.proposedVersion() == null
+                            ? null
+                            : new VersionComparison(value.previousVersion(), value.proposedVersion()),
+                    value.headcountException() == null
+                            ? null
+                            : new HeadcountExceptionInput(
+                                    value.headcountException().jobTitle(),
+                                            value.headcountException().currentHeadcount(),
+                                    value.headcountException().requestedHeadcount(),
+                                            value.headcountException().reason()));
         }
     }
 

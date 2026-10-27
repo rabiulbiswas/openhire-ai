@@ -1,5 +1,13 @@
 # Phase 3 — application intake, resume processing and Candidate 360
 
+## Embedded extraction change — 2026-10-24
+
+Resume extraction now uses embedded Tika 3.3.3 and native Tesseract inside resume-processor,
+not a separate Tika server. Local/CI images and deployment scripts have been updated. Existing
+recovery fixtures use an injected extraction port. See [resume processor](services/resume-processor.md)
+for resource limits, configuration and local prerequisites. The historical runtime acceptance below
+predates this change; a rebuilt-container end-to-end OCR/scanner acceptance run is still required.
+
 ## Status — 2026-10-09
 
 **Runtime-accepted.** Every service was rebuilt from current source and force-recreated (including the

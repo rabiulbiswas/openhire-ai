@@ -1,5 +1,109 @@
 # Tenant portals and Super Admin onboarding
 
+> **Current implementation:** see [same-host authentication](SAME_HOST_AUTH.md). Login, OTP and recovery
+> now stay on `admin.localhost` or the onboarded tenant's hostname under `/auth/...`. The shared
+> `auth.localhost` section below is historical and superseded; do not follow its old cutover commands.
+
+## Historical shared authentication host — superseded
+
+The local portal override now uses **`http://auth.localhost`** as Keycloak's fixed public hostname.
+Login starts at `http://admin.localhost/login` or `http://<tenant>.localhost/login`, displays the
+OpenHire-themed password/OTP/reset form at `auth.localhost`, and returns to the original portal callback.
+The authentication path may still contain `/realms/openhire-staff`; there is no realm selector or exposed
+internal port. This is a shared authentication host, not a promise of staying on the exact tenant hostname.
+
+The Nginx proxy exposes only Keycloak `/realms/` and `/resources/` paths on that hostname. `/admin`,
+health and metrics are not exposed there. Keycloak administration remains local at
+`http://localhost:8180/admin` (or `KEYCLOAK_PORT`). Its authentication can use the public auth hostname.
+Proxy headers are replaced, not copied from the browser. Keycloak uses a strict fixed hostname and
+its direct admin port is loopback-bound. This configuration is local HTTP only, not a production ingress.
+
+Both realm issuers change to `http://auth.localhost/realms/<realm>`. The portal override updates the
+gateway and all 17 resource services together. Token exchange, userinfo, JWKS and administrative calls
+still use the private Docker address `http://keycloak:8080`; no Docker DNS alias for `auth.localhost` is needed.
+Token signature/issuer validation is not disabled. Existing sessions/tokens use the old issuer: sign out
+and start a fresh login after the coordinated cutover; do not flush shared Redis or delete users.
+
+### Existing local installation: preserve Keycloak before hostname cutover
+
+The base Compose Keycloak historically had no persistent H2 volume. A blind recreation could delete
+realm changes, clients and passwords. The portal override now mounts `<project>_keycloak-h2-data` at
+`/opt/keycloak/data`. **Do not recreate an existing Keycloak before preparing that storage.**
+
+1. Schedule local downtime and stop testing logins/onboarding. Record/export the existing realm/client
+   configuration securely as an additional recovery copy. In each realm, check Realm settings > General >
+   Frontend URL: clear an old `http://localhost:8180` override (or set the intended public URL). Otherwise
+   that realm setting can override the server hostname. Do this before taking the offline snapshot.
+2. From the backend root, explicitly run:
+
+   ```bash
+   bash scripts/setup/prepare-portal-keycloak.sh --apply
+   ```
+
+   This is for the default local **dev-file H2** only. It inspects only specific Docker metadata, stops the
+   original Keycloak, saves an offline H2 copy under ignored `backups/keycloak-h2-*`, and copies it into the
+   new named volume without overwriting a populated destination. It leaves the original container **stopped
+   on success** to prevent writes after the snapshot. On failure it attempts to restore the original running
+   container. Do not proceed after a failed copy; retained backups/partial volumes require inspection, not
+   automatic deletion. Existing external-database deployments need their own backup procedure.
+3. Recreate **only Keycloak**, now with preserved state and the new hostname:
+
+   ```bash
+   docker compose -f docker-compose.yml -f docker-compose.tenant-portals.yml \
+     up -d --no-deps --force-recreate --wait --wait-timeout 300 keycloak
+   ```
+
+   For a custom project, use the same `OPENHIRE_DOCKER_PROJECT` for the helper and matching
+   `docker compose --project-name <project>` for manual commands. Never use `down -v`.
+4. Redeploy **all backend applications**, not only identity/gateway, so every validator trusts the new issuer:
+
+   ```bash
+   ./run-backend.sh deploy --tenant-portals --follow
+   # If retaining the existing local trusted-fixture scanning bypass, use instead:
+   ./run-backend.sh deploy --tenant-portals --no-scan --follow
+   ```
+
+   This builds the current sources and recreates the proxy after the applications start, so Nginx loads the
+   new authentication-host configuration. Add `--no-build` only when application images are already current.
+   The deployment installs the OpenHire theme into the recreated Keycloak; client theme selection remains
+   operator-managed. Neither helper nor deployment creates/deletes users or changes client credentials.
+   `--tenant-portals` now refuses to proceed if an existing Keycloak still has the legacy hostname or the
+   expected persistent volume is missing. `--logs-only` remains read-only and bypasses that migration gate.
+5. Verify discovery before signing in:
+
+   ```bash
+   curl --fail --resolve auth.localhost:80:127.0.0.1 \
+     http://auth.localhost/realms/openhire-staff/.well-known/openid-configuration
+   ```
+
+   `issuer` must be `http://auth.localhost/realms/openhire-staff`, and `authorization_endpoint` must
+   start with `http://auth.localhost/`. Then use a fresh login from the relevant portal, verify OTP if
+   configured, confirm the role dashboard and sign out. Repeat for a tenant account. Do not reuse an old
+   OAuth callback/error URL. If your system resolver does not handle `.localhost`, use the `--resolve`
+   diagnostic above; browsers normally resolve it to loopback.
+
+Callbacks and logout URLs **stay on the portal domains**: keep the exact operator-managed
+`admin.localhost/login/oauth2/code/openhire-platform` and
+`<tenant>.localhost/login/oauth2/code/openhire-tenant` URLs, and their `/login` logout/activation redirects.
+Do not change them to `auth.localhost` or add wildcard callbacks. Any external Google/Microsoft/SAML
+identity provider with an old Keycloak broker callback needs its operator-managed callback updated separately.
+
+The new storage survives ordinary container recreation. It is still local H2, not production database
+architecture. Keep backup files private. Rolling back requires coordinated issuer settings for every service
+and a reviewed snapshot restore; merely removing the override is not a safe migration rollback.
+
+### Validation for this change
+
+Source/configuration checks and mocked Docker tests cover fixed issuer propagation, proxy headers/path
+restrictions, refusal of an unsafe cutover, offline-copy success and failure recovery. No live Keycloak
+storage migration, service recreation, account change or browser end-to-end acceptance was executed by
+the assistant. Apply the operator steps above and verify before claiming runtime acceptance.
+
+Validation results: 40 Node checks passed; the fully merged Compose configuration verified the gateway
+and all 17 API issuers, forced OIDC mode, loopback admin publishing and persistent storage. The combined
+local-no-scan/portal configuration also validated. Console TypeScript checking passed after adapting its
+local account-security link to `auth.localhost`. No Java application or Docker image build was run.
+
 **2026-10-23 expansion:** canonical `/api/v1/platform/tenants` APIs coexist with the legacy organization paths.
 The platform UI uses `/tenants`. Claim readers prefer `tenant_id` and reject conflicting legacy claims. See
 [tenant naming migration](TENANT_NAMING_MIGRATION.md) for the passed synthetic Mongo rehearsal, shared
@@ -140,8 +244,8 @@ role definitions are not automatically converted into Keycloak business roles. B
    Keycloak's accessible controls and security behavior, with OpenHire styling and copy.
    Tenant deployment also installs these assets automatically, but theme selection remains operator-managed.
    Do not recreate a non-persisted Keycloak container to install a theme. The provider URL can still contain its
-   realm path; branding removes the chooser/branding, not the OAuth redirect protocol. Keeping the browser on
-   the exact portal hostname throughout is not implemented by this theme.
+   realm path; branding removes the chooser/branding, not the OAuth redirect protocol. The portal override now
+   uses `auth.localhost`, not the exact tenant hostname; follow the safe cutover section above first.
    See `infra/keycloak/themes/openhire/README.md` for mockup styling, OTP behavior and supported controls.
 7. Start the frontend applications from the frontend repository:
 
@@ -154,12 +258,13 @@ role definitions are not automatically converted into Keycloak business roles. B
 8. After reviewing/building the Java changes, deploy the selected backend services and proxy:
 
    ```bash
-   ./scripts/deployment/deploy-local.sh --tenant-portals identity-service api-gateway
+   ./scripts/deployment/deploy-local.sh --tenant-portals
    ```
 
-   Other business services must already run. Add `--no-scan resume-processor` only when intentionally using
+   The first issuer cutover must update all services. Add `--no-scan` only when intentionally using
    the trusted synthetic-resume override. Reuse `--tenant-portals` on later deployments; omitting it restores
-   the base Compose configuration for selected services. This flag does not configure Keycloak.
+   the base Compose configuration for selected services, which would mix issuers. This flag does not change
+   Keycloak clients or automatically migrate existing Keycloak storage.
 9. Open `http://admin.localhost/login`, onboard Codlogicx and open the activation email in Mailpit. Then use
    `http://codlogicx.localhost/login`. Do not use an ORG_ADMIN account to sign in to the platform portal.
 
@@ -186,6 +291,28 @@ tenant-specific branch still needs runtime verification; existing script checks 
 ## Local validation once the remaining work is implemented
 
 Onboard Codlogicx from the independent Super Admin portal; activate its admin through the emailed invitation;
-invite recruiter, compliance and candidate users; verify role-specific dashboards on the same tenant host;
+invite recruiter, organisation admin and candidate users; verify role-specific dashboards on the same tenant host;
+
+Compliance Officer is retired. Organisation Admin owns Compliance overview, AI
+decision history, consent texts and retention rules, including privacy requests,
+fairness reports and audit exports. The old role is excluded from role pickers,
+invitations, new tenant seeds and service authorization. Existing role labels and
+actor IDs may remain in historical records; no audit data is deleted and no user
+is automatically promoted. A mixed-role user's remaining supported roles continue
+to work. Historical invitations for the retired role cannot be resent or accepted.
+
+For the existing CodeLogicx demo, with the original demo password supplied via
+`OPENHIRE_SEED_PASSWORD`, run:
+
+```sh
+node scripts/setup/seed-tenant-demo.mjs --tenant=codelogicx --data-only --resume --retire-compliance --apply
+```
+
+Deploy the identity, gateway, compliance, analytics and AI gateway changes first.
+This command disables only the compliance-only demo account through the audited
+Organisation Admin API and checks the four compliance page APIs. Disabling a user
+also revokes their identity-provider sessions. It preserves other accounts,
+passwords and historical records. Existing admins should sign in again to refresh
+their UI permissions after deployment.
 attempt cross-tenant access; verify tenant users cannot access platform APIs; suspend/reactivate a tenant;
 check logout, password reset, existing sessions and multiple-role accounts. Business-plan controls remain absent.

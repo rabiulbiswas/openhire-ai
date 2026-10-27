@@ -1,6 +1,7 @@
 package com.openhire.aigateway.client.provider;
 
 import com.openhire.aigateway.domain.AiTypes.ProviderException;
+import com.openhire.aigateway.domain.AiTypes.ProviderTimeout;
 import java.net.URI;
 import java.time.Duration;
 import java.util.Locale;
@@ -46,8 +47,13 @@ final class ProviderSupport {
     /** Maps any client failure to a ProviderException; connection problems and 5xx count against the circuit. */
     static ProviderException failure(RuntimeException e) {
         if (e instanceof ProviderException p) return p;
+        for (Throwable cause = e; cause != null; cause = cause.getCause()) {
+            if (cause instanceof java.net.SocketTimeoutException || cause instanceof java.net.http.HttpTimeoutException)
+                return new ProviderTimeout(e);
+        }
         if (e instanceof RestClientResponseException response) {
             int status = response.getStatusCode().value();
+            if (status == 408 || status == 504) return new ProviderTimeout(e);
             return new ProviderException("HTTP " + status, status >= 500 || status == 429, e);
         }
         return new ProviderException("Model server unreachable", true, e);

@@ -21,14 +21,30 @@ public class HttpJobWorkflowClient implements JobWorkflowClient {
 
     @Override
     public void decision(String tenantId, String jobId, String decision, String reason, String actorId) {
+        send(tenantId, jobId, decision, reason, actorId, null);
+    }
+
+    @Override
+    public void decision(
+            String tenantId, String jobId, String decision, String reason, String actorId, int expectedVersion) {
+        send(tenantId, jobId, decision, reason, actorId, expectedVersion);
+    }
+
+    private void send(
+            String tenantId, String jobId, String decision, String reason, String actorId, Integer expectedVersion) {
+        var body = new java.util.LinkedHashMap<String, Object>(Map.of(
+                "decision",
+                decision,
+                "reason",
+                reason == null ? "" : reason,
+                "actorId",
+                actorId == null ? "approval-service" : actorId));
+        if (expectedVersion != null) body.put("expectedVersion", expectedVersion);
         client.post()
                 .uri("/api/v1/jobs/internal/{id}/approval-decision", jobId)
                 .header("X-Tenant-Id", tenantId)
                 .header("X-Internal-Service-Secret", secret)
-                .body(Map.of(
-                        "decision", decision,
-                        "reason", reason == null ? "" : reason,
-                        "actorId", actorId == null ? "approval-service" : actorId))
+                .body(body)
                 .retrieve()
                 .toBodilessEntity();
     }

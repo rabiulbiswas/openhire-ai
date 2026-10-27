@@ -4,6 +4,11 @@ plugins {
 }
 
 dependencies {
+    // Keep the supported 3.x API; load only the resume formats we accept.
+    implementation 'org.apache.tika:tika-core:3.3.3'
+    implementation 'org.apache.tika:tika-parser-pdf-module:3.3.3'
+    implementation 'org.apache.tika:tika-parser-microsoft-module:3.3.3'
+    implementation 'org.apache.tika:tika-parser-ocr-module:3.3.3'
     implementation project(':service-support')
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'

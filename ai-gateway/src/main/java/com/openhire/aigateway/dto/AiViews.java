@@ -37,7 +37,20 @@ public final class AiViews {
     public record StructureRequest(String text, String candidateName) {}
 
     public record JdRequest(
-            String title, String team, String level, String location, List<String> mustHaveSkills, String tone) {}
+            String title,
+            String team,
+            String level,
+            String location,
+            List<String> mustHaveSkills,
+            String tone,
+            String qualification,
+            List<String> goodToHaveSkills,
+            String workMode) {
+        public JdRequest(
+                String title, String team, String level, String location, List<String> mustHaveSkills, String tone) {
+            this(title, team, level, location, mustHaveSkills, tone, null, List.of(), null);
+        }
+    }
 
     public record ThreadItem(String from, String text) {}
 

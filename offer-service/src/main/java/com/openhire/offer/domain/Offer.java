@@ -28,8 +28,13 @@ import org.springframework.data.mongodb.core.mapping.Field;
 /** Aggregate root: one offer per application, with immutable versions and its approval chain. */
 @Document("offers")
 @CompoundIndexes({
+    @CompoundIndex(name = "tenant_created_page", def = "{'tenantId': 1, 'createdAt': -1, '_id': -1}"),
+    @CompoundIndex(
+            name = "tenant_status_created_page",
+            def = "{'tenantId': 1, 'status': 1, 'createdAt': -1, '_id': -1}"),
     @CompoundIndex(name = "tenant_application", def = "{'tenantId': 1, 'applicationId': 1}", unique = true),
     @CompoundIndex(name = "tenant_status", def = "{'tenantId': 1, 'status': 1, 'updatedAt': -1}"),
+    @CompoundIndex(name = "tenant_owner_updated", def = "{'tenantId': 1, 'ownerId': 1, 'updatedAt': -1}"),
     @CompoundIndex(name = "expiry_sweep", def = "{'status': 1, 'expiresAt': 1}")
 })
 public class Offer {
@@ -52,6 +57,28 @@ public class Offer {
     private Band band;
     private List<OfferVersion> versions;
     private List<ApprovalStep> approvalSteps;
+    private Map<String, String> approvalAssignees = new LinkedHashMap<>();
+
+    public Map<String, String> approvalAssignees() {
+        return approvalAssignees == null ? Map.of() : Map.copyOf(approvalAssignees);
+    }
+
+    public void assignApprovers(Map<String, String> assignees) {
+        if (status != Status.DRAFT
+                && !(status == Status.PENDING_APPROVAL && approvalAssignees().isEmpty()))
+            throw new IllegalStateException("Approvers are frozen once approval starts");
+        for (var step : approvalSteps)
+            if (step.status() == StepStatus.DONE
+                    && !java.util.Objects.equals(step.decidedBy(), assignees.get(step.role())))
+                throw new IllegalArgumentException("Completed approval assignments cannot be changed");
+        approvalAssignees = new LinkedHashMap<>(assignees);
+        if (status == Status.PENDING_APPROVAL) requestCurrentStep(Instant.now());
+    }
+
+    public boolean assigned(ApprovalStep step, Viewer viewer) {
+        return viewer.subject().equals(approvalAssignees().get(step.role())) && viewer.canApprove(step.role());
+    }
+
     private String approvalNote;
     private Instant expiresAt;
     private Instant sentAt;
@@ -153,8 +180,15 @@ public class Offer {
         else versions.set(versions.size() - 1, version);
         var wasSent = status.open();
         boolean reapproval = compensation && submitted;
-        if (reapproval) startApproval(now);
-        else if (wasSent) status = Status.APPROVED; // the candidate must be sent the revised terms
+        if (reapproval) {
+            if (CompensationPolicy.chain(latest().terms(), band).stream()
+                    .allMatch(s -> approvalAssignees().containsKey(s.role()))) startApproval(now);
+            else {
+                status = Status.DRAFT;
+                approvalSteps = new ArrayList<>();
+                approvalNote = "Select the required named approvers and submit the revised terms";
+            }
+        } else if (wasSent) status = Status.APPROVED; // the candidate must be sent the revised terms
         if (submitted)
             record("offer.revised.v1", Map.of("reapprovalRequired", reapproval, "versionNo", version.versionNo()), now);
         updatedAt = now;
@@ -181,7 +215,8 @@ public class Offer {
         if (step == null) return;
         var extra = new LinkedHashMap<String, Object>();
         extra.put("stepId", step.id());
-        extra.put("currentApprovers", List.of(step.role()));
+        var assignee = approvalAssignees().get(step.role());
+        extra.put("currentApprovers", assignee == null ? List.of() : List.of(assignee));
         extra.put("title", jobTitle + ": " + candidateName);
         record("offer.approval.requested.v1", extra, now);
     }
@@ -200,6 +235,7 @@ public class Offer {
                 .findFirst();
         if (next.isPresent()) {
             approvalSteps.set(approvalSteps.indexOf(next.get()), next.get().with(StepStatus.CURRENT));
+            record("offer.approval.step-approved.v1", Map.of("stepId", step.id(), "approvedBy", viewer.subject()), now);
             requestCurrentStep(now);
         } else {
             status = Status.APPROVED;
@@ -224,12 +260,12 @@ public class Offer {
     }
 
     private void authorise(ApprovalStep step, Viewer viewer) {
-        if (!viewer.canApprove(step.role()))
-            throw new IllegalArgumentException("Only " + step.label() + " can approve this step");
         if (viewer.subject().equals(ownerId))
             throw new IllegalStateException("You cannot approve an offer you created");
         if (approvalSteps.stream().anyMatch(other -> viewer.subject().equals(other.decidedBy())))
             throw new IllegalStateException("A different person must approve each step");
+        if (!assigned(step, viewer))
+            throw new IllegalArgumentException("Only the assigned " + step.label() + " can approve this step");
     }
 
     /** Returns false when the offer was already sent (idempotent retry). */
@@ -442,6 +478,10 @@ public class Offer {
         return updatedAt;
     }
 
+    public Instant createdAt() {
+        return createdAt;
+    }
+
     // ---- Internals -------------------------------------------------------------------------------
 
     private void requirePending() {
@@ -475,6 +515,13 @@ public class Offer {
         payload.put("versionNo", versions.getLast().versionNo());
         payload.put("status", status.name());
         if (ownerId != null) payload.put("ownerId", ownerId);
+        payload.put(
+                "approvalParticipants",
+                approvalSteps.stream()
+                        .map(s -> approvalAssignees().get(s.role()))
+                        .filter(java.util.Objects::nonNull)
+                        .distinct()
+                        .toList());
         payload.putAll(extra);
         events.add(new PendingEvent(
                 UUID.randomUUID().toString(),

@@ -13,8 +13,8 @@ import org.springframework.web.server.ResponseStatusException;
 /** Tenant, actor and role checks for the staff endpoints. Local security mode (development only) skips roles. */
 @Component
 class Viewers {
-    static final Set<String> READERS = Set.of("COMPLIANCE_OFFICER", "ORG_ADMIN", "SUPER_ADMIN");
-    static final Set<String> MANAGERS = Set.of("COMPLIANCE_OFFICER", "ORG_ADMIN");
+    static final Set<String> READERS = Set.of("ORG_ADMIN", "SUPER_ADMIN");
+    static final Set<String> MANAGERS = Set.of("ORG_ADMIN");
 
     private final Access access;
     private final boolean local;

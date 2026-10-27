@@ -178,9 +178,9 @@ try {
   const recruiter = await login(recruiterSeed.username, recruiterSeed.credentials[0].value);
   const admin = await login(adminSeed.username, adminSeed.credentials[0].value);
   const otherTenantAdmin = await login(secondSeed.username, secondSeed.credentials[0].value);
-  const officer = await fixtureUser('officer', 'COMPLIANCE_OFFICER');
+  const officer = admin; // Compliance is owned by the organisation administrator.
   const superAdmin = await fixtureUser('super', 'SUPER_ADMIN');
-  pass('sessions: recruiter, org admin, compliance officer, super admin and an administrator of a second organisation');
+  pass('sessions: recruiter, organisation admin (including compliance), super admin and an administrator of a second organisation');
 
   await api('/audit-events', recruiter, undefined, 'GET', 403);
   await api('/compliance/overview', recruiter, undefined, 'GET', 403);

@@ -36,6 +36,13 @@ public class JobApplicationService {
     private final JobDescriptionGenerator descriptionGenerator;
     private final ApprovalClient approvals;
     private final AuditRecorder audit;
+    private final com.openhire.jobservice.service.port.JobMetrics metrics;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.openhire.platform.security.TenantStaffDirectory staff;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private JobCategories categories;
 
     public JobApplicationService(
             JobRepository jobs,
@@ -43,13 +50,15 @@ public class JobApplicationService {
             IdempotencyStore idempotency,
             JobDescriptionGenerator descriptionGenerator,
             ApprovalClient approvals,
-            AuditRecorder audit) {
+            AuditRecorder audit,
+            com.openhire.jobservice.service.port.JobMetrics metrics) {
         this.jobs = jobs;
         this.outbox = outbox;
         this.idempotency = idempotency;
         this.descriptionGenerator = descriptionGenerator;
         this.approvals = approvals;
         this.audit = audit;
+        this.metrics = metrics;
     }
 
     public JobResponse create(String tenantId, String actorId, String idempotencyKey, CreateJobRequest request) {
@@ -63,7 +72,11 @@ public class JobApplicationService {
                 return JobResponse.from(existing);
             }
         }
-        var job = Job.create(tenantId, content(request), JobStatus.DRAFT, actorId);
+        if (request.qualification() == null || request.qualification().isBlank())
+            throw new IllegalArgumentException("Qualification is required for new jobs");
+        var job = Job.create(tenantId, content(tenantId, request, List.of(), null), JobStatus.DRAFT, actorId);
+        assignManager(job, request.hiringManagerId(), actorId);
+        if ("PENDING_APPROVAL".equals(request.status())) manager(job, actorId);
         var saved = jobs.save(job);
         emit("job.requisition.created.v1", saved);
         recordAudit("JOB_CREATED", saved, actorId);
@@ -71,10 +84,7 @@ public class JobApplicationService {
             idempotency.remember(tenantId, idempotencyKey, saved.id(), IDEMPOTENCY_TTL);
         }
         if ("PENDING_APPROVAL".equals(request.status())) {
-            saved.submit(actorId);
-            saved = jobs.save(saved);
-            approvals.requestJobApproval(tenantId, actorId, saved.id(), saved.title(), saved.currentVersion());
-            emit("job.approval.requested.v1", saved);
+            return submitJob(tenantId, saved, actorId);
         }
         return JobResponse.from(saved);
     }
@@ -85,18 +95,41 @@ public class JobApplicationService {
     }
 
     public JobResponse update(String tenantId, String id, int expectedVersion, String actor, CreateJobRequest request) {
+        // Validate before making any persistent change.
+        if (request.hiringManagerId() != null) staff.require(tenantId, request.hiringManagerId(), "HIRING_MANAGER");
         return change(
                 tenantId,
                 id,
-                value -> value.edit(
-                        expectedVersion,
-                        content(request, value.currentSnapshot().interviewPlan()),
-                        actor),
+                value -> {
+                    value.edit(
+                            expectedVersion,
+                            content(
+                                    tenantId,
+                                    request,
+                                    value.currentSnapshot().interviewPlan(),
+                                    value.currentSnapshot()),
+                            actor);
+                    assignManager(value, request.hiringManagerId(), actor);
+                },
                 "job.version.created.v1");
     }
 
     public JobResponse updateHiringTeam(
             String tenantId, String id, int expectedVersion, String actor, List<HiringTeamMember> members) {
+        var managers = members.stream()
+                .filter(m -> "HIRING_MANAGER".equalsIgnoreCase(m.role().replace(' ', '_')))
+                .toList();
+        if (managers.size() > 1)
+            throw new IllegalArgumentException("Select one responsible hiring manager for approval");
+        var job = requireJob(tenantId, id);
+        if (job.status() == JobStatus.PENDING_APPROVAL
+                && !job.hiringTeam().stream()
+                        .filter(m -> "HIRING_MANAGER".equalsIgnoreCase(m.role().replace(' ', '_')))
+                        .map(Job.HiringTeamMember::userId)
+                        .toList()
+                        .equals(managers.stream().map(HiringTeamMember::userId).toList()))
+            throw new IllegalStateException("The hiring manager is frozen while approval is pending");
+        managers.forEach(m -> staff.require(tenantId, m.userId(), "HIRING_MANAGER"));
         return change(
                 tenantId,
                 id,
@@ -126,27 +159,153 @@ public class JobApplicationService {
 
     public JobResponse submit(String tenantId, String id, String actor) {
         var job = requireJob(tenantId, id);
+        return submitJob(tenantId, job, actor);
+    }
+
+    private JobResponse submitJob(String tenantId, Job job, String actor) {
+        var approver = manager(job, actor);
+        var baseline = job.submittedVersion();
         job.submit(actor);
-        var saved = jobs.save(job);
-        approvals.requestJobApproval(tenantId, actor, saved.id(), saved.title(), saved.currentVersion());
+        var saved = job;
+        if (baseline > 0 && baseline < saved.currentVersion()) {
+            var before = saved.versions().stream()
+                    .filter(v -> v.version() == baseline)
+                    .findFirst()
+                    .orElseThrow();
+            approvals.requestAssignedJobChangeApproval(
+                    tenantId,
+                    actor,
+                    saved.id(),
+                    saved.title(),
+                    new ApprovalClient.Comparison(baseline, saved.currentVersion()),
+                    JobApprovalChanges.between(before, saved.currentSnapshot()),
+                    approver);
+        } else
+            approvals.requestAssignedJobApproval(
+                    tenantId, actor, saved.id(), saved.title(), saved.currentVersion(), approvalTerms(saved), approver);
+        saved = jobs.save(saved);
         emit("job.approval.requested.v1", saved);
         return JobResponse.from(saved);
     }
 
+    private void assignManager(Job job, String id, String actor) {
+        if (id == null) return;
+        var member = staff.require(job.tenantId(), id, "HIRING_MANAGER");
+        var team = new java.util.ArrayList<>(job.hiringTeam().stream()
+                .filter(m -> !"HIRING_MANAGER".equalsIgnoreCase(m.role().replace(' ', '_')))
+                .toList());
+        team.add(new Job.HiringTeamMember(member.id(), member.displayName(), "HIRING_MANAGER"));
+        job.updateHiringTeam(job.currentVersion(), team, actor);
+    }
+
+    private String manager(Job job, String actor) {
+        var managers = job.hiringTeam().stream()
+                .filter(m -> "HIRING_MANAGER".equalsIgnoreCase(m.role().replace(' ', '_')))
+                .toList();
+        if (managers.size() != 1)
+            throw new IllegalArgumentException("Select exactly one hiring manager before submitting");
+        var id = managers.getFirst().userId();
+        if (id.equals(actor))
+            throw new IllegalArgumentException("A different hiring manager must approve your request");
+        staff.require(job.tenantId(), id, "HIRING_MANAGER");
+        return id;
+    }
+
+    /** Snapshot submitted values: later job edits must not silently change an approval's context. */
+    private static List<ApprovalClient.Term> approvalTerms(Job job) {
+        var salary = job.salaryMin() != null && job.salaryMax() != null
+                ? job.currency() + " " + job.salaryMin().stripTrailingZeros().toPlainString() + " to "
+                        + job.salaryMax().stripTrailingZeros().toPlainString()
+                : "Not provided";
+        var terms = new java.util.ArrayList<>(List.of(
+                new ApprovalClient.Term(
+                        "Headcount",
+                        job.currentSnapshot().headcount() == null
+                                ? "Not provided"
+                                : job.currentSnapshot().headcount()
+                                        + (job.currentSnapshot().positionType() == null
+                                                ? ""
+                                                : ", "
+                                                        + ("REPLACEMENT"
+                                                                        .equals(job.currentSnapshot()
+                                                                                .positionType())
+                                                                ? "replacement"
+                                                                : "new position"))),
+                new ApprovalClient.Term("Salary band", salary),
+                new ApprovalClient.Term("Location", job.location()),
+                new ApprovalClient.Term(
+                        "Job category",
+                        job.currentSnapshot().classification() == null
+                                ? "Not specified"
+                                : job.currentSnapshot().classification().categoryName()),
+                new ApprovalClient.Term(
+                        "Work mode",
+                        job.currentSnapshot().classification() == null
+                                ? "Not specified"
+                                : job.currentSnapshot().classification().workMode()),
+                new ApprovalClient.Term(
+                        "Reason",
+                        job.currentSnapshot().hiringReason() == null
+                                ? "Not provided"
+                                : job.currentSnapshot().hiringReason()),
+                new ApprovalClient.Term("Job description", job.description())));
+        if (job.currentSnapshot().qualification() != null)
+            terms.add(new ApprovalClient.Term(
+                    "Qualification", job.currentSnapshot().qualification()));
+        if (!job.mustHaveSkills().isEmpty())
+            terms.add(new ApprovalClient.Term("Must-have skills", String.join(", ", job.mustHaveSkills())));
+        if (!job.currentSnapshot().goodToHaveSkills().isEmpty())
+            terms.add(new ApprovalClient.Term(
+                    "Good-to-have skills (optional)",
+                    String.join(", ", job.currentSnapshot().goodToHaveSkills())));
+        return List.copyOf(terms);
+    }
+
     public JobResponse decision(String tenantId, String id, String decision, String actor, String reason) {
+        return decision(tenantId, id, decision, actor, reason, null);
+    }
+
+    public JobResponse decision(
+            String tenantId, String id, String decision, String actor, String reason, Integer expectedVersion) {
         return switch (decision.toUpperCase()) {
-            case "APPROVED" -> change(tenantId, id, value -> value.markApproved(actor), "job.approved.v1");
+            case "APPROVED" -> approveAndPublish(tenantId, id, actor, expectedVersion);
             case "CHANGES_REQUESTED", "REJECTED" ->
                 change(
                         tenantId,
                         id,
-                        value -> value.requestChanges(actor, reason == null ? decision : reason),
+                        value -> {
+                            requireDecisionVersion(value, expectedVersion);
+                            value.requestChanges(actor, reason == null ? decision : reason);
+                        },
                         "job.changes-requested.v1");
             default -> throw new IllegalArgumentException("Unsupported approval decision " + decision);
         };
     }
 
+    private JobResponse approveAndPublish(String tenantId, String id, String actor, Integer expectedVersion) {
+        var job = requireJob(tenantId, id);
+        requireDecisionVersion(job, expectedVersion);
+        // Approval callbacks can be redelivered. Never reopen a subsequently paused/closed job.
+        if (job.approvedVersion() == job.currentVersion() && job.status() != JobStatus.PENDING_APPROVAL)
+            return JobResponse.from(job);
+        job.markApproved(actor);
+        job.publish(actor);
+        var saved = jobs.save(job);
+        emit("job.approved.v1", saved);
+        emit("job.published.v1", saved);
+        recordAudit("JOB_PUBLISHED", saved, actor);
+        return JobResponse.from(saved);
+    }
+
+    private static void requireDecisionVersion(Job job, Integer expectedVersion) {
+        if (expectedVersion != null && expectedVersion != job.currentVersion())
+            throw new IllegalStateException("Approval belongs to a different job version");
+    }
+
     public JobResponse publish(String tenantId, String id, String actor) {
+        var job = requireJob(tenantId, id);
+        if (job.status() == JobStatus.OPEN && job.approvedVersion() == job.currentVersion())
+            return JobResponse.from(job);
         var response = change(tenantId, id, value -> value.publish(actor), "job.published.v1");
         recordAudit(
                 "JOB_PUBLISHED",
@@ -173,11 +332,22 @@ public class JobApplicationService {
     }
 
     public PageResponse<JobSummaryResponse> list(String tenantId, String status) {
-        var data = jobs.findAll(tenantId).stream()
+        var selected = jobs.findAll(tenantId).stream()
                 .filter(job -> status == null
                         || status.isBlank()
                         || job.status().name().equals(status))
-                .map(JobSummaryResponse::from)
+                .toList();
+        Map<String, com.openhire.jobservice.service.port.JobMetrics.Counts> counts;
+        try {
+            counts = metrics.counts(tenantId, selected.stream().map(Job::id).toList());
+        } catch (org.springframework.web.client.RestClientException | IllegalStateException unavailable) {
+            org.slf4j.LoggerFactory.getLogger(JobApplicationService.class)
+                    .warn("Job application metrics unavailable; returning explicit unavailable values");
+            counts = Map.of();
+        }
+        var availableCounts = counts;
+        var data = selected.stream()
+                .map(job -> JobSummaryResponse.from(job, availableCounts.get(job.id())))
                 .toList();
         return PageResponse.singlePage(data);
     }
@@ -196,9 +366,19 @@ public class JobApplicationService {
                 .filter(value -> value.version() == version)
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("Job version " + version + " was not found"));
-        return descriptionGenerator.generate(
-                new AiJobDraftRequest(job.title(), job.team(), job.level(), snapshot.mustHaveSkills(), tone)
-                        .normalized());
+        return descriptionGenerator.generate(new AiJobDraftRequest(
+                        job.title(),
+                        job.team(),
+                        job.level(),
+                        snapshot.mustHaveSkills(),
+                        tone,
+                        snapshot.qualification(),
+                        snapshot.goodToHaveSkills(),
+                        job.location(),
+                        snapshot.classification() == null
+                                ? null
+                                : snapshot.classification().workMode())
+                .normalized());
     }
 
     private JobResponse change(String tenantId, String id, Consumer<Job> command, String eventType) {
@@ -222,6 +402,12 @@ public class JobApplicationService {
     }
 
     private void emit(String type, Job job) {
+        if (type.equals("job.approved.v1") || type.equals("job.published.v1")) {
+            outbox.append(
+                    "job.events.v1",
+                    PublicationEvents.event(type, job.tenantId(), job.id(), job.currentVersion(), job.publishedAt()));
+            return;
+        }
         outbox.append(
                 "job.events.v1",
                 DomainEventEnvelope.create(
@@ -238,11 +424,15 @@ public class JobApplicationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Job " + id + " was not found"));
     }
 
-    private JobContent content(CreateJobRequest request) {
-        return content(request, List.of());
-    }
-
-    private JobContent content(CreateJobRequest request, List<Job.InterviewRound> interviewPlan) {
+    private JobContent content(
+            String tenantId,
+            CreateJobRequest request,
+            List<Job.InterviewRound> interviewPlan,
+            Job.JobVersion previous) {
+        if (request.mustHaveSkills() == null || request.mustHaveSkills().isEmpty())
+            throw new IllegalArgumentException("At least one must-have skill is required");
+        if (request.qualification() != null && request.qualification().isBlank())
+            throw new IllegalArgumentException("Qualification cannot be empty");
         return new JobContent(
                 request.title(),
                 request.team(),
@@ -264,6 +454,21 @@ public class JobApplicationService {
                                 .map(value -> new Job.RubricCriterion(value.id(), value.label(), value.weight()))
                                 .toList(),
                 request.description(),
-                interviewPlan);
+                interviewPlan,
+                request.headcount() == null && previous != null ? previous.headcount() : request.headcount(),
+                request.positionType() == null && previous != null ? previous.positionType() : request.positionType(),
+                request.hiringReason() == null && previous != null ? previous.hiringReason() : request.hiringReason(),
+                categories.resolve(
+                        tenantId,
+                        request.categoryId(),
+                        request.workMode(),
+                        previous == null ? null : previous.classification(),
+                        previous == null),
+                request.qualification() == null && previous != null
+                        ? previous.qualification()
+                        : request.qualification(),
+                request.goodToHaveSkills() == null && previous != null
+                        ? previous.goodToHaveSkills()
+                        : request.goodToHaveSkills());
     }
 }

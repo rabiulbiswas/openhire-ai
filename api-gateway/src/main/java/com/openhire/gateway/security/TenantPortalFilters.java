@@ -22,12 +22,19 @@ public class TenantPortalFilters {
                         h.remove("X-Tenant-Id");
                         h.remove("X-Actor-Id");
                         h.remove("X-Internal-Secret");
+                        h.remove("X-Public-Tenant-Id");
                     }))
                     .build();
             // Revoked/suspended memberships must still be able to clear their browser and SSO sessions.
             if (path.equals("/bff/logout")) {
                 portals.slug(clean);
-                return chain.filter(clean);
+                var result = chain.filter(clean);
+                return portals.sameHostAuth()
+                        ? result.contextWrite(context -> context.put(
+                                LocalPortalOidcConfiguration.ORIGIN,
+                                LocalPortalIssuerValidator.origin(
+                                        portals.loginUri(clean).toString())))
+                        : result;
             }
             if (path.startsWith("/api/v1/internal/")) {
                 exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
@@ -40,6 +47,32 @@ public class TenantPortalFilters {
                                 .anyMatch(id -> !tenant.get("id").equals(id))) {
                     exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
                     return exchange.getResponse().setComplete();
+                }
+                var routed = clean;
+                if (path.equals("/api/v1/public/applications") || path.startsWith("/api/v1/public/candidate-registrations")) {
+                    if ("admin".equals(portals.slug(clean))) {
+                        exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
+                        return exchange.getResponse().setComplete();
+                    }
+                    routed = clean.mutate().request(request -> request.headers(headers ->
+                            headers.set("X-Public-Tenant-Id", tenant.get("id").toString()))).build();
+                }
+                if ((path.equals("/api/v1/public/consent") || path.equals("/api/v1/public/jobs")
+                        || path.startsWith("/api/v1/public/jobs/"))
+                        && org.springframework.http.HttpMethod.GET.equals(
+                                clean.getRequest().getMethod())) {
+                    if ("admin".equals(portals.slug(clean))) {
+                        exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
+                        return exchange.getResponse().setComplete();
+                    }
+                    // Public consent has no token relay. Use only the active host's registry ID,
+                    // for anonymous applicants as well as staff; never a global/default tenant.
+                    var uri = org.springframework.web.util.UriComponentsBuilder.fromUri(
+                                    clean.getRequest().getURI())
+                            .replaceQueryParam("tenantId", tenant.get("id"))
+                            .build(true)
+                            .toUri();
+                    routed = clean.mutate().request(request -> request.uri(uri)).build();
                 }
                 // Tenant activation/recovery belongs to Keycloak, not the legacy token completion API.
                 if (path.startsWith("/api/v1/public/invitations/")
@@ -61,7 +94,13 @@ public class TenantPortalFilters {
                             .setLocation(java.net.URI.create("/oauth2/authorization/" + registration));
                     return exchange.getResponse().setComplete();
                 }
-                return chain.filter(clean);
+                var result = chain.filter(routed);
+                return portals.sameHostAuth()
+                        ? result.contextWrite(context -> context.put(
+                                LocalPortalOidcConfiguration.ORIGIN,
+                                LocalPortalIssuerValidator.origin(
+                                        portals.loginUri(clean).toString())))
+                        : result;
             });
         };
     }

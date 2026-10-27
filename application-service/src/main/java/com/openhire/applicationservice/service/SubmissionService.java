@@ -90,6 +90,23 @@ public class SubmissionService {
 
     public Document submit(String tenant, String actor, String key, Document input, MultipartFile file)
             throws Exception {
+        return submitAttributed(tenant, actor, key, input, file, null);
+    }
+
+    /** Called only by an authenticated integration adapter after provider signature/tenant mapping checks. */
+    public Document submitPortal(String tenant, String provider, String key, Document input, MultipartFile file)
+            throws Exception {
+        if (!Set.of("LINKEDIN", "NAUKRI").contains(provider))
+            throw new IllegalArgumentException("Unsupported application provider");
+        required(input, "externalReference", 200);
+        var normalized = new Document(input);
+        normalized.put("source", "PUBLIC_API");
+        return submitAttributed(tenant, "portal:" + provider, key, normalized, file, provider);
+    }
+
+    private Document submitAttributed(
+            String tenant, String actor, String key, Document input, MultipartFile file, String sourceProvider)
+            throws Exception {
         if (key == null || key.isBlank() || key.length() > 200)
             throw new IllegalArgumentException("Idempotency-Key is required (max 200)");
         String jobId = required(input, "jobId", 100),
@@ -97,6 +114,25 @@ public class SubmissionService {
                 email = required(input, "email", 254).toLowerCase(Locale.ROOT),
                 src = source(text(input, "source"));
         if (!email.matches("[^\\s@]+@[^\\s@]+\\.[^\\s@]+")) throw new IllegalArgumentException("Invalid email");
+        String phone = text(input, "phone").trim(),
+                notice = text(input, "noticePeriod").trim(),
+                reason = text(input, "candidateReason").trim();
+        if (!phone.isBlank()
+                && (phone.length() > 32
+                        || !phone.matches("[+0-9() .-]+")
+                        || phone.replaceAll("\\D", "").length() < 7
+                        || phone.replaceAll("\\D", "").length() > 15))
+            throw new IllegalArgumentException("Enter a valid phone number with 7 to 15 digits");
+        if (!notice.isBlank()
+                && !Set.of("IMMEDIATE", "15", "30", "60", "90", "MORE_THAN_90").contains(notice))
+            throw new IllegalArgumentException("Invalid notice period");
+        if (reason.length() > 2000)
+            throw new IllegalArgumentException("Candidate reason must be at most 2000 characters");
+        if (src.equals("AGENCY") || src.equals("CAREER")) validateAgencyResume(file);
+        String profileTitle = text(input, "title").trim(),
+                profileLocation = text(input, "location").trim();
+        if (profileTitle.length() > 200 || profileLocation.length() > 200)
+            throw new IllegalArgumentException("Candidate title and location must be at most 200 characters");
         if (!Boolean.parseBoolean(text(input, "processingConsent")))
             throw new IllegalArgumentException("Processing consent is required");
         String consentVersion = consentVersion(tenant);
@@ -109,7 +145,7 @@ public class SubmissionService {
                 actor,
                 src,
                 external.isBlank() ? "idempotency" : "external",
-                external.isBlank() ? key : external);
+                external.isBlank() ? key : sourceProvider == null ? external : jobId + ":" + external);
         byte[] bytes = file == null || file.isEmpty() ? null : file.getBytes();
         if (bytes != null && bytes.length > 10 * 1024 * 1024)
             throw new IllegalArgumentException("Resume exceeds 10 MB");
@@ -118,6 +154,12 @@ public class SubmissionService {
         normalized.put("name", name);
         normalized.put("email", email);
         normalized.put("source", src);
+        if (sourceProvider != null) normalized.put("sourceProvider", sourceProvider);
+        // Keep old submission fingerprints stable when these optional fields are absent.
+        if (!profileTitle.isEmpty()) normalized.put("title", profileTitle);
+        if (!profileLocation.isEmpty()) normalized.put("location", profileLocation);
+        if (!notice.isEmpty()) normalized.put("noticePeriod", notice);
+        if (!reason.isEmpty()) normalized.put("candidateReason", reason);
         for (String field : List.of("phone", "owner", "consentVersion", "externalReference"))
             normalized.put(field, text(input, field).trim());
         normalized.put("answers", new TreeMap<>(doc(input.get("answers"))));
@@ -133,10 +175,12 @@ public class SubmissionService {
         if (existing == null) {
             var job = job(tenant, jobId);
             if (!"OPEN".equals(text(job, "status"))) throw conflict("Job is not open");
+            if (src.equals("CAREER")) validateCareerJob(input, job);
             var record = new Document("_id", id)
                     .append("tenantId", tenant)
                     .append("actorId", actor)
                     .append("source", src)
+                    .append("sourceProvider", sourceProvider)
                     .append("fingerprint", fingerprint)
                     .append("jobId", jobId)
                     .append("jobTitle", text(job, "title"))
@@ -144,6 +188,10 @@ public class SubmissionService {
                     .append("name", name)
                     .append("email", email)
                     .append("phone", text(input, "phone"))
+                    .append("noticePeriod", notice)
+                    .append("candidateReason", reason)
+                    .append("title", profileTitle)
+                    .append("location", profileLocation)
                     .append("owner", text(input, "owner"))
                     .append("consentVersion", consentVersion)
                     .append("processingConsent", true)
@@ -217,6 +265,46 @@ public class SubmissionService {
         return get(tenant, id);
     }
 
+    static void validateAgencyResume(MultipartFile file) throws java.io.IOException {
+        if (file == null || file.isEmpty() || file.getSize() > 10L * 1024 * 1024)
+            throw new IllegalArgumentException("A resume from 1 byte to 10 MB is required");
+        var filename =
+                Optional.ofNullable(file.getOriginalFilename()).orElse("").toLowerCase(Locale.ROOT);
+        byte[] header;
+        try (var stream = file.getInputStream()) {
+            header = stream.readNBytes(8);
+        }
+        boolean pdf = filename.endsWith(".pdf")
+                && new String(header, java.nio.charset.StandardCharsets.US_ASCII).startsWith("%PDF-");
+        boolean docx = filename.endsWith(".docx")
+                && header.length >= 4
+                && header[0] == 'P'
+                && header[1] == 'K'
+                && header[2] == 3
+                && header[3] == 4;
+        boolean doc =
+                filename.endsWith(".doc") && HexFormat.of().formatHex(header).equals("d0cf11e0a1b11ae1");
+        if (!pdf && !docx && !doc)
+            throw new IllegalArgumentException("Resume must be a PDF, DOC or DOCX file with matching content");
+    }
+
+    static void validateCareerJob(Document input, Document job) {
+        var version = doc(job.get("currentVersion"));
+        if (!(job.get("approvedVersion") instanceof Number approved)
+                || !(version.get("version") instanceof Number current)
+                || approved.intValue() <= 0 || approved.intValue() != current.intValue())
+            throw conflict("Job is not open for applications");
+        var answers = doc(input.get("answers"));
+        if (answers.size() > 100 || answers.values().stream()
+                .anyMatch(value -> !(value instanceof String answer) || answer.length() > 2000))
+            throw new IllegalArgumentException("Answers must be text of at most 2000 characters each");
+        for (var question : version.getList("knockoutQuestions", Document.class, List.of())) {
+            var answer = answers.get(text(question, "id"));
+            if (!(answer instanceof String value) || value.isBlank())
+                throw new IllegalArgumentException("Answer all required application questions");
+        }
+    }
+
     private String upload(String tenant, String application, String filename, byte[] bytes) {
         var body = new LinkedMultiValueMap<String, Object>();
         body.add("tenantId", tenant);
@@ -268,12 +356,25 @@ public class SubmissionService {
     }
 
     public List<Document> list(String tenant, String jobId, String actor, String status, int page, int size) {
+        return list(tenant, jobId, actor, status, page, size, null);
+    }
+
+    public List<Document> list(
+            String tenant, String jobId, String actor, String status, int page, int size, String channel) {
         if (page < 0 || page > 10000 || size < 1 || size > 100)
             throw new IllegalArgumentException("Invalid pagination");
         var c = Criteria.where("tenantId").is(tenant);
         if (jobId != null) c = c.and("jobId").is(jobId);
         if (actor != null) c = c.and("actorId").is(actor);
         if (status != null) c = c.and("stage").is(status);
+        if (channel != null && !channel.isBlank()) {
+            if (Set.of("LINKEDIN", "NAUKRI").contains(channel))
+                c = c.and("sourceProvider").is(channel);
+            else {
+                c = c.and("source").is(source(channel));
+                if ("PUBLIC_API".equals(channel)) c = c.and("sourceProvider").in(null, "");
+            }
+        }
         return mongo.find(
                 Query.query(c)
                         .with(org.springframework.data.domain.Sort.by(
@@ -295,6 +396,7 @@ public class SubmissionService {
                 .append("jobId", text(row, "jobId"))
                 .append("jobTitle", text(row, "jobTitle"))
                 .append("source", text(row, "source"))
+                .append("sourceProvider", text(row, "sourceProvider"))
                 .append("stage", text(row, "stage"))
                 .append("score", row.get("score"))
                 .append("updatedAt", text(row, "updatedAt"))

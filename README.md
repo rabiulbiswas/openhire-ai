@@ -77,8 +77,13 @@ See [tenant portals and onboarding](docs/TENANT_PORTALS.md) for implemented APIs
 security requirements and remaining work. Business plans are deferred. Tenant login is opt-in and requires
 operator-managed Keycloak clients, exact callback URLs and email/theme setup. Local addresses use
 `admin.localhost` and `<tenant>.localhost`, with no hosts-file edits needed in modern browsers.
-After that setup, use `./scripts/deployment/deploy-local.sh --tenant-portals identity-service api-gateway`.
-This enables the proxy and tenant checks; it does not perform Keycloak setup or establish runtime acceptance.
+Branded login, OTP and recovery now stay on each portal's hostname under `/auth/...`; `auth.localhost` is retired.
+Existing installations must follow the [safe same-host authentication cutover](docs/SAME_HOST_AUTH.md) before
+recreating Keycloak: preserve its existing accounts/client settings first, then deploy **all services** with
+`./scripts/deployment/deploy-local.sh --tenant-portals` (add `--no-scan` to retain that local mode).
+The cutover changes token issuers and the internal authentication path; rebuild/update all 18 applications.
+No client callbacks move to the auth host; they stay on each portal. Deployment does not configure clients
+or establish runtime acceptance.
 
 The earlier domain modules use ports/adapters. Phase 3 also includes controller/use-case workflow components
 that coordinate Mongo-backed processing records and internal service clients:
@@ -107,6 +112,17 @@ use MongoTemplate directly for conditional claims and embedded-outbox updates; t
 
 Host Java, Gradle and Node are **not required for Docker backend deployment**. Java 25 is needed only for direct
 JVM builds/runs; Node and pnpm are needed when running the frontend separately.
+
+Resume extraction now runs **inside `resume-processor`** using embedded Tika and native Tesseract;
+there is no separate Tika container or `TIKA_URL`. The resume image installs English OCR data automatically.
+For direct Java runs on macOS, install `brew install tesseract` and check `tesseract --list-langs` first.
+ClamAV remains separate unless you explicitly select the existing local-only no-scan mode.
+See [resume extraction settings and limits](docs/services/resume-processor.md).
+
+After pulling this change, rebuild the resume image using `./run-backend.sh deploy --follow resume-processor`
+(or add `--no-scan` to preserve that local mode). An old `openhire-tika-1` container may remain as an orphan;
+it is no longer used. Stop it manually after confirming its ownership; do not remove shared infrastructure
+or volumes. No running container is stopped automatically by this source change.
 
 ### 2. Open the backend directory and review configuration
 
@@ -344,14 +360,14 @@ Mongo-gated acceptance tests are skipped; a successful default test run does not
 ### 3. Run resume recovery acceptance with MongoDB
 
 Start your local MongoDB server first; Compass is a client, not a database server. The fixture starts its own
-scanner and extraction servers, so ClamAV, Tika, Redis, Kafka and the deployed resume service are not required
+scanner socket and injects extraction faults, so ClamAV, Tika Server, Redis, Kafka and the deployed resume service are not required
 for this specific test class. Keep the trailing slash on the base Mongo URI for compatibility with other tests.
 
 ```bash
 OPENHIRE_RUN_MONGO_TESTS=true \
 OPENHIRE_TEST_MONGO_URI=mongodb://localhost:27017/ \
 bash gradlew :resume-processor:test \
-  --tests 'com.openhire.resumeprocessor.ResumeRecoveryAcceptanceTest' \
+  --tests 'com.openhire.resumeprocessor.service.ResumeRecoveryAcceptanceTest' \
   --rerun-tasks --no-daemon
 
 # Run every resume-processor test, including Mongo acceptance

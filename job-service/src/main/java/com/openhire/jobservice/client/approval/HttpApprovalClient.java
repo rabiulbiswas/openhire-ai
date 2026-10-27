@@ -22,7 +22,20 @@ public class HttpApprovalClient implements ApprovalClient {
 
     @Override
     @SuppressWarnings("unchecked")
-    public String requestJobApproval(String tenantId, String actorId, String jobId, String title, int version) {
+    public String requestJobApproval(
+            String tenantId, String actorId, String jobId, String title, int version, List<Term> terms) {
+        throw new IllegalArgumentException("Select a hiring manager before submitting");
+    }
+
+    @Override
+    public String requestAssignedJobApproval(
+            String tenantId,
+            String actorId,
+            String jobId,
+            String title,
+            int version,
+            List<Term> terms,
+            String approver) {
         var response = client.post()
                 .uri("/api/v1/internal/approvals")
                 .header("X-Tenant-Id", tenantId)
@@ -35,11 +48,61 @@ public class HttpApprovalClient implements ApprovalClient {
                         jobId,
                         "title",
                         title,
+                        "terms",
+                        terms,
                         "steps",
                         List.of(Map.of(
-                                "id", "job-" + version + "-manager",
-                                "approver", "me",
-                                "role", "Hiring manager"))))
+                                "id", "job-" + version + "-manager", "approver", approver, "role", "Hiring manager"))))
+                .retrieve()
+                .body(Map.class);
+        return response == null ? null : String.valueOf(response.get("id"));
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public String requestJobChangeApproval(
+            String tenantId,
+            String actorId,
+            String jobId,
+            String title,
+            Comparison comparison,
+            List<FieldChange> diff) {
+        throw new IllegalArgumentException("Select a hiring manager before submitting");
+    }
+
+    @Override
+    public String requestAssignedJobChangeApproval(
+            String tenantId,
+            String actorId,
+            String jobId,
+            String title,
+            Comparison comparison,
+            List<FieldChange> diff,
+            String approver) {
+        var response = client.post()
+                .uri("/api/v1/internal/approvals")
+                .header("X-Tenant-Id", tenantId)
+                .header("X-Actor-Id", actorId)
+                .header("X-Internal-Service-Secret", secret)
+                .body(Map.of(
+                        "type",
+                        "JOB_VERSION_CHANGE",
+                        "subjectId",
+                        jobId,
+                        "title",
+                        title + ", version " + comparison.proposedVersion(),
+                        "comparison",
+                        comparison,
+                        "diff",
+                        diff,
+                        "steps",
+                        List.of(Map.of(
+                                "id",
+                                "job-" + comparison.proposedVersion() + "-manager",
+                                "approver",
+                                approver,
+                                "role",
+                                "Hiring manager"))))
                 .retrieve()
                 .body(Map.class);
         return response == null ? null : String.valueOf(response.get("id"));

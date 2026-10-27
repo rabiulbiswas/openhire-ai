@@ -34,6 +34,21 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class IdentityAuditTest {
+    @Test
+    void retiredComplianceRoleIsHiddenAndCannotBeCreatedOrAssigned() {
+        when(roles.findRoles("org-1")).thenReturn(List.of(role("COMPLIANCE_OFFICER"), role("ORG_ADMIN")));
+        assertThat(service.roles("org-1")).extracting(Role::name).containsExactly("ORG_ADMIN");
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> service.createRole("org-1", "COMPLIANCE_OFFICER", "legacy", Set.of()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("retired");
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> service.updateMemberRoles(ADMIN, "org-1", "user-9", Set.of("COMPLIANCE_OFFICER")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("retired");
+        org.mockito.Mockito.verify(members, org.mockito.Mockito.never()).save(any());
+    }
+
     private static final Actor ADMIN = new Actor("admin-1", "Asha Admin");
 
     private final Organizations organizations = mock(Organizations.class);
@@ -71,6 +86,93 @@ class IdentityAuditTest {
             mock(IdentityEventPublisher.class),
             Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"), ZoneOffset.UTC),
             audit);
+
+    @Test
+    void profileRenamePersistsWithoutChangingRolesOrAuditIdentity() {
+        when(members.findMemberById("org-1", "user-9"))
+                .thenReturn(Optional.of(new Member(
+                        "user-9",
+                        "org-1",
+                        "private@example.test",
+                        "Old Name",
+                        MemberStatus.ACTIVE,
+                        Set.of("RECRUITER"),
+                        Instant.EPOCH)));
+        when(members.updateDisplayName("org-1", "user-9", "New Name")).thenReturn(true);
+        service.updateMemberDisplayName("org-1", "user-9", "  New Name  ");
+        org.mockito.Mockito.verify(members).updateDisplayName("org-1", "user-9", "New Name");
+        org.mockito.Mockito.verify(members, org.mockito.Mockito.never()).save(any());
+        assertThat(audited).hasSize(1);
+        assertThat(audited.getFirst())
+                .contains("PROFILE_UPDATED", "user-9")
+                .doesNotContain("New Name", "private@example.test");
+    }
+
+    @Test
+    void profileRenameRejectsOtherTenantDisabledAndInvalidNames() {
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> service.updateMemberDisplayName("org-1", "missing", "New Name"))
+                .isInstanceOf(com.openhire.platform.web.ResourceNotFoundException.class);
+        when(members.findMemberById("org-1", "disabled"))
+                .thenReturn(Optional.of(new Member(
+                        "disabled",
+                        "org-1",
+                        "private@example.test",
+                        "Old",
+                        MemberStatus.DISABLED,
+                        Set.of(),
+                        Instant.EPOCH)));
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> service.updateMemberDisplayName("org-1", "disabled", "New Name"))
+                .isInstanceOf(com.openhire.platform.web.ResourceNotFoundException.class);
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> service.updateMemberDisplayName("org-1", "user-9", " "))
+                .isInstanceOf(IllegalArgumentException.class);
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> service.updateMemberDisplayName("org-1", "user-9", "x".repeat(201)))
+                .isInstanceOf(IllegalArgumentException.class);
+        org.mockito.Mockito.verify(members, org.mockito.Mockito.never()).save(any());
+    }
+
+    @Test
+    void displayNamesAreTenantScopedAndExposeOnlyNames() {
+        when(members.findMemberById("org-1", "user-9"))
+                .thenReturn(Optional.of(new Member(
+                        "user-9",
+                        "org-1",
+                        "private@example.test",
+                        "Jane Creator",
+                        MemberStatus.DISABLED,
+                        Set.of("RECRUITER"),
+                        Instant.EPOCH)));
+        when(members.findMemberById("org-1", "foreign-user"))
+                .thenReturn(Optional.of(new Member(
+                        "foreign-user",
+                        "org-2",
+                        "foreign@example.test",
+                        "Other Tenant",
+                        MemberStatus.ACTIVE,
+                        Set.of(),
+                        Instant.EPOCH)));
+        assertThat(service.memberDisplayNames("org-1", List.of("user-9", "foreign-user", "missing", "user-9")))
+                .containsExactlyEntriesOf(java.util.Map.of("user-9", "Jane Creator"));
+        org.mockito.Mockito.verify(members).findMemberById("org-1", "user-9");
+        org.mockito.Mockito.verify(members).findMemberById("org-1", "foreign-user");
+        org.mockito.Mockito.verify(members).findMemberById("org-1", "missing");
+        org.mockito.Mockito.verifyNoMoreInteractions(members);
+    }
+
+    @Test
+    void displayNameLookupRejectsUnboundedOrUnscopedRequests() {
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.memberDisplayNames("", List.of("user-9")))
+                .isInstanceOf(IllegalArgumentException.class);
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> service.memberDisplayNames("org-1", java.util.Collections.nCopies(101, "user-9")))
+                .isInstanceOf(IllegalArgumentException.class);
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.memberDisplayNames("org-1", List.of(" ")))
+                .isInstanceOf(IllegalArgumentException.class);
+        org.mockito.Mockito.verifyNoInteractions(members);
+    }
 
     @Test
     void roleChangeIsAuditedWithActorAndNoPersonalData() {

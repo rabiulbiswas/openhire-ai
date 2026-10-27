@@ -3,7 +3,6 @@ package com.openhire.resumeprocessor.service;
 import static org.assertj.core.api.Assertions.*;
 
 import com.mongodb.client.MongoClients;
-import com.sun.net.httpserver.HttpServer;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
@@ -18,7 +17,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.*;
 
-/** Isolated Mongo + real socket/HTTP fault fixtures. Production scanner remains enabled and unchanged. */
+/** Isolated Mongo + scanner socket and injected extraction faults. Real parsing has separate fixtures. */
 @EnabledIfEnvironmentVariable(named = "OPENHIRE_RUN_MONGO_TESTS", matches = "true")
 class ResumeRecoveryAcceptanceTest {
     @TempDir
@@ -28,7 +27,6 @@ class ResumeRecoveryAcceptanceTest {
     private MongoTemplate mongo;
     private ResumePipeline pipeline;
     private ServerSocket scanner;
-    private HttpServer extractor;
     private final AtomicReference<String> scan = new AtomicReference<>("OK");
     private final AtomicReference<String> extract = new AtomicReference<>("OK");
 
@@ -57,32 +55,24 @@ class ResumeRecoveryAcceptanceTest {
                 }
             }
         });
-        extractor = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
-        extractor.createContext("/tika", exchange -> {
-            exchange.getRequestBody().readAllBytes();
-            boolean ocr = "ocr_only".equals(exchange.getRequestHeaders().getFirst("X-Tika-PDFOcrStrategy"));
-            byte[] text = (extract.get().equals("OCR") && !ocr
-                            ? ""
-                            : "Fixture resume with Java Spring Boot and backend engineering experience")
-                    .getBytes(StandardCharsets.UTF_8);
-            exchange.sendResponseHeaders(extract.get().equals("FAIL") ? 500 : 200, text.length == 0 ? -1 : text.length);
-            if (text.length > 0) exchange.getResponseBody().write(text);
-            exchange.close();
-        });
-        extractor.start();
         pipeline = new ResumePipeline(
                 mongo,
                 directory.toString(),
-                "http://localhost:" + extractor.getAddress().getPort(),
+                (bytes, mime, ocr) -> {
+                    if (extract.get().equals("FAIL")) throw new ResumePipeline.Unavailable("EXTRACTION_UNAVAILABLE");
+                    return extract.get().equals("OCR") && !ocr
+                            ? ""
+                            : "Fixture resume with Java Spring Boot and backend engineering experience";
+                },
                 "localhost",
-                scanner.getLocalPort());
+                scanner.getLocalPort(),
+                1);
     }
 
     @AfterEach
     void close() throws Exception {
         if (pipeline != null) pipeline.shutdown();
         if (scanner != null) scanner.close();
-        if (extractor != null) extractor.stop(0);
         if (mongo != null) mongo.getDb().drop();
         if (client != null) client.close();
     }

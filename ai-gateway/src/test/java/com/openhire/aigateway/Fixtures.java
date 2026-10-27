@@ -57,6 +57,18 @@ public final class Fixtures {
 
     private Fixtures() {}
 
+    public static Map<String, Object> jdSections(String text) {
+        return Map.of(
+                "roleDescription",
+                text,
+                "summary",
+                text,
+                "responsibilities",
+                List.of("Build reliable services", "Collaborate with the team", "Review and test changes"),
+                "technicalSkills",
+                List.of("Java", "Testing", "Problem solving"));
+    }
+
     public static final class MutableClock extends Clock {
         private Instant now;
 
@@ -88,6 +100,7 @@ public final class Fixtures {
         public final String id;
         public final boolean local;
         public final List<ChatRequest> calls = new CopyOnWriteArrayList<>();
+        public final List<Duration> taskTimeouts = new CopyOnWriteArrayList<>();
         public final List<List<String>> embedCalls = new CopyOnWriteArrayList<>();
         public Function<ChatRequest, String> reply = r -> "{}";
         public RuntimeException failure;
@@ -125,6 +138,12 @@ public final class Fixtures {
             calls.add(request);
             if (failure != null) throw failure;
             return new ChatResult(reply.apply(request), promptTokens, completionTokens);
+        }
+
+        @Override
+        public ChatResult chat(ChatRequest request, Duration timeout) {
+            taskTimeouts.add(timeout);
+            return chat(request);
         }
 
         @Override

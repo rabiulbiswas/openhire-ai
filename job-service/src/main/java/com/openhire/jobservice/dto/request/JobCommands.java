@@ -16,5 +16,9 @@ public final class JobCommands {
     public record InterviewRound(
             @NotBlank String id, @NotBlank String name, int durationMin, List<@NotBlank String> interviewerNames) {}
 
-    public record DecisionRequest(@NotBlank String decision, String reason, String actorId) {}
+    public record DecisionRequest(@NotBlank String decision, String reason, String actorId, Integer expectedVersion) {
+        public DecisionRequest(String decision, String reason, String actorId) {
+            this(decision, reason, actorId, null);
+        }
+    }
 }

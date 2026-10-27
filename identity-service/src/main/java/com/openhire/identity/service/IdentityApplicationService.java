@@ -181,6 +181,40 @@ public class IdentityApplicationService {
         return members.findMembers(organizationId);
     }
 
+    public Map<String, String> updateMemberDisplayName(String tenantId, String subject, String name) {
+        if (tenantId == null || tenantId.isBlank() || subject == null || subject.isBlank())
+            throw new IllegalArgumentException("Tenant and user are required");
+        if (name == null || name.isBlank() || name.trim().length() > 200)
+            throw new IllegalArgumentException("Name is required, maximum 200 characters");
+        var current = members.findMemberById(tenantId, subject)
+                .orElseThrow(() -> new ResourceNotFoundException("Team member not found"));
+        if (!tenantId.equals(current.organizationId()) || current.status() == DISABLED)
+            throw new ResourceNotFoundException("Team member not found");
+        if (!members.updateDisplayName(tenantId, subject, name.trim()))
+            throw new ResourceNotFoundException("Team member not found");
+        auditEntry(new Actor(subject, null), tenantId, "PROFILE_UPDATED", "Member", subject)
+                .done();
+        return Map.of("name", name.trim());
+    }
+
+    /** Minimal tenant-scoped display lookup; never exposes the administrative member directory. */
+    public Map<String, String> memberDisplayNames(String tenantId, List<String> ids) {
+        if (tenantId == null || tenantId.isBlank()) throw new IllegalArgumentException("Tenant is required");
+        if (ids == null
+                || ids.isEmpty()
+                || ids.size() > 100
+                || ids.stream().anyMatch(id -> id == null || id.isBlank() || id.length() > 200))
+            throw new IllegalArgumentException("Provide between 1 and 100 valid user IDs");
+        var names = new java.util.LinkedHashMap<String, String>();
+        ids.stream().distinct().forEach(id -> members.findMemberById(tenantId, id)
+                .ifPresent(member -> {
+                    if (tenantId.equals(member.organizationId())
+                            && member.displayName() != null
+                            && !member.displayName().isBlank()) names.put(id, member.displayName());
+                }));
+        return Map.copyOf(names);
+    }
+
     public Member updateMemberRoles(Actor actor, String organizationId, String memberId, Set<String> roleNames) {
         requireRolesExist(organizationId, roleNames);
         var current = members.findMemberById(organizationId, memberId)
@@ -225,10 +259,14 @@ public class IdentityApplicationService {
 
     public List<Role> roles(String organizationId) {
         if (tenantPortals) seedAdditionalRoles(organizationId);
-        return roles.findRoles(organizationId);
+        return roles.findRoles(organizationId).stream()
+                .filter(role -> !"COMPLIANCE_OFFICER".equalsIgnoreCase(role.name()))
+                .toList();
     }
 
     public Role createRole(String organizationId, String name, String description, Set<String> permissions) {
+        if ("COMPLIANCE_OFFICER".equalsIgnoreCase(name.trim()))
+            throw new IllegalArgumentException("Compliance Officer is retired; use Organisation Admin");
         if ("SUPER_ADMIN".equalsIgnoreCase(name.trim())) {
             throw new IllegalArgumentException("Platform super administrator is not a tenant role");
         }
@@ -274,6 +312,7 @@ public class IdentityApplicationService {
         var current = invitations
                 .findInvitationById(organizationId, invitationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Invitation not found"));
+        requireRolesExist(organizationId, current.roles());
         if (tenantPortals) return invite(organizationId, current.email(), current.roles());
         return issueInvitation(organizationId, current.email(), current.roles());
     }
@@ -360,7 +399,7 @@ public class IdentityApplicationService {
     }
 
     private void seedAdditionalRoles(String id) {
-        for (var name : Set.of("HR_ADMIN", "COMPLIANCE_OFFICER", "EMPLOYEE", "AGENCY_RECRUITER", "CANDIDATE")) {
+        for (var name : Set.of("HR_ADMIN", "EMPLOYEE", "AGENCY_RECRUITER", "CANDIDATE")) {
             if (roles.findRoleByName(id, name).isEmpty()) {
                 try {
                     roles.save(
@@ -671,6 +710,8 @@ public class IdentityApplicationService {
 
     private void requireRolesExist(String organizationId, Set<String> requested) {
         if (requested.isEmpty()) throw new IllegalArgumentException("At least one role is required");
+        if (requested.stream().anyMatch(name -> "COMPLIANCE_OFFICER".equalsIgnoreCase(name.trim())))
+            throw new IllegalArgumentException("Compliance Officer is retired; use Organisation Admin");
         if (tenantPortals
                 && !Set.of(
                                 "ORG_ADMIN",
@@ -678,7 +719,6 @@ public class IdentityApplicationService {
                                 "HR_ADMIN",
                                 "HIRING_MANAGER",
                                 "INTERVIEWER",
-                                "COMPLIANCE_OFFICER",
                                 "EMPLOYEE",
                                 "AGENCY_RECRUITER",
                                 "CANDIDATE")

@@ -70,6 +70,12 @@ a populated realm to make an import run again. The current local Compose Keycloa
 or external database configured, so container recreation can lose realm changes. Plan persistence and backups
 before using it for durable/shared identities.
 
+The opt-in `docker-compose.tenant-portals.yml` now adds persistent local H2 storage and uses
+each portal's own `/auth/...` for browser authentication, while private traffic uses `http://keycloak:8080/auth`.
+Existing ephemeral containers require an offline snapshot/copy **before** recreation. See the
+[guarded cutover procedure](../docs/SAME_HOST_AUTH.md); the deployment refuses an unprepared existing
+Keycloak rather than deleting/reimporting its realms. The base Compose defaults are unchanged.
+
 Development users, localhost redirects, placeholder secrets and `start-dev` are not production settings. Before
 deployment, configure HTTPS, persistent identity storage, real redirect origins, SMTP, required email/TOTP policies,
 secret rotation and access controls. Do not expose the local administrative defaults publicly.
@@ -111,7 +117,7 @@ Important defaults and boundaries:
 - Containers run non-root with read-only root filesystems and writable temporary storage. Provider credential files
   can use explicitly configured read-only volumes; they are not embedded in images.
 
-**Not provisioned:** EKS, ECR repositories, IAM permissions, MongoDB, Redis, Kafka, Keycloak, Ollama, Tika, ClamAV,
+**Not provisioned:** EKS, ECR repositories, IAM permissions, MongoDB, Redis, Kafka, Keycloak, Ollama, ClamAV,
 SMTP infrastructure, ingress controllers, persistent volumes, TLS certificates or runtime secrets. Arrange these
 separately before deploying. A rendered chart does not prove connectivity, failover or application acceptance.
 
@@ -168,7 +174,8 @@ The absolute `/etc/prometheus/alerts.yml` reference in the test file is why the 
 ## Related configuration outside infra
 
 - [`docker-compose.yml`](../docker-compose.yml): local infrastructure images, ports, profiles, volumes and environment
-  wiring, including Redis, Kafka, Tika, ClamAV and Mailpit. MongoDB and the LLM are externally supplied.
+  wiring, including Redis, Kafka, ClamAV and Mailpit. Tika is embedded in resume-processor; its image
+  includes native Tesseract/English OCR data. MongoDB and the LLM are externally supplied.
 - [`run-backend.sh`](../run-backend.sh) and [`scripts/deployment/`](../scripts/deployment/): explicit local startup tools.
 - [`scripts/setup/`](../scripts/setup/): reviewed identity configuration tools.
 - [Phase 7 operations](../docs/PHASE_7_OPERATIONS.md) and [enterprise recovery](../docs/PHASE_8_ENTERPRISE_RECOVERY.md):

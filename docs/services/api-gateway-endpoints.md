@@ -2,7 +2,7 @@
 
 Generated from current Java controller annotations. This is a source-level reference, not proof of deployed reachability or live acceptance. See [service design](api-gateway.md) for business rules and end-to-end flows, and [shared conventions](END_TO_END_DESIGN.md#api-and-security-conventions).
 
-Mapped operations: **9**. Framework-generated Actuator endpoints and gateway-proxied routes are not duplicated here. Signatures preserve request headers, query defaults, body types, return types and optional bindings. Java types are not JSON field names: request/response record fields are listed below. Controller checks may delegate additional authorization to application services; an empty extracted-check list does not mean public access.
+Mapped operations: **10**. Framework-generated Actuator endpoints and gateway-proxied routes are not duplicated here. Signatures preserve request headers, query defaults, body types, return types and optional bindings. Java types are not JSON field names: request/response record fields are listed below. Controller checks may delegate additional authorization to application services; an empty extracted-check list does not mean public access.
 
 ## BffAccountController
 
@@ -10,7 +10,7 @@ Source: [BffAccountController](../../api-gateway/src/main/java/com/openhire/gate
 
 ### GET `/api/v1/me`
 
-- Handler: `profile` ([source](../../api-gateway/src/main/java/com/openhire/gateway/controller/BffAccountController.java#L41)).
+- Handler: `profile` ([source](../../api-gateway/src/main/java/com/openhire/gateway/controller/BffAccountController.java#L44)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 
@@ -22,19 +22,19 @@ Mono<MeProfile> profile(Mono<Principal> principal, WebSession session)
 
 ### PATCH `/api/v1/me`
 
-- Handler: `updateProfile` ([source](../../api-gateway/src/main/java/com/openhire/gateway/controller/BffAccountController.java#L46)).
+- Handler: `updateProfile` ([source](../../api-gateway/src/main/java/com/openhire/gateway/controller/BffAccountController.java#L58)).
 - Success status: \@ResponseStatus(HttpStatus.NO_CONTENT).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 
 Request bindings and declared response:
 
 ```java
-Mono<Void> updateProfile(@RequestBody MeProfile profile, WebSession session)
+Mono<Void> updateProfile(@RequestBody MeProfile profile, WebSession session, Mono<Principal> principal)
 ```
 
 ### GET `/api/v1/me/sessions`
 
-- Handler: `browserSessions` ([source](../../api-gateway/src/main/java/com/openhire/gateway/controller/BffAccountController.java#L62)).
+- Handler: `browserSessions` ([source](../../api-gateway/src/main/java/com/openhire/gateway/controller/BffAccountController.java#L84)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 
@@ -46,7 +46,7 @@ Mono<List<SessionInfo>> browserSessions( Mono<Principal> principal, WebSession c
 
 ### DELETE `/api/v1/me/sessions`
 
-- Handler: `signOutOtherSessions` ([source](../../api-gateway/src/main/java/com/openhire/gateway/controller/BffAccountController.java#L78)).
+- Handler: `signOutOtherSessions` ([source](../../api-gateway/src/main/java/com/openhire/gateway/controller/BffAccountController.java#L100)).
 - Success status: \@ResponseStatus(HttpStatus.NO_CONTENT).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 
@@ -62,7 +62,7 @@ Source: [BffSessionController](../../api-gateway/src/main/java/com/openhire/gate
 
 ### GET `/bff/session`
 
-- Handler: `session` ([source](../../api-gateway/src/main/java/com/openhire/gateway/controller/BffSessionController.java#L60)).
+- Handler: `session` ([source](../../api-gateway/src/main/java/com/openhire/gateway/controller/BffSessionController.java#L63)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 
@@ -72,9 +72,21 @@ Request bindings and declared response:
 Mono<Map<String, Object>> session(Mono<Principal> principal, WebSession session)
 ```
 
+### GET `/bff/portal-status`
+
+- Handler: `portalStatus` ([source](../../api-gateway/src/main/java/com/openhire/gateway/controller/BffSessionController.java#L86)).
+- Success status: ResponseEntity chooses status; see handler.
+- Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
+
+Request bindings and declared response:
+
+```java
+Mono<ResponseEntity<Void>> portalStatus(org.springframework.web.server.ServerWebExchange exchange)
+```
+
 ### GET `/bff/csrf`
 
-- Handler: `csrf` ([source](../../api-gateway/src/main/java/com/openhire/gateway/controller/BffSessionController.java#L70)).
+- Handler: `csrf` ([source](../../api-gateway/src/main/java/com/openhire/gateway/controller/BffSessionController.java#L95)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 
@@ -86,7 +98,7 @@ Mono<Map<String, String>> csrf( @org.springframework.web.bind.annotation.Request
 
 ### DELETE `/bff/session`
 
-- Handler: `logout` ([source](../../api-gateway/src/main/java/com/openhire/gateway/controller/BffSessionController.java#L78)).
+- Handler: `logout` ([source](../../api-gateway/src/main/java/com/openhire/gateway/controller/BffSessionController.java#L103)).
 - Success status: 200 (normal return; exceptions may differ).
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 
@@ -98,7 +110,7 @@ Mono<Void> logout(WebSession session)
 
 ### GET `/bff/logout`
 
-- Handler: `browserLogout` ([source](../../api-gateway/src/main/java/com/openhire/gateway/controller/BffSessionController.java#L88)).
+- Handler: `browserLogout` ([source](../../api-gateway/src/main/java/com/openhire/gateway/controller/BffSessionController.java#L113)).
 - Success status: ResponseEntity chooses status; see handler.
 - Controller access/tenant calls: See handler and service authorization; no simple access helper extracted.
 

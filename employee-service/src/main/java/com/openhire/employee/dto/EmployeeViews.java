@@ -8,6 +8,14 @@ import java.util.List;
 public final class EmployeeViews {
     private EmployeeViews() {}
 
+    public record EmployeePage(
+            List<EmployeeSummary> data,
+            String nextCursor,
+            boolean hasMore,
+            String previousCursor,
+            boolean hasPrevious,
+            int limit) {}
+
     public record Page<T>(List<T> data, String nextCursor, boolean hasMore) {
         public static <T> Page<T> of(List<T> data) {
             return new Page<>(data, null, false);

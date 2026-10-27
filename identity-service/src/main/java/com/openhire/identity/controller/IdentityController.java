@@ -96,6 +96,79 @@ public class IdentityController {
         return service.members(tenant());
     }
 
+    @GetMapping("/users/display-names")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ORG_ADMIN','HR_ADMIN','RECRUITER','HIRING_MANAGER')")
+    org.springframework.http.ResponseEntity<java.util.Map<String, String>> displayNames(
+            @org.springframework.web.bind.annotation.RequestParam java.util.List<String> ids) {
+        return org.springframework.http.ResponseEntity.ok()
+                .cacheControl(org.springframework.http.CacheControl.noStore())
+                .body(service.memberDisplayNames(tenant(), ids));
+    }
+
+    @GetMapping("/users/approval-members")
+    @PreAuthorize("hasAnyRole('ORG_ADMIN','HR_ADMIN','RECRUITER','HIRING_MANAGER')")
+    Object approvalMembers() {
+        return approvalMembersFor(tenant());
+    }
+
+    @GetMapping("/internal/approval-members")
+    Object internalApprovalMembers(
+            @RequestHeader("X-Internal-Service-Secret") String secret,
+            @org.springframework.web.bind.annotation.RequestParam String tenantId) {
+        requireProfileSecret(secret);
+        return service.members(tenantId).stream()
+                .filter(m -> tenantId.equals(m.organizationId()))
+                .filter(m -> m.status() == com.openhire.identity.domain.IdentityModels.MemberStatus.ACTIVE)
+                .map(m -> new com.openhire.platform.security.TenantStaffDirectory.Member(
+                        m.id(), m.email(), m.displayName(), m.roles()))
+                .toList();
+    }
+
+    private Object approvalMembersFor(String tenant) {
+        return service.members(tenant).stream()
+                .filter(m -> tenant.equals(m.organizationId()))
+                .filter(m -> m.status() == com.openhire.identity.domain.IdentityModels.MemberStatus.ACTIVE)
+                .filter(m -> m.roles().stream()
+                        .anyMatch(java.util.Set.of("HIRING_MANAGER", "HR_ADMIN", "ORG_ADMIN")::contains))
+                .map(m -> new com.openhire.platform.security.TenantStaffDirectory.Member(
+                        m.id(), m.email(), m.displayName(), m.roles()))
+                .toList();
+    }
+
+    @GetMapping("/internal/member-profile")
+    Object memberProfile(
+            @RequestHeader("X-Internal-Service-Secret") String secret,
+            @org.springframework.web.bind.annotation.RequestParam String tenantId,
+            @org.springframework.web.bind.annotation.RequestParam String subject) {
+        requireProfileSecret(secret);
+        var name =
+                service.memberDisplayNames(tenantId, java.util.List.of(subject)).get(subject);
+        if (name == null) throw new com.openhire.platform.web.ResourceNotFoundException("Team member not found");
+        return org.springframework.http.ResponseEntity.ok()
+                .cacheControl(org.springframework.http.CacheControl.noStore())
+                .body(java.util.Map.of("name", name));
+    }
+
+    @PatchMapping("/internal/member-profile")
+    Object updateMemberProfile(
+            @RequestHeader("X-Internal-Service-Secret") String secret, @Valid @RequestBody MemberProfileUpdate input) {
+        requireProfileSecret(secret);
+        return service.updateMemberDisplayName(input.tenantId(), input.subject(), input.name());
+    }
+
+    private void requireProfileSecret(String secret) {
+        if (secret == null
+                || !java.security.MessageDigest.isEqual(
+                        internalSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                        secret.getBytes(java.nio.charset.StandardCharsets.UTF_8)))
+            throw new org.springframework.web.server.ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    }
+
+    public record MemberProfileUpdate(
+            @NotBlank String tenantId,
+            @NotBlank String subject,
+            @NotBlank @jakarta.validation.constraints.Size(max = 200) String name) {}
+
     @PatchMapping("/users/{id}/roles")
     @PreAuthorize("hasRole('ORG_ADMIN')")
     Object updateRoles(@PathVariable String id, @Valid @RequestBody RolesRequest request) {

@@ -120,7 +120,7 @@ spring:
               order: -40
               uri: ${INTEGRATION_HUB_URL:http://localhost:8107}
               predicates:
-                - Path=/api/v1/connectors,/api/v1/connectors/**,/api/v1/webhooks,/api/v1/webhooks/**,/api/v1/mcp,/api/v1/public/mcp/resource-metadata
+                - Path=/api/v1/connectors,/api/v1/connectors/**,/api/v1/webhooks,/api/v1/webhooks/**,/api/v1/job-portals,/api/v1/job-portals/**,/api/v1/mcp,/api/v1/public/mcp/resource-metadata
               filters:
                 - TokenRelay
                 - name: RequestRateLimiter
@@ -227,7 +227,7 @@ spring:
               order: -20
               uri: ${APPLICATION_SERVICE_URL:http://localhost:8084}
               predicates:
-                - Path=/api/v1/applications/**,/api/v1/jobs/*/applications,/api/v1/jobs/*/pipeline,/api/v1/imports/**,/api/v1/assessments/**,/api/v1/partner/**,/api/v1/partner-assignments/**,/api/v1/me/referrals
+                - Path=/api/v1/applications/**,/api/v1/jobs/*/applications,/api/v1/jobs/*/application-sources,/api/v1/jobs/*/pipeline,/api/v1/imports/**,/api/v1/assessments/**,/api/v1/partner/**,/api/v1/partner-assignments/**,/api/v1/me/referrals
               filters:
                 - TokenRelay
             - id: phase3-candidates
@@ -258,6 +258,42 @@ spring:
               uri: ${JOB_SERVICE_URL:http://localhost:8082}
               predicates:
                 - Path=/api/v1/public/jobs/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 30
+                    key-resolver: "#{@publicIntakeKeyResolver}"
+            - id: candidate-registration
+              order: -35
+              uri: ${IDENTITY_SERVICE_URL:http://localhost:8081}
+              predicates:
+                - Path=/api/v1/public/candidate-registrations/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 1
+                    redis-rate-limiter.burstCapacity: 10
+                    key-resolver: "#{@publicIntakeKeyResolver}"
+            - id: candidate-profile
+              order: -35
+              uri: ${IDENTITY_SERVICE_URL:http://localhost:8081}
+              predicates:
+                - Path=/api/v1/candidate/profile
+              filters:
+                - TokenRelay
+            - id: candidate-applications
+              order: -35
+              uri: ${APPLICATION_SERVICE_URL:http://localhost:8084}
+              predicates:
+                - Path=/api/v1/candidate/applications/**
+              filters:
+                - TokenRelay
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 30
+                    key-resolver: "#{@publicIntakeKeyResolver}"
             - id: identity-service
               uri: ${IDENTITY_SERVICE_URL:http://localhost:8081}
               predicates:
@@ -272,8 +308,11 @@ spring:
             - id: job-service
               uri: ${JOB_SERVICE_URL:http://localhost:8082}
               predicates:
-                - Path=/api/v1/jobs/**,/api/v1/pipeline-templates/**,/api/v1/hiring-stages/**,/api/v1/internal-jobs/**,/api/v1/me/inbox
+                - Path=/api/v1/jobs/**,/api/v1/job-categories,/api/v1/job-categories/**,/api/v1/pipeline-templates/**,/api/v1/hiring-stages/**,/api/v1/internal-jobs/**,/api/v1/me/inbox
               filters:
+                # Keep the public request host: same-origin tenant POSTs must not look like
+                # cross-origin calls to job-service:8082 and hit the legacy dev CORS allowlist.
+                - PreserveHostHeader
                 - TokenRelay
                 - name: RequestRateLimiter
                   args:
@@ -298,7 +337,7 @@ openhire:
   tenant:
     default-id: ${DEFAULT_TENANT_ID:}
   ui:
-    staff-url: ${STAFF_UI_URL:http://localhost:5173/}
+    staff-url: ${STAFF_UI_URL:http://localhost:5173/today}
     partner-url: ${PARTNER_UI_URL:http://localhost:5174/jobs}
     auth-url: ${AUTH_UI_URL:http://localhost:5176/login}
     candidate-auth-url: ${CANDIDATE_AUTH_UI_URL:http://localhost:5176/login}

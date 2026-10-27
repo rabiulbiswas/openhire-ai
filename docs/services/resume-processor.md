@@ -32,16 +32,45 @@ Pipeline: magic bytes → ClamAV INSTREAM scan → Apache Tika text extraction �
 DOCX validation rejects traversal, excessive expanded size/entry counts, missing structure and VBA payloads.
 Magic-byte validation is only the first stage, not proof a document is safe or parseable.
 
-The full Tika Docker image supplies OCR. ClamAV maintains signatures in its own named volume; initial
-signature download can take time. Neither parser nor scanner is published to a host port by Compose.
-Local Java runs must provide `TIKA_URL`, `CLAMAV_HOST` and `CLAMAV_PORT` to separately running dependencies.
+Tika 3.3.3 is embedded in the resume processor (PDF, Microsoft Office and OCR modules only).
+`EmbeddedResumeTextExtractor` implements `ResumeTextExtractor`; no Tika HTTP server or `TIKA_URL` is used.
+Tesseract runs as a child process in the same container. Both local and CI Dockerfiles install Tesseract
+and English language data only for the resume-processor image; other service images do not include OCR.
+ClamAV remains a separate scanner with its own signature volume and fail-closed behaviour.
+
+For a Java run outside Docker, install Tesseract first (`brew install tesseract` on macOS, or
+`apt-get install tesseract-ocr tesseract-ocr-eng` on Debian/Ubuntu), verify `tesseract --list-langs`, and
+configure `CLAMAV_HOST`/`CLAMAV_PORT`. Text extraction does not need Tesseract, but an OCR-required resume
+fails instead of pretending extraction succeeded when the engine or language data is unavailable.
+
+| Environment setting | Default | Purpose |
+|---|---|---|
+| `RESUME_EXTRACTION_CONCURRENCY` | `1` | Worker/parser concurrency; permitted range 1–4 |
+| `RESUME_EXTRACTION_TIMEOUT_SECONDS` | `80` | Caller deadline per text/OCR attempt (maximum 80 seconds) |
+| `RESUME_EXTRACTION_MAX_PAGES` | `20` | Reject PDFs above this count (maximum configurable 50) |
+| `RESUME_EXTRACTION_MAX_CHARACTERS` | `1000000` | Reject overflowing text, never persist truncation |
+| `RESUME_OCR_TIMEOUT_SECONDS` | `30` | Tesseract timeout per page (maximum 30 seconds) |
+| `RESUME_OCR_LANGUAGE` | `eng` | Installed language identifiers; extra data requires image changes |
+
+OCR fallback is for PDFs with fewer than 30 extracted characters. Rendering uses 150 DPI and rejects
+pages above 10 million estimated rendered pixels. Embedded document attachments are not recursively
+parsed. The parser executor has fixed threads and a small bounded queue, separate from virtual-thread
+pipeline workers. A timed-out parser is interrupted; if it ignores interruption it keeps occupying its
+slot, rather than allowing unbounded replacement threads. Busy/timeouts participate in existing bounded
+retry recovery; no timed-out result can release a quarantined resume.
+
+In-process parsing is not a security sandbox: native/Java heap exhaustion or an uninterruptible parser
+can still affect this service and require its restart. Keep container limits; use a separate extraction
+process again if stronger production isolation is required. Compose retains the 768 MB memory limit,
+reduces JVM heap share to 60% and defaults to one worker; this is not a guarantee every document fits.
+Tesseract is restricted to one OpenMP thread. Tune only after representative load/OCR acceptance.
 
 Workers claim records with an expiring lease. Failed records allow up to three attempts; infected records
 cannot be retried into a clean state. A clean replacement uses the application's replacement-upload endpoint.
 Expired exhausted leases become FAILED. Application polling sees failures even if event delivery is delayed.
 
 Components: Spring MVC/Security, MongoTemplate, local filesystem volume, Java virtual-thread workers,
-ClamAV socket adapter, bounded HTTP extraction adapter, embedded Kafka outbox, Actuator.
+ClamAV socket adapter, embedded Tika extractor/native Tesseract, embedded Kafka outbox, Actuator.
 
 ## REST endpoints
 
@@ -60,7 +89,7 @@ Internal endpoints require `X-Internal-Service-Secret`. They are not public gate
 
 - Pipeline with explicit processing outcomes and human recovery instead of automatic rejection.
 - Content-addressed idempotent upload and quarantined storage.
-- Lease/worker-pool pattern with bounded extraction size, network timeouts and retry count.
+- Lease/worker-pool pattern with bounded extraction size, parser/OCR deadlines and retry count.
 - Adapter boundaries around scanner and extractor protocols.
 - Single-document result/outbox write; `resume.events.v1` carries status, not resume contents.
 
@@ -71,5 +100,15 @@ Unlinked objects from interrupted/competing uploads are retained, not automatica
 ## Verification
 
 `ResumeValidationTest` sources cover file-size limits, PDF headers, DOCX structure, traversal and macros.
-The owner must still run Java tests plus real clean/corrupt/scanned/malware fixtures against Tika/ClamAV,
-including scanner outage and timeout recovery. No Java service or scanner has been started by the assistant.
+The recovery acceptance fixture injects extraction faults through the extractor port and runs its own
+scanner socket; it does not test Tika/OCR itself. The owner must still run the live clean/corrupt/scanned/
+malware fixtures against the rebuilt resume processor, including scanner outage and timeout recovery.
+Historical external-Tika acceptance is not acceptance of this new embedded implementation.
+
+Change validation (2026-10-24): the extractor and pipeline were compiled into a temporary directory,
+not packaged as applications. A standalone synthetic smoke check passed PDF and DOCX text extraction,
+real native Tesseract OCR of an image-only PDF, PDF page limits, output limits and corrupt-PDF rejection.
+All 34 Node pipeline/deployment/configuration checks passed, package/endpoint checks passed, and normal
+and local-no-scan Compose configuration validation passed. Dependency locks include compile, test and
+Spring Boot production-runtime configurations. No application JAR/image build, live Mongo operation,
+service restart or full Java acceptance suite was performed for this change.

@@ -87,9 +87,7 @@ class TriggerRulesTest {
     void aNewApprovalAlertsAssignedApproversAndTheRoleForUnassignedSteps() {
         var alerts = TriggerRules.approvalAlerts("approval.requested.v1", approval("PENDING", List.of("sub-hm", "me")));
 
-        assertThat(alerts)
-                .extracting(TriggerRules.StaffAlert::recipient)
-                .containsExactly("user:sub-hm", "role:HIRING_MANAGER");
+        assertThat(alerts).extracting(TriggerRules.StaffAlert::recipient).containsExactly("user:sub-hm");
         assertThat(alerts.getFirst().type()).isEqualTo("APPROVAL_REQUESTED");
         assertThat(alerts.getFirst().params()).containsEntry("id", "apr-1");
     }
@@ -104,7 +102,9 @@ class TriggerRulesTest {
         });
 
         var next = TriggerRules.approvalAlerts("approval.approved.v1", approval("PENDING", List.of("sub-finance")));
-        assertThat(next).extracting(TriggerRules.StaffAlert::recipient).containsExactly("user:sub-finance");
+        assertThat(next)
+                .extracting(TriggerRules.StaffAlert::recipient)
+                .containsExactly("user:sub-finance", "user:sub-recruiter");
     }
 
     @Test
@@ -169,7 +169,7 @@ class TriggerRulesTest {
                         "offer.approval.requested.v1",
                         offer(Map.of(
                                 "currentApprovers",
-                                List.of("HR_ADMIN", "FINANCE"),
+                                List.of("assigned-hr", "assigned-finance"),
                                 "title",
                                 "Backend Engineer: Priya Das")),
                         "Priya Das",
@@ -178,7 +178,7 @@ class TriggerRulesTest {
 
         assertThat(alerts)
                 .extracting(TriggerRules.StaffAlert::recipient)
-                .containsExactly("role:HR_ADMIN", "role:ORG_ADMIN");
+                .containsExactly("user:assigned-hr", "user:assigned-finance");
         assertThat(alerts.getFirst().type()).isEqualTo("APPROVAL_REQUESTED");
         assertThat(alerts.getFirst().route()).isEqualTo("offers");
         assertThat(alerts.getFirst().params()).containsEntry("offerId", "offer-1");
@@ -194,9 +194,7 @@ class TriggerRulesTest {
 
         assertThat(plan.candidateMessage().templateKey()).isEqualTo("offer-accepted");
         assertThat(plan.candidateMessage().variables()).containsEntry("offer.joiningDate", "16 November 2026");
-        assertThat(plan.alerts())
-                .extracting(TriggerRules.StaffAlert::recipient)
-                .containsExactly("user:sub-recruiter", "role:HR_ADMIN");
+        assertThat(plan.alerts()).extracting(TriggerRules.StaffAlert::recipient).containsExactly("user:sub-recruiter");
         assertThat(plan.alerts().getFirst().title()).isEqualTo("Priya Das accepted the offer");
     }
 
@@ -205,7 +203,7 @@ class TriggerRulesTest {
         var declined =
                 TriggerRules.plan("offer.declined.v1", offer(Map.of("reason", "Took another job")), "Priya Das", "Eng");
         assertThat(declined.candidateMessage()).isNull();
-        assertThat(declined.alerts()).hasSize(2);
+        assertThat(declined.alerts()).hasSize(1);
         assertThat(declined.alerts().getFirst().body()).isEqualTo("Took another job");
 
         var asked = TriggerRules.plan(

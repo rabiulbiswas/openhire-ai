@@ -25,6 +25,9 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequestMapping("/api/v1/me")
 public class BffAccountController {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.openhire.gateway.security.MemberProfileClient profiles;
+
     private static final String PROFILE_NAME = "openhire.profile.name";
     private static final String PROFILE_TITLE = "openhire.profile.title";
     private static final String PROFILE_TIMEZONE = "openhire.profile.timezone";
@@ -40,15 +43,34 @@ public class BffAccountController {
 
     @GetMapping
     Mono<MeProfile> profile(Mono<Principal> principal, WebSession session) {
-        return principal.map(value -> profileFor(value, session)).defaultIfEmpty(profileFor(null, session));
+        return principal
+                .flatMap(value -> {
+                    var current = profileFor(value, session);
+                    if (profiles == null) return Mono.just(current);
+                    return profiles.name(value)
+                            .map(name -> new MeProfile(name, current.title(), current.timezone(), current.language()))
+                            .defaultIfEmpty(current)
+                            .onErrorReturn(current);
+                })
+                .defaultIfEmpty(profileFor(null, session));
     }
 
     @PatchMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    Mono<Void> updateProfile(@RequestBody MeProfile profile, WebSession session) {
+    Mono<Void> updateProfile(@RequestBody MeProfile profile, WebSession session, Mono<Principal> principal) {
         requireText(profile.name(), "name");
         requireText(profile.timezone(), "timezone");
         requireText(profile.language(), "language");
+        if (profile.name().trim().length() > 200)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name is too long");
+        // Persist first. Never report a session-only rename as a successful profile update.
+        var persisted = principal.flatMap(value -> profiles == null
+                ? Mono.empty()
+                : profiles.update(value, profile.name().trim()));
+        return persisted.then(Mono.defer(() -> saveProfilePreferences(profile, session)));
+    }
+
+    private Mono<Void> saveProfilePreferences(MeProfile profile, WebSession session) {
         session.getAttributes().put(PROFILE_NAME, profile.name().trim());
         session.getAttributes()
                 .put(

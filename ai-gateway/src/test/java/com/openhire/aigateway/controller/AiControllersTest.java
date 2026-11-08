@@ -37,6 +37,8 @@ class AiControllersTest {
         var access = new Access("oidc", "demo", SECRET);
         mvc = MockMvcBuilders.standaloneSetup(
                         new InternalAiController(rig.tasks, access),
+                        new InterviewAiController(
+                                access, new com.openhire.aigateway.service.InterviewAiTask(rig.gateway)),
                         new StaffAiController(access, rig.tasks, rig.settings, rig.admin, rig.evaluation, rig.ops))
                 .setControllerAdvice(new AiErrors(), new GlobalExceptionHandler())
                 .build();
@@ -74,6 +76,25 @@ class AiControllersTest {
             "rubricVersion", "v1");
 
     // ---- internal ----
+
+    @Test
+    void interviewAssistantUsesInternalAuthenticationAndValidatedOutput() throws Exception {
+        rig.local.reply = request -> Json.write(Map.of(
+                "questions",
+                List.of(Map.of("question", "How would you make retries safe?", "followUp", "Explain idempotency.")),
+                "statements",
+                List.of()));
+        var body = Map.of("mode", "QUESTIONS", "context", "Technical interview; reliability", "sources", List.of());
+        mvc.perform(internal("interview-assist", body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.questions[0].question").value("How would you make retries safe?"));
+        mvc.perform(json(
+                        post("/api/v1/internal/ai/interview-assist")
+                                .header("X-Internal-Service-Secret", "wrong")
+                                .header("X-Tenant-Id", "t1"),
+                        body))
+                .andExpect(status().isUnauthorized());
+    }
 
     @Test
     void judgeReturnsTheContractShape() throws Exception {
@@ -317,7 +338,7 @@ class AiControllersTest {
         mvc.perform(get("/api/v1/prompts").principal(as("COMPLIANCE_OFFICER"))).andExpect(status().isForbidden());
         mvc.perform(get("/api/v1/prompts").principal(as("ORG_ADMIN")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(7))
+                .andExpect(jsonPath("$.length()").value(8))
                 .andExpect(
                         jsonPath("$[?(@.id=='match.criterion.judge@2')].status").value("SHADOW"));
         mvc.perform(get("/api/v1/prompts/match.criterion.judge@1").principal(as("ORG_ADMIN")))

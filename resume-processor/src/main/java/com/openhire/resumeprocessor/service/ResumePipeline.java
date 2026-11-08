@@ -4,7 +4,6 @@ import static com.openhire.support.Records.*;
 
 import com.openhire.resumeprocessor.service.port.ResumeTextExtractor;
 import java.io.*;
-import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.*;
@@ -35,36 +34,11 @@ public class ResumePipeline {
     private final MongoTemplate mongo;
     private final Path root;
     private final ResumeTextExtractor extractor;
-    private final String clamHost;
-    private final int clamPort;
-
-    @Value("${openhire.resume.scan-enabled:true}")
-    private boolean scanEnabled = true;
-
-    @org.springframework.beans.factory.annotation.Autowired
-    private org.springframework.core.env.Environment environment;
-
-    @jakarta.annotation.PostConstruct
-    void validateScannerMode() {
-        if (!scanEnabled) {
-            var profiles = Set.of(environment.getActiveProfiles());
-            if (!profiles.contains("local-no-scan")
-                    || profiles.stream().anyMatch(p -> !Set.of("local-no-scan", "local", "dev", "oidc")
-                            .contains(p))) {
-                throw new IllegalStateException(
-                        "Disabling resume scanning requires the isolated local-no-scan profile");
-            }
-            org.slf4j.LoggerFactory.getLogger(ResumePipeline.class)
-                    .warn("LOCAL DEVELOPMENT ONLY: resume malware scanning disabled; use trusted synthetic files only");
-        }
-    }
 
     public ResumePipeline(
             MongoTemplate mongo,
             @Value("${openhire.resume.directory}") String directory,
             ResumeTextExtractor extractor,
-            @Value("${openhire.resume.clamav-host}") String clamHost,
-            @Value("${openhire.resume.clamav-port}") int clamPort,
             @Value("${openhire.resume.extraction.concurrency:1}") int concurrency)
             throws IOException {
         if (concurrency < 1 || concurrency > 4) throw new IllegalArgumentException("Invalid resume concurrency");
@@ -73,8 +47,6 @@ public class ResumePipeline {
         this.mongo = mongo;
         this.root = Path.of(directory).toAbsolutePath().normalize();
         this.extractor = extractor;
-        this.clamHost = clamHost;
-        this.clamPort = clamPort;
         Files.createDirectories(root);
     }
 
@@ -194,7 +166,7 @@ public class ResumePipeline {
     public byte[] download(String tenant, String id) throws IOException {
         var row = result(tenant, id);
         if (!"DONE".equals(row.getString("status")))
-            throw conflict("Resume is quarantined until scanning and extraction succeed");
+            throw conflict("Resume is unavailable until text extraction succeeds");
         return Files.readAllBytes(root.resolve(id));
     }
 
@@ -256,12 +228,8 @@ public class ResumePipeline {
         String status = "DONE", error = "", text = "";
         try {
             byte[] bytes = Files.readAllBytes(root.resolve(id));
-            if (scanEnabled) {
-                scan(bytes);
-                steps.put("virusScan", "PASSED");
-            } else {
-                steps.put("virusScan", "SKIPPED_LOCAL_DEV");
-            }
+            // Retain an explicit result for clients consuming the historical pipeline steps.
+            steps.put("virusScan", "NOT_PERFORMED");
             text = extractor.extract(bytes, row.getString("mime"), false);
             steps.put("extract", "PASSED");
             if (text.strip().length() < 30 && "application/pdf".equals(row.getString("mime"))) {
@@ -269,17 +237,13 @@ public class ResumePipeline {
                 steps.put("ocr", "PASSED");
             }
             if (text.strip().length() < 30) throw new IOException("NO_EXTRACTABLE_TEXT");
-        } catch (Infected infected) {
-            status = "REJECTED";
-            error = "MALWARE_DETECTED";
-            steps.put("virusScan", "REJECTED");
         } catch (Exception exception) {
             status = "FAILED";
             error = exception.getMessage() == null ? "PROCESSING_FAILED" : exception.getMessage();
             if (error.length() > 200) error = "PROCESSING_FAILED";
             int attempt = ((Number) row.getOrDefault("attempts", 1)).intValue();
             if (transientFailure(exception) && attempt < 3) {
-                // Fail closed (no unscanned resume is released) but let a brief scanner or extractor outage recover.
+                // Keep the document unavailable until extraction succeeds; transient faults can recover.
                 mongo.updateFirst(
                         owned,
                         new Update()
@@ -329,32 +293,7 @@ public class ResumePipeline {
                 "resumes");
     }
 
-    private void scan(byte[] bytes) throws IOException {
-        try (var socket = new Socket()) {
-            socket.connect(new InetSocketAddress(clamHost, clamPort), 5000);
-            socket.setSoTimeout(30000);
-            var out = new DataOutputStream(socket.getOutputStream());
-            out.write("zINSTREAM\0".getBytes(StandardCharsets.US_ASCII));
-            for (int offset = 0; offset < bytes.length; offset += 8192) {
-                int length = Math.min(8192, bytes.length - offset);
-                out.writeInt(length);
-                out.write(bytes, offset, length);
-            }
-            out.writeInt(0);
-            out.flush();
-            var response = new ByteArrayOutputStream();
-            int next;
-            while ((next = socket.getInputStream().read()) > 0) {
-                if (response.size() > 4096) throw new IOException("INVALID_SCANNER_RESPONSE");
-                response.write(next);
-            }
-            String result = response.toString(StandardCharsets.UTF_8);
-            if (result.contains("FOUND")) throw new Infected();
-            if (!result.trim().endsWith(": OK")) throw new Unavailable("SCANNER_UNAVAILABLE");
-        }
-    }
-
-    /** A dependency (scanner or extractor) is temporarily unable to serve the request. */
+    /** Extraction is temporarily unable to serve the request. */
     static final class Unavailable extends IOException {
         Unavailable(String message) {
             super(message);
@@ -386,6 +325,4 @@ public class ResumePipeline {
                 || exception instanceof java.net.UnknownHostException
                 || exception instanceof java.net.NoRouteToHostException;
     }
-
-    private static class Infected extends IOException {}
 }

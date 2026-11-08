@@ -1,5 +1,7 @@
 # Phase 4 — interviews, communication and notification dispatch
 
+> Scanner removal update: résumé antivirus scanning has been removed in all environments. Scanner requirements and acceptance results below are historical; see [current resume processing](services/resume-processor.md).
+
 ## Status — 2026-10-15
 
 **Complete and runtime-accepted on the local stack.** Owner decisions still open are listed under *Open items*.

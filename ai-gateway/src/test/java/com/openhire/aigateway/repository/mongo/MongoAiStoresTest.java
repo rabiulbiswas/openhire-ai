@@ -49,7 +49,7 @@ class MongoAiStoresTest {
         seeds.forEach(store::insertIfAbsent);
         assertThat(store.find("t1", "match.criterion.judge@1").orElseThrow().status())
                 .isEqualTo(PromptStatus.RETIRED);
-        assertThat(store.list("t1")).hasSize(7);
+        assertThat(store.list("t1")).hasSize(8);
         assertThat(store.list("t2")).isEmpty();
         assertThat(store.versions("t1", "match.criterion.judge")).hasSize(2);
     }

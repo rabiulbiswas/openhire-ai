@@ -37,6 +37,7 @@ public final class TriggerRules {
     private static final Set<String> HANDLED = Set.of(
             "ApplicationSubmitted",
             "interview.scheduled.v1",
+            "interview.panel-assigned.v1",
             "interview.rescheduled.v1",
             "interview.cancelled.v1",
             "interview.scheduling-link.issued.v1",
@@ -81,6 +82,18 @@ public final class TriggerRules {
         return switch (eventType) {
             case "ApplicationSubmitted" ->
                 new Plan(new CandidateMessage("application-received", vars, true), List.of());
+            case "interview.panel-assigned.v1" -> {
+                for (var email : panelEmails(payload))
+                    alerts.add(new StaffAlert(
+                            "email:" + email,
+                            "ASSIGNED",
+                            NotificationEventKey.ASSIGNED_TO_JOB_ROUND,
+                            "You were assigned to interview " + who,
+                            round + " · scheduling pending",
+                            "myInterviews",
+                            Map.of()));
+                yield new Plan(null, alerts);
+            }
             case "interview.scheduled.v1" -> {
                 for (var email : panelEmails(payload))
                     alerts.add(new StaffAlert(

@@ -43,7 +43,6 @@ openhire:
     collection: resumes
     topic: resume.events.v1
   resume:
-    scan-enabled: ${RESUME_SCAN_ENABLED:true}
     directory: ${RESUME_DIRECTORY:./.openhire-resumes}
     extraction:
       concurrency: ${RESUME_EXTRACTION_CONCURRENCY:1}
@@ -52,8 +51,6 @@ openhire:
       max-characters: ${RESUME_EXTRACTION_MAX_CHARACTERS:1000000}
       ocr-timeout-seconds: ${RESUME_OCR_TIMEOUT_SECONDS:30}
       ocr-language: ${RESUME_OCR_LANGUAGE:eng}
-    clamav-host: ${CLAMAV_HOST:localhost}
-    clamav-port: ${CLAMAV_PORT:3310}
 management:
   endpoints:
     web:

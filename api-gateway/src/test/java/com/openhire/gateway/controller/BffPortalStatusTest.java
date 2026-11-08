@@ -16,14 +16,19 @@ import reactor.core.publisher.Mono;
 class BffPortalStatusTest {
     @Test
     void publicBrandingExposesOnlyIdAndNameWithoutStartingASession() {
-        var exchange = MockServerWebExchange.from(MockServerHttpRequest.get("http://codlogicx.localhost/bff/public-tenant"));
+        var exchange =
+                MockServerWebExchange.from(MockServerHttpRequest.get("http://codlogicx.localhost/bff/public-tenant"));
         var result = controller(HttpStatus.OK, true).publicTenant(exchange).block();
         assertThat(result).containsOnlyKeys("id", "name");
         assertThat(result).containsEntry("id", "456").containsEntry("name", "Codlogicx");
         assertThat(exchange.getSession().block().isStarted()).isFalse();
-        var platform = MockServerWebExchange.from(MockServerHttpRequest.get("http://admin.localhost/bff/public-tenant"));
-        assertThatThrownBy(() -> controller(HttpStatus.OK, true).publicTenant(platform).block()).isInstanceOf(ResponseStatusException.class);
+        var platform =
+                MockServerWebExchange.from(MockServerHttpRequest.get("http://admin.localhost/bff/public-tenant"));
+        assertThatThrownBy(() ->
+                        controller(HttpStatus.OK, true).publicTenant(platform).block())
+                .isInstanceOf(ResponseStatusException.class);
     }
+
     private BffSessionController controller(HttpStatus status, boolean enabled) {
         var portals = new TenantPortalAccess(enabled, "localhost", "oidc", "http://identity-service:8081", "fixture");
         ReflectionTestUtils.setField(portals, "sameHostAuth", true);

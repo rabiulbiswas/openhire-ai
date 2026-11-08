@@ -20,22 +20,8 @@ must explicitly run `bash scripts/setup/prepare-portal-keycloak.sh --apply` and 
 saves a restricted offline backup, prepares the persistent volume, and leaves the source stopped on success.
 It is never run automatically. No user/client setup is performed. Do not use `down -v`.
 
-For local testing without ClamAV, use the explicit `--no-scan` option:
-
-```bash
-# Build/recreate resume processor, stop ClamAV after startup succeeds, follow logs
-./scripts/deployment/deploy-local.sh --no-scan --follow resume-processor
-# Deploy all backend applications in that mode and follow combined logs
-./scripts/deployment/deploy-local.sh --no-scan --follow
-```
-
-This loads `docker-compose.local-no-scan.yml`, skips ClamAV startup, and sets
-`RESUME_SCAN_ENABLED=false` with the local-only profile. Requires Compose 2.24.4+.
-Use trusted synthetic files only. ClamAV is stopped only when resume-processor
-was selected and its deployment passed startup checks. `--logs-only` never
-changes services. Use `--no-scan` on each deployment that should retain the bypass;
-omitting it restores normal scanning when resume-processor is deployed.
-
+Résumé antivirus scanning has been removed in all environments. Deploy normally; file validation, extraction and OCR
+remain enabled. The deprecated `--no-scan` option is accepted as a no-op for existing scripts.
 
 After all selected applications pass startup checks, deployment follows their
 combined live logs continuously in the same console. No tmux or extra windows

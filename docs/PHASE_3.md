@@ -1,5 +1,7 @@
 # Phase 3 — application intake, resume processing and Candidate 360
 
+> Scanner removal update: résumé antivirus scanning has been removed in all environments. Scanner requirements and acceptance results below are historical; see [current resume processing](services/resume-processor.md).
+
 ## Embedded extraction change — 2026-10-24
 
 Resume extraction now uses embedded Tika 3.3.3 and native Tesseract inside resume-processor,

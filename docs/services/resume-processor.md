@@ -8,12 +8,11 @@
 flowchart LR
     Upload[Internal authenticated upload] --> Validate[Size, magic bytes and container checks]
     Validate --> Quarantine[Generated-name quarantined storage]
-    Quarantine --> Scan[ClamAV]
-    Scan -->|clean| Extract[Tika extraction and OCR fallback]
-    Scan -->|unknown or infected| Block[Blocked or failed result]
+    Quarantine --> Extract[Tika extraction and OCR fallback]
+    Extract -->|failure| Block[Blocked or failed result]
     Extract --> Result[Sections and persisted processing outcome]
     Result --> Event[Resume outcome event]
-    Result --> Download[Authorized clean download]
+    Result --> Download[Authorized processed download]
 ```
 
 
@@ -22,13 +21,15 @@ Java 25 / Spring Boot 4.1.1, port 8086, MongoDB `oh_resume`, named Docker volume
 ## Business logic and components
 
 `ResumeController` accepts only secret-authenticated internal uploads, status queries and retries.
-Recruiters can download a resume only after scanning and extraction succeed, in their own tenant.
+Recruiters can download a resume only after extraction succeeds, in their own tenant.
 `ResumePipeline` validates file contents, writes a generated-name quarantine object, creates a durable
 processing record and runs bounded concurrent workers. Maximum upload is 10 MB; filenames are never
 used as filesystem paths. IDs incorporate tenant, application and content digest.
 
-Pipeline: magic bytes → ClamAV INSTREAM scan → Apache Tika text extraction → OCR fallback for sparse PDFs
-→ section splitting → stored result/outbox. Unknown scanner results and scanner outages fail closed.
+Pipeline: magic bytes → Apache Tika text extraction → OCR fallback for sparse PDFs
+→ section splitting → stored result/outbox. Antivirus scanning has been removed for every environment.
+Newly processed records retain the historical step key with `virusScan: NOT_PERFORMED`, never `PASSED`.
+Historical scan results/rejections are preserved; no existing documents are automatically released or retried.
 DOCX validation rejects traversal, excessive expanded size/entry counts, missing structure and VBA payloads.
 Magic-byte validation is only the first stage, not proof a document is safe or parseable.
 
@@ -36,11 +37,11 @@ Tika 3.3.3 is embedded in the resume processor (PDF, Microsoft Office and OCR mo
 `EmbeddedResumeTextExtractor` implements `ResumeTextExtractor`; no Tika HTTP server or `TIKA_URL` is used.
 Tesseract runs as a child process in the same container. Both local and CI Dockerfiles install Tesseract
 and English language data only for the resume-processor image; other service images do not include OCR.
-ClamAV remains a separate scanner with its own signature volume and fail-closed behaviour.
+No scanner service, scanner credentials, scanner socket or scanning profile is required.
 
 For a Java run outside Docker, install Tesseract first (`brew install tesseract` on macOS, or
-`apt-get install tesseract-ocr tesseract-ocr-eng` on Debian/Ubuntu), verify `tesseract --list-langs`, and
-configure `CLAMAV_HOST`/`CLAMAV_PORT`. Text extraction does not need Tesseract, but an OCR-required resume
+`apt-get install tesseract-ocr tesseract-ocr-eng` on Debian/Ubuntu), and verify `tesseract --list-langs` before use.
+Text extraction does not need Tesseract, but an OCR-required resume
 fails instead of pretending extraction succeeded when the engine or language data is unavailable.
 
 | Environment setting | Default | Purpose |
@@ -65,12 +66,12 @@ process again if stronger production isolation is required. Compose retains the 
 reduces JVM heap share to 60% and defaults to one worker; this is not a guarantee every document fits.
 Tesseract is restricted to one OpenMP thread. Tune only after representative load/OCR acceptance.
 
-Workers claim records with an expiring lease. Failed records allow up to three attempts; infected records
-cannot be retried into a clean state. A clean replacement uses the application's replacement-upload endpoint.
+Workers claim records with an expiring lease. Failed records allow up to three attempts; historical REJECTED records
+remain blocked. A replacement uses the application's replacement-upload endpoint.
 Expired exhausted leases become FAILED. Application polling sees failures even if event delivery is delayed.
 
 Components: Spring MVC/Security, MongoTemplate, local filesystem volume, Java virtual-thread workers,
-ClamAV socket adapter, embedded Tika extractor/native Tesseract, embedded Kafka outbox, Actuator.
+Embedded Tika extractor/native Tesseract, embedded Kafka outbox, Actuator.
 
 ## REST endpoints
 
@@ -81,7 +82,7 @@ All paths start with `/api/v1`.
 | POST | `/internal/resumes` | Multipart `tenantId`, `applicationId`, `file`; validates and queues |
 | GET | `/internal/resumes/{id}?tenantId=…` | Internal status, step outcomes, extracted text and sections |
 | POST | `/internal/resumes/{id}/retry?tenantId=…` | Retry a FAILED record below attempt limit |
-| GET | `/resumes/{id}/download` | Staff-only clean attachment; tenant from verified token |
+| GET | `/resumes/{id}/download` | Staff-only processed attachment; tenant from verified token |
 
 Internal endpoints require `X-Internal-Service-Secret`. They are not public gateway routes.
 
@@ -90,7 +91,7 @@ Internal endpoints require `X-Internal-Service-Secret`. They are not public gate
 - Pipeline with explicit processing outcomes and human recovery instead of automatic rejection.
 - Content-addressed idempotent upload and quarantined storage.
 - Lease/worker-pool pattern with bounded extraction size, parser/OCR deadlines and retry count.
-- Adapter boundaries around scanner and extractor protocols.
+- Adapter boundary around the extractor.
 - Single-document result/outbox write; `resume.events.v1` carries status, not resume contents.
 
 Storage is local-volume based, not S3. Back up `resume-data` together with `oh_resume`; moving to multiple
@@ -100,9 +101,8 @@ Unlinked objects from interrupted/competing uploads are retained, not automatica
 ## Verification
 
 `ResumeValidationTest` sources cover file-size limits, PDF headers, DOCX structure, traversal and macros.
-The recovery acceptance fixture injects extraction faults through the extractor port and runs its own
-scanner socket; it does not test Tika/OCR itself. The owner must still run the live clean/corrupt/scanned/
-malware fixtures against the rebuilt resume processor, including scanner outage and timeout recovery.
+The recovery acceptance fixture injects extraction faults through the extractor port, without any scanner socket.
+It checks successful extraction, explicit NOT_PERFORMED scan reporting, OCR fallback and bounded retry/lease recovery.
 Historical external-Tika acceptance is not acceptance of this new embedded implementation.
 
 Change validation (2026-10-24): the extractor and pipeline were compiled into a temporary directory,

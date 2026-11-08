@@ -1,5 +1,6 @@
 package com.openhire.candidateservice.controller;
 
+import com.openhire.candidateservice.service.CandidateProfileView;
 import com.openhire.candidateservice.service.CandidateService;
 import com.openhire.support.Access;
 import com.openhire.support.Records;
@@ -13,10 +14,12 @@ import org.springframework.web.bind.annotation.*;
 public class CandidateController {
     private final CandidateService service;
     private final Access access;
+    private final CandidateProfileView profiles;
 
-    public CandidateController(CandidateService service, Access access) {
+    public CandidateController(CandidateService service, Access access, CandidateProfileView profiles) {
         this.service = service;
         this.access = access;
+        this.profiles = profiles;
     }
 
     @PostMapping("/internal/candidates/resolve")
@@ -43,7 +46,7 @@ public class CandidateController {
     @GetMapping("/candidates/{id}/360")
     public Document get(Authentication auth, @PathVariable String id) {
         access.requireStaff(auth);
-        return service.view(access.tenant(auth), id);
+        return profiles.view(access.tenant(auth), id);
     }
 
     @GetMapping("/candidates")

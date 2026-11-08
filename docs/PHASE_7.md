@@ -1,5 +1,7 @@
 # Phase 7 — compliance, analytics and platform operations
 
+> Scanner removal update: résumé antivirus scanning has been removed in all environments. Scanner requirements and acceptance results below are historical; see [current resume processing](services/resume-processor.md).
+
 ## Status — 2026-10-15
 
 Implementation and acceptance work in progress. The two services, UI integrations and workflow checks exist;

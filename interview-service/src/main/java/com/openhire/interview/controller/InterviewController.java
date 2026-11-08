@@ -5,7 +5,6 @@ import com.openhire.interview.domain.InterviewTypes.PanelMember;
 import com.openhire.interview.domain.InterviewTypes.Rating;
 import com.openhire.interview.domain.InterviewTypes.RatingEntry;
 import com.openhire.interview.domain.InterviewTypes.Recommendation;
-import com.openhire.interview.dto.InterviewViews.InterviewEventView;
 import com.openhire.interview.dto.InterviewViews.LoopView;
 import com.openhire.interview.dto.InterviewViews.MyInterviewView;
 import com.openhire.interview.dto.InterviewViews.Page;
@@ -53,7 +52,8 @@ class InterviewController {
 
     record RatingInput(String competencyId, String rating) {}
 
-    record ScorecardInput(List<RatingInput> ratings, String evidence, String recommendation) {}
+    record ScorecardInput(
+            List<RatingInput> ratings, String evidence, String recommendation, String aiDraft, Boolean aiReviewed) {}
 
     @PostMapping("/applications/{applicationId}/interview-loop")
     @ResponseStatus(HttpStatus.CREATED)
@@ -69,7 +69,11 @@ class InterviewController {
     }
 
     @GetMapping("/interviews")
-    Page<InterviewEventView> week(Authentication auth, @RequestParam(required = false) String week) {
+    Object week(
+            Authentication auth,
+            @RequestParam(required = false) String week,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(defaultValue = "10") int limit) {
         var viewer = viewers.participant(auth);
         LocalDate day;
         try {
@@ -77,7 +81,25 @@ class InterviewController {
         } catch (DateTimeParseException invalid) {
             throw new IllegalArgumentException("week must be a date such as 2026-10-12");
         }
-        return interviews.week(viewers.tenant(auth), day, viewer);
+        var result = interviews.week(viewers.tenant(auth), day, viewer);
+        if (page == null) return result;
+        if (page < 1 || page > 10000 || limit < 1 || limit > 50)
+            throw new IllegalArgumentException("page must be 1-10000 and limit 1-50");
+        int from = Math.min((page - 1) * limit, result.data().size()),
+                to = Math.min(from + limit, result.data().size());
+        return Map.of(
+                "data",
+                result.data().subList(from, to),
+                "page",
+                page,
+                "limit",
+                limit,
+                "total",
+                result.data().size(),
+                "hasMore",
+                to < result.data().size(),
+                "hasPrevious",
+                page > 1);
     }
 
     @GetMapping("/interviews/unscheduled")
@@ -177,7 +199,16 @@ class InterviewController {
                 input.recommendation() == null || input.recommendation().isBlank()
                         ? null
                         : enumValue(Recommendation.class, input.recommendation(), "recommendation");
-        interviews.submitScorecard(viewers.tenant(auth), roundId, viewer, ratings, input.evidence(), recommendation);
+        String evidence = input.evidence();
+        if (input.aiDraft() != null && !input.aiDraft().isBlank()) {
+            if (!Boolean.TRUE.equals(input.aiReviewed()))
+                throw new IllegalArgumentException("Review the AI draft before submitting");
+            if (input.aiDraft().length() > 6000) throw new IllegalArgumentException("AI draft is too long");
+            if (evidence == null || evidence.isBlank())
+                throw new IllegalArgumentException("Original interview evidence is required");
+            evidence = evidence + "\n\nAI-assisted feedback (reviewed by interviewer):\n" + input.aiDraft();
+        }
+        interviews.submitScorecard(viewers.tenant(auth), roundId, viewer, ratings, evidence, recommendation);
         return Map.of("status", "SUBMITTED");
     }
 

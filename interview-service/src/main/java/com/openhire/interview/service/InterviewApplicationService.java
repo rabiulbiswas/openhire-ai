@@ -174,7 +174,7 @@ public class InterviewApplicationService {
                 result.add(eventView(loop, round, viewer));
             }
         }
-        result.sort(Comparator.comparing(InterviewEventView::start));
+        result.sort(Comparator.comparing(InterviewEventView::start).thenComparing(InterviewEventView::id));
         return Page.of(result);
     }
 

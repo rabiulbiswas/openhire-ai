@@ -54,6 +54,32 @@ class CandidateMongoAcceptanceTest {
     }
 
     @Test
+    void verifiedRichProfileEditsPersistWithFieldSources() {
+        String tenant = UUID.randomUUID().toString();
+        String candidate =
+                service.resolve(request(tenant, "profile@example.test")).getString("id");
+        service.profile(
+                tenant,
+                candidate,
+                "reviewer",
+                new Document("title", "Engineer")
+                        .append("location", "Kolkata")
+                        .append("skills", java.util.List.of("Java", "SQL"))
+                        .append(
+                                "experience",
+                                java.util.List.of(new Document("company", "Example Ltd")
+                                        .append("title", "Engineer")
+                                        .append("period", "2022 to present"))));
+        var profile = service.view(tenant, candidate);
+        assertThat(profile.getList("skills", Document.class))
+                .extracting(d -> d.getString("name"))
+                .containsExactly("Java", "SQL");
+        assertThat(profile.getList("experience", Document.class)).hasSize(1);
+        assertThat(((Document) ((Document) profile.get("provenance")).get("skills")))
+                .containsEntry("source", "RECRUITER_PROFILE_EDIT");
+    }
+
+    @Test
     void resolvesIdenticalEmailWithinTenantButNeverAcrossTenants() {
         String tenant = UUID.randomUUID().toString();
         var one = service.resolve(request(tenant, "PERSON@example.test"));

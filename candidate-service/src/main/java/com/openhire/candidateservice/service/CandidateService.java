@@ -40,13 +40,17 @@ public class CandidateService {
         if (after != null && after.length() > 200) throw new IllegalArgumentException("Cursor is too long");
         if (before != null && before.length() > 200) throw new IllegalArgumentException("Cursor is too long");
         boolean backwards = before != null && !before.isBlank();
-        if (backwards && after != null && !after.isBlank()) throw new IllegalArgumentException("Use either after or before, not both");
+        if (backwards && after != null && !after.isBlank())
+            throw new IllegalArgumentException("Use either after or before, not both");
         var criteria = directoryCriteria(tenant, search);
         if (after != null && !after.isBlank()) criteria.and("_id").gt(after);
         if (backwards) criteria.and("_id").lt(before);
         var query = Query.query(criteria)
-                .with(org.springframework.data.domain.Sort.by(backwards
-                        ? org.springframework.data.domain.Sort.Direction.DESC : org.springframework.data.domain.Sort.Direction.ASC, "_id"))
+                .with(org.springframework.data.domain.Sort.by(
+                        backwards
+                                ? org.springframework.data.domain.Sort.Direction.DESC
+                                : org.springframework.data.domain.Sort.Direction.ASC,
+                        "_id"))
                 .limit(limit + 1);
         query.fields().include("_id", "name", "email", "title", "location", "owner", "applications");
         var rows = mongo.find(query, Document.class, "candidates");
@@ -57,9 +61,17 @@ public class CandidateService {
         if (!shown.isEmpty()) {
             if (backwards) {
                 hasPrevious = more;
-                hasNext = mongo.exists(Query.query(directoryCriteria(tenant, search).and("_id").gt(shown.getLast().getString("_id"))), "candidates");
+                hasNext = mongo.exists(
+                        Query.query(directoryCriteria(tenant, search)
+                                .and("_id")
+                                .gt(shown.getLast().getString("_id"))),
+                        "candidates");
             } else if (after != null && !after.isBlank()) {
-                hasPrevious = mongo.exists(Query.query(directoryCriteria(tenant, search).and("_id").lt(shown.getFirst().getString("_id"))), "candidates");
+                hasPrevious = mongo.exists(
+                        Query.query(directoryCriteria(tenant, search)
+                                .and("_id")
+                                .lt(shown.getFirst().getString("_id"))),
+                        "candidates");
             }
         }
         var result = new LinkedHashMap<String, Object>();
@@ -70,15 +82,21 @@ public class CandidateService {
                             var summary = new Document("id", row.getString("_id"));
                             for (String field : List.of("name", "email", "title", "location", "owner"))
                                 summary.put(field, text(row, field));
-                            summary.put("applicationStatuses", doc(row.get("applications")).values().stream()
-                                    .map(value -> doc(value))
-                                    .filter(application -> !text(application, "stage").isBlank())
-                                    .sorted(Comparator.comparing((Document application) -> text(application, "appliedAt")).reversed())
-                                    .map(application -> new Document("applicationId", text(application, "applicationId"))
-                                            .append("jobId", text(application, "jobId"))
-                                            .append("jobTitle", text(application, "jobTitle"))
-                                            .append("stage", text(application, "stage")))
-                                    .toList());
+                            summary.put(
+                                    "applicationStatuses",
+                                    doc(row.get("applications")).values().stream()
+                                            .map(value -> doc(value))
+                                            .filter(application ->
+                                                    !text(application, "stage").isBlank())
+                                            .sorted(Comparator.comparing(
+                                                            (Document application) -> text(application, "appliedAt"))
+                                                    .reversed())
+                                            .map(application -> new Document(
+                                                            "applicationId", text(application, "applicationId"))
+                                                    .append("jobId", text(application, "jobId"))
+                                                    .append("jobTitle", text(application, "jobTitle"))
+                                                    .append("stage", text(application, "stage")))
+                                            .toList());
                             return summary;
                         })
                         .toList());
@@ -91,10 +109,18 @@ public class CandidateService {
     }
 
     private Criteria directoryCriteria(String tenant, String search) {
-        var criteria = Criteria.where("tenantId").is(tenant).and("mergedInto").exists(false).and("erased").ne(true);
+        var criteria = Criteria.where("tenantId")
+                .is(tenant)
+                .and("mergedInto")
+                .exists(false)
+                .and("erased")
+                .ne(true);
         if (search != null && !search.isBlank()) {
-            var literal = java.util.regex.Pattern.compile(java.util.regex.Pattern.quote(search.trim()), java.util.regex.Pattern.CASE_INSENSITIVE);
-            criteria.orOperator(Criteria.where("name").regex(literal), Criteria.where("email").regex(literal));
+            var literal = java.util.regex.Pattern.compile(
+                    java.util.regex.Pattern.quote(search.trim()), java.util.regex.Pattern.CASE_INSENSITIVE);
+            criteria.orOperator(
+                    Criteria.where("name").regex(literal),
+                    Criteria.where("email").regex(literal));
         }
         return criteria;
     }
@@ -138,7 +164,9 @@ public class CandidateService {
                         "provenance",
                         new Document("name", provenance)
                                 .append("email", provenance)
-                                .append("phone", provenance))
+                                .append("phone", provenance)
+                                .append("title", provenance)
+                                .append("location", provenance))
                 .append(
                         "consents",
                         new Document("processing", true)
@@ -164,10 +192,19 @@ public class CandidateService {
         for (var field : List.of("title", "location")) {
             String value = field.equals("title") ? title : location;
             if (value.isEmpty()) continue;
-            var missingField = key(tenant, id).addCriteria(Criteria.where("erased").ne(true)
-                    .and("mergedInto").exists(false).and("mergeLock").exists(false));
-            missingField.addCriteria(new Criteria().orOperator(Criteria.where(field).is(null), Criteria.where(field).is("")));
-            mongo.updateFirst(missingField, new Update().set(field, value).set("provenance." + field, provenance), "candidates");
+            var missingField = key(tenant, id)
+                    .addCriteria(Criteria.where("erased")
+                            .ne(true)
+                            .and("mergedInto")
+                            .exists(false)
+                            .and("mergeLock")
+                            .exists(false));
+            missingField.addCriteria(new Criteria()
+                    .orOperator(
+                            Criteria.where(field).is(null),
+                            Criteria.where(field).is("")));
+            mongo.updateFirst(
+                    missingField, new Update().set(field, value).set("provenance." + field, provenance), "candidates");
         }
         return new Document("id", id);
     }
@@ -181,20 +218,95 @@ public class CandidateService {
     }
 
     public void profile(String tenant, String id, String actor, Document input) {
-        if (!input.keySet().equals(Set.of("title", "location")))
-            throw new IllegalArgumentException("Provide candidate title and location only");
+        if (!input.keySet().containsAll(Set.of("title", "location"))
+                || !Set.of("title", "location", "employer", "skills", "experience")
+                        .containsAll(input.keySet()))
+            throw new IllegalArgumentException("Provide title, location and supported candidate profile fields only");
         String title = profileValue(input, "title"), location = profileValue(input, "location");
         var row = canonical(tenant, id);
+        if (Boolean.TRUE.equals(row.get("erased")) || row.containsKey("mergeLock"))
+            throw conflict("Candidate is erased or a merge is in progress");
         id = row.getString("_id");
-        var query = key(tenant, id).addCriteria(Criteria.where("mergeLock").exists(false)
-                .and("mergedInto").exists(false).and("erased").ne(true));
-        var provenance = new Document("source", "RECRUITER_PROFILE_EDIT").append("actorId", actor).append("recordedAt", now());
-        var update = new Update().set("title", title).set("location", location)
-                .set("provenance.title", provenance).set("provenance.location", provenance);
+        var query = key(tenant, id)
+                .addCriteria(Criteria.where("mergeLock")
+                        .exists(false)
+                        .and("mergedInto")
+                        .exists(false)
+                        .and("erased")
+                        .ne(true));
+        var provenance = new Document("source", "RECRUITER_PROFILE_EDIT")
+                .append("actorId", actor)
+                .append("recordedAt", now());
+        var values = new LinkedHashMap<String, Object>();
+        values.put("title", title);
+        values.put("location", location);
+        if (input.containsKey("employer")) values.put("employer", profileValue(input, "employer"));
+        if (input.containsKey("skills")) values.put("skills", profileSkills(input.get("skills")));
+        if (input.containsKey("experience")) values.put("experience", profileExperience(input.get("experience")));
+        var update = new Update();
+        var changed = new ArrayList<String>();
+        values.forEach((field, value) -> {
+            boolean explicitEmptyProfile = Set.of("skills", "experience").contains(field)
+                    && value instanceof List<?> list
+                    && list.isEmpty()
+                    && !"RECRUITER_PROFILE_EDIT"
+                            .equals(text(doc(doc(row.get("provenance")).get(field)), "source"));
+            if (!Objects.equals(row.get(field), value) || explicitEmptyProfile) {
+                update.set(field, value).set("provenance." + field, provenance);
+                changed.add(field);
+            }
+        });
+        if (changed.isEmpty()) return;
         if (mongo.updateFirst(query, update, "candidates").getMatchedCount() == 0)
             throw conflict("Candidate is erased or a merge is in progress");
-        audit.record(AuditRecord.of(tenant, "CANDIDATE_PROFILE_UPDATED").user(actor, null)
-                .resource("Candidate", id).about(id, null).detail("fields", List.of("title", "location")).build());
+        audit.record(AuditRecord.of(tenant, "CANDIDATE_PROFILE_UPDATED")
+                .user(actor, null)
+                .resource("Candidate", id)
+                .about(id, null)
+                .detail("fields", changed)
+                .build());
+    }
+
+    private List<Document> profileSkills(Object value) {
+        if (!(value instanceof List<?> entries) || entries.size() > 100)
+            throw new IllegalArgumentException("Provide at most 100 skills");
+        var skills = new LinkedHashMap<String, Document>();
+        for (Object entry : entries) {
+            if (!(entry instanceof String name) || name.isBlank() || name.trim().length() > 120)
+                throw new IllegalArgumentException("Each skill must be text between 1 and 120 characters");
+            skills.putIfAbsent(
+                    name.trim().toLowerCase(Locale.ROOT),
+                    new Document("name", name.trim()).append("source", "RECRUITER"));
+        }
+        return new ArrayList<>(skills.values());
+    }
+
+    private List<Document> profileExperience(Object value) {
+        if (!(value instanceof List<?> entries) || entries.size() > 50)
+            throw new IllegalArgumentException("Provide at most 50 experience entries");
+        var experience = new ArrayList<Document>();
+        for (Object entry : entries) {
+            if (!(entry instanceof Map<?, ?>)) throw new IllegalArgumentException("Experience entries must be objects");
+            var item = doc(entry);
+            if (!Set.of("company", "title", "period", "summary").containsAll(item.keySet()))
+                throw new IllegalArgumentException("Unsupported experience field");
+            var normalized = new Document();
+            for (String field : List.of("company", "title", "period", "summary")) {
+                Object raw = item.get(field);
+                if (raw != null && !(raw instanceof String))
+                    throw new IllegalArgumentException("Experience fields must be text");
+                String text = raw == null ? "" : raw.toString().trim();
+                if (text.length() > (field.equals("summary") ? 4000 : 200))
+                    throw new IllegalArgumentException("Experience field is too long");
+                if (!field.equals("summary") || !text.isEmpty()) normalized.put(field, text);
+            }
+            if (text(normalized, "company").isBlank()
+                    && text(normalized, "title").isBlank()
+                    && text(normalized, "summary").isBlank())
+                throw new IllegalArgumentException("Provide a company, role or experience description");
+            experience.add(normalized);
+        }
+        return experience;
     }
 
     public Document project(Document request) {

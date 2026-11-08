@@ -95,8 +95,12 @@ public class GatewaySecurityConfiguration {
                 (filter, authentication) -> {
                     if (portals != null && portals.enabled()) {
                         return portals.completeLogin(filter.getExchange(), authentication)
-                                .then(filter.getExchange().getSession().flatMap(session -> MonoRedirect.redirect(filter.getExchange(),
-                                        CandidateLoginReturn.consume(session, authentication, portals.landing(authentication)))))
+                                .then(filter.getExchange()
+                                        .getSession()
+                                        .flatMap(session -> MonoRedirect.redirect(
+                                                filter.getExchange(),
+                                                CandidateLoginReturn.consume(
+                                                        session, authentication, portals.landing(authentication)))))
                                 .onErrorResume(
                                         org.springframework.web.server.ResponseStatusException.class,
                                         error -> filter.getExchange()

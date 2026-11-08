@@ -184,7 +184,8 @@ public class SubmissionController {
             @RequestPart MultipartFile resume)
             throws Exception {
         // Receipt-based tracking/withdrawal still works, but anonymous intake is retired.
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Register and sign in with a verified candidate account before applying");
+        throw new ResponseStatusException(
+                HttpStatus.UNAUTHORIZED, "Register and sign in with a verified candidate account before applying");
     }
 
     private Document receipt(String tenant, String id, String token) {

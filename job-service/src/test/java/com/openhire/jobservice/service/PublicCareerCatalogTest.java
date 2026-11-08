@@ -69,6 +69,9 @@ class PublicCareerCatalogTest {
                         "missing",
                         "approvedVersion",
                         "questions",
+                        "$$question._id",
+                        "$$question.id",
+                        "$ifNull",
                         "careerVersion.qualification",
                         "careerVersion.goodToHaveSkills");
         assertThat(pipeline).doesNotContain("requiredAnswer", "rubric", "hiringReason", "hiringTeam");

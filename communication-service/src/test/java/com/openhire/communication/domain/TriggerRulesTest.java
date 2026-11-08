@@ -8,6 +8,14 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class TriggerRulesTest {
+    @Test
+    void panelAssignmentNotifiesOnlyAssignedStaffBeforeBooking() {
+        var plan = TriggerRules.plan("interview.panel-assigned.v1", scheduled(), "Priya Das", "Backend Engineer");
+        assertThat(plan.candidateMessage()).isNull();
+        assertThat(plan.alerts()).extracting(TriggerRules.StaffAlert::recipient).containsExactly("email:asha@x.test");
+        assertThat(plan.alerts().getFirst().eventKey()).isEqualTo(NotificationEventKey.ASSIGNED_TO_JOB_ROUND);
+    }
+
     private static Map<String, Object> scheduled() {
         return Map.of(
                 "applicationId", "app-1",

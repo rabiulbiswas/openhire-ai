@@ -87,7 +87,7 @@ must be retained. The old base Compose Keycloak had no database volume; never bl
    ```bash
    ./run-backend.sh deploy --tenant-portals --follow
    # Retain the explicit local trusted-fixture scanner bypass, if applicable:
-   ./run-backend.sh deploy --tenant-portals --no-scan --follow
+   ./run-backend.sh deploy --tenant-portals --follow
    ```
 
    Use only one of these commands. `--tenant-portals` refuses old hostname/path/storage configurations.
@@ -130,7 +130,7 @@ Other requests are unchanged. The registry/authorization checks are not disabled
 Deploy the gateway change and reload the affected page:
 
 ```bash
-./run-backend.sh deploy --tenant-portals --no-scan api-gateway --follow
+./run-backend.sh deploy --tenant-portals api-gateway --follow
 ```
 
 Five focused boundary checks cover dynamic anonymous resolution, spoofed-header removal,
@@ -155,7 +155,7 @@ scheme/forwarded-header handling; this local HTTP fix is not an AWS ingress conf
 Deploy the gateway change using the prepared portal configuration:
 
 ```bash
-./run-backend.sh deploy --tenant-portals --no-scan api-gateway --follow
+./run-backend.sh deploy --tenant-portals api-gateway --follow
 ```
 
 After signing in afresh, review GET and POST `/api/v1/jobs`. A complete valid creation must

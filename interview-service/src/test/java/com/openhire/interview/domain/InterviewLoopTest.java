@@ -105,7 +105,9 @@ class InterviewLoopTest {
 
         loop.assignPanel(round, List.of(ASHA, BEN), NOW);
         assertThat(loop.round(round).panel()).containsExactly(ASHA, BEN);
-        assertThat(loop.pendingEvents()).hasSize(1);
+        assertThat(loop.pendingEvents())
+                .extracting(InterviewTypes.PendingEvent::eventType)
+                .contains("interview.panel-assigned.v1");
         loop.schedule(
                 round, slot(NOW.plus(Duration.ofDays(1)), 60), loop.round(round).panel(), null, FEEDBACK, NOW);
         assertThatThrownBy(() -> loop.assignPanel(round, List.of(ASHA), NOW)).hasMessageContaining("rescheduling");

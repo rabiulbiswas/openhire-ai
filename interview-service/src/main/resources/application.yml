@@ -44,6 +44,8 @@ openhire:
   internal-secret: ${INTERNAL_SERVICE_SECRET:local-development-secret}
   application-url: ${APPLICATION_SERVICE_URL:http://localhost:8084}
   job-url: ${JOB_SERVICE_URL:http://localhost:8082}
+  ai-url: ${AI_GATEWAY_URL:http://localhost:8092}
+  resume-url: ${RESUME_PROCESSOR_URL:http://localhost:8086}
   security:
     mode: ${SECURITY_MODE:oidc}
   tenant:

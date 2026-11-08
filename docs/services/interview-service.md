@@ -54,7 +54,23 @@ Example schedule body (illustrative identifiers, not an instruction to send it):
 {"start":"2026-11-02T10:00:00+05:30","timezone":"Asia/Kolkata","panel":[{"name":"Panel member","email":"panel@example.com","role":"INTERVIEWER"}],"meetingUrl":"https://meet.example.com/interview"}
 ```
 
-Scorecard input is `{ratings:[{competencyId,rating}], evidence, recommendation}`. Rating/recommendation strings must match the enums in the linked DTO/domain sources. Do not assume free-form numeric ratings.
+Scorecard input is `{ratings:[{competencyId,rating}], evidence, recommendation, aiDraft?, aiReviewed?}`. An AI draft requires `aiReviewed: true` and nonempty original evidence. Original notes and the reviewed draft are retained together. Rating/recommendation strings must match the enums in the linked DTO/domain sources. Do not assume free-form numeric ratings.
+
+## Human-led interview assistance
+
+The console provides a responsive calendar/list beside the selected round's interview kit, AI questions and feedback tabs. The list supports server pagination using `GET /api/v1/interviews?week=2026-10-26&page=1&limit=6`; calendar clients may omit `page` to retrieve that week's complete schedule. Limits are 1–50 and pages start at 1.
+
+| Endpoint | Behaviour |
+| --- | --- |
+| `GET /api/v1/rounds/{id}/kit` | Assigned panel, competencies, meeting link, actual feedback deadline and submission eligibility |
+| `GET /api/v1/rounds/{id}/resume` | Application-linked parsed résumé; restricted to the assigned panel or coordinators |
+| `POST /api/v1/rounds/{id}/ai-questions` | Job-, résumé- and round-specific question suggestions; no automatic ratings |
+| `POST /api/v1/rounds/{id}/feedback-draft` with `{notes}` | Draft from the assigned interviewer's own evidence, after the round starts and before submission |
+| `POST /api/v1/applications/{id}/ai-debrief` | Evidence-linked summary of submitted scorecards, respecting blind-feedback permissions |
+
+AI calls use the gateway's `interview.assist` task, tenant model routing, budget, redaction, output validation and provenance. Every generated feedback/debrief statement must cite an exact quote from a supplied evidence source. Drafts do not mutate scorecards or hiring decisions. Manual feedback remains available when the model is unavailable; the UI requires regenerating or discarding a draft after notes change.
+
+`AI_GATEWAY_URL` defaults to `http://localhost:8092`; `RESUME_PROCESSOR_URL` defaults to `http://localhost:8086`. Compose sets service-network URLs. Preserve `docker-compose.tenant-portals.yml` when rebuilding a tenant-portal deployment. Panel assignments emit `interview.panel-assigned.v1` for assigned-staff notifications before scheduling; existing booking/change/reminder events remain in use.
 
 ## Components and purpose
 

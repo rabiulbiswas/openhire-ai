@@ -292,13 +292,15 @@ public class SubmissionService {
         var version = doc(job.get("currentVersion"));
         if (!(job.get("approvedVersion") instanceof Number approved)
                 || !(version.get("version") instanceof Number current)
-                || approved.intValue() <= 0 || approved.intValue() != current.intValue())
-            throw conflict("Job is not open for applications");
+                || approved.intValue() <= 0
+                || approved.intValue() != current.intValue()) throw conflict("Job is not open for applications");
         var answers = doc(input.get("answers"));
-        if (answers.size() > 100 || answers.values().stream()
-                .anyMatch(value -> !(value instanceof String answer) || answer.length() > 2000))
+        if (answers.size() > 100
+                || answers.values().stream()
+                        .anyMatch(value -> !(value instanceof String answer) || answer.length() > 2000))
             throw new IllegalArgumentException("Answers must be text of at most 2000 characters each");
-        for (var question : version.getList("knockoutQuestions", Document.class, List.of())) {
+        // HTTP JSON decoding produces nested Maps, while Mongo reads produce Documents.
+        for (var question : documents(version.get("knockoutQuestions"))) {
             var answer = answers.get(text(question, "id"));
             if (!(answer instanceof String value) || value.isBlank())
                 throw new IllegalArgumentException("Answer all required application questions");

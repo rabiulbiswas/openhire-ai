@@ -37,6 +37,7 @@ spring:
           jwk-set-uri: ${OIDC_JWK_SET_URI:http://localhost:8180/realms/openhire-staff/protocol/openid-connect/certs}
 openhire:
   application-url: ${APPLICATION_SERVICE_URL:http://localhost:8084}
+  resume-url: ${RESUME_PROCESSOR_URL:http://localhost:8086}
   security:
     mode: ${SECURITY_MODE:oidc}
   tenant:
@@ -48,8 +49,6 @@ openhire:
     topic: candidate.events.v1
   resume:
     directory: ${RESUME_DIRECTORY:./.openhire-resumes}
-    clamav-host: ${CLAMAV_HOST:localhost}
-    clamav-port: ${CLAMAV_PORT:3310}
 management:
   endpoints:
     web:

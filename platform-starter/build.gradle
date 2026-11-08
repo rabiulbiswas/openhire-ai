@@ -30,4 +30,6 @@ dependencies {
     testImplementation 'org.apache.kafka:kafka-clients'
     testImplementation 'org.assertj:assertj-core'
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    // Keep client-thread and container failures visible instead of SLF4J's no-op logger.
+    testRuntimeOnly 'org.springframework.boot:spring-boot-starter-logging'
 }

@@ -39,7 +39,7 @@ for attempt in $(seq 1 60); do
   sleep 3
 done
 [[ "$complete" == true ]] || { printf 'FAILED: processing did not finish within the polling window\n' >&2; exit 1; }
-printf 'PASS: resume scan, extraction and keyword screening completed\n'
+printf 'PASS: resume validation, extraction and keyword screening completed\n'
 curl --fail --silent --show-error --max-time 15 -X POST \
   "$gateway/api/v1/public/applications/$id/withdraw?tenantId=$OPENHIRE_TENANT_ID" -H "X-Application-Receipt: $receipt" >/dev/null
 [[ "$(curl --fail --silent --show-error --max-time 15 "$status_url" -H "X-Application-Receipt: $receipt" | field stage)" == WITHDRAWN ]]

@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.*;
 
 import com.mongodb.client.MongoClients;
 import java.io.*;
-import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -17,7 +16,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.*;
 
-/** Isolated Mongo + scanner socket and injected extraction faults. Real parsing has separate fixtures. */
+/** Isolated Mongo and injected extraction faults. Real parsing has separate fixtures. */
 @EnabledIfEnvironmentVariable(named = "OPENHIRE_RUN_MONGO_TESTS", matches = "true")
 class ResumeRecoveryAcceptanceTest {
     @TempDir
@@ -26,8 +25,6 @@ class ResumeRecoveryAcceptanceTest {
     private com.mongodb.client.MongoClient client;
     private MongoTemplate mongo;
     private ResumePipeline pipeline;
-    private ServerSocket scanner;
-    private final AtomicReference<String> scan = new AtomicReference<>("OK");
     private final AtomicReference<String> extract = new AtomicReference<>("OK");
 
     @BeforeEach
@@ -36,25 +33,6 @@ class ResumeRecoveryAcceptanceTest {
                 System.getenv().getOrDefault("OPENHIRE_TEST_MONGO_URI", "mongodb://localhost:27017"));
         mongo = new MongoTemplate(
                 client, "oh_phase3_test_" + UUID.randomUUID().toString().replace("-", ""));
-        scanner = new ServerSocket(0, 10, InetAddress.getLoopbackAddress());
-        Thread.startVirtualThread(() -> {
-            while (!scanner.isClosed()) {
-                try (var socket = scanner.accept()) {
-                    var input = new DataInputStream(socket.getInputStream());
-                    while (input.readByte() != 0) {}
-                    int count;
-                    while ((count = input.readInt()) != 0) input.readNBytes(count);
-                    if (scan.get().equals("TIMEOUT")) Thread.sleep(32000);
-                    else
-                        socket.getOutputStream()
-                                .write(("stream: " + (scan.get().equals("FOUND") ? "Test.Signature FOUND" : "OK")
-                                                + "\0")
-                                        .getBytes(StandardCharsets.US_ASCII));
-                } catch (Exception ignored) {
-                    if (scanner.isClosed()) return;
-                }
-            }
-        });
         pipeline = new ResumePipeline(
                 mongo,
                 directory.toString(),
@@ -64,15 +42,12 @@ class ResumeRecoveryAcceptanceTest {
                             ? ""
                             : "Fixture resume with Java Spring Boot and backend engineering experience";
                 },
-                "localhost",
-                scanner.getLocalPort(),
                 1);
     }
 
     @AfterEach
     void close() throws Exception {
         if (pipeline != null) pipeline.shutdown();
-        if (scanner != null) scanner.close();
         if (mongo != null) mongo.getDb().drop();
         if (client != null) client.close();
     }
@@ -131,25 +106,16 @@ class ResumeRecoveryAcceptanceTest {
     }
 
     @Test
-    void scannerTimeoutFailsClosedAndCanRecover() throws Exception {
-        scan.set("TIMEOUT");
+    void processesWithoutScannerAndDoesNotClaimAScanPassed() throws Exception {
         var id = upload();
-        assertQuarantinedBackoff(id);
-        scan.set("OK");
-        makeRetryDue(id);
-        var recovered = finish(id);
-        assertThat(recovered.getString("status")).isEqualTo("DONE");
-        assertThat(recovered.getInteger("attempts")).isEqualTo(2);
+        mongo.updateFirst(
+                Query.query(Criteria.where("_id").is(id)), new Update().set("steps.virusScan", "PASSED"), "resumes");
+        var result = finish(id);
+        assertThat(result.getString("status")).isEqualTo("DONE");
+        assertThat(((Document) result.get("steps")).getString("virusScan")).isEqualTo("NOT_PERFORMED");
+        assertThat(((Document) result.get("steps")).getString("extract")).isEqualTo("PASSED");
+        assertThat(result.getInteger("attempts")).isEqualTo(1);
         assertThat(pipeline.download("fixture", id)).isNotEmpty();
-    }
-
-    @Test
-    void malwareIsQuarantinedAndNotRetryable() throws Exception {
-        scan.set("FOUND");
-        var id = upload();
-        assertThat(finish(id).getString("status")).isEqualTo("REJECTED");
-        assertThatThrownBy(() -> pipeline.download("fixture", id)).isInstanceOf(RuntimeException.class);
-        assertThatThrownBy(() -> pipeline.retry("fixture", id)).isInstanceOf(RuntimeException.class);
     }
 
     @Test

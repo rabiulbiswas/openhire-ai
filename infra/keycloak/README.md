@@ -37,7 +37,7 @@ the topic, reset consumer offsets or blindly replay all events to silence the wa
 To deploy only this serialization correction after the full same-host cutover is complete:
 
 ```bash
-./run-backend.sh deploy --tenant-portals --no-scan identity-service compliance-service --follow
+./run-backend.sh deploy --tenant-portals identity-service compliance-service --follow
 ```
 
 The fix was checked with four isolated cases: raw audit JSON stays an object on the wire;
@@ -62,7 +62,7 @@ configured in Keycloak; the application does not bypass their authorization chec
 After updating the identity image, retry the invitation from the existing tenant details:
 
 ```bash
-./run-backend.sh deploy --tenant-portals --no-scan identity-service --follow
+./run-backend.sh deploy --tenant-portals identity-service --follow
 ```
 
 The recovery lookup can reuse a provider user created before role assignment failed;

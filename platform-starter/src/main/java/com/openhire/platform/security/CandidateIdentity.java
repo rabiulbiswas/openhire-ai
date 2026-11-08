@@ -13,13 +13,24 @@ import org.springframework.web.server.ResponseStatusException;
 /** Verified candidate identity only. A staff role or an email supplied in a form is never sufficient. */
 public record CandidateIdentity(String tenantId, String subject, String email) {
     public static CandidateIdentity require(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof Jwt jwt))
+        if (authentication == null
+                || !authentication.isAuthenticated()
+                || !(authentication.getPrincipal() instanceof Jwt jwt))
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sign in with your candidate account");
         var claims = jwt.getClaims();
-        var forbidden = Set.of("SUPER_ADMIN", "ORG_ADMIN", "RECRUITER", "HR_ADMIN", "HIRING_MANAGER", "INTERVIEWER", "EMPLOYEE", "AGENCY_RECRUITER");
+        var forbidden = Set.of(
+                "SUPER_ADMIN",
+                "ORG_ADMIN",
+                "RECRUITER",
+                "HR_ADMIN",
+                "HIRING_MANAGER",
+                "INTERVIEWER",
+                "EMPLOYEE",
+                "AGENCY_RECRUITER");
         if (!(claims.get("realm_access") instanceof Map<?, ?> realm)
                 || !(realm.get("roles") instanceof Collection<?> roles)
-                || !roles.contains("CANDIDATE") || roles.stream().anyMatch(forbidden::contains)
+                || !roles.contains("CANDIDATE")
+                || roles.stream().anyMatch(forbidden::contains)
                 || !Boolean.TRUE.equals(claims.get("email_verified")))
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "A verified candidate account is required");
         var tenant = TenantClaims.resolve(claims);

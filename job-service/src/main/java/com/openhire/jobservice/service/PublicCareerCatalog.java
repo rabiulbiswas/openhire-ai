@@ -159,7 +159,12 @@ public class PublicCareerCatalog {
                                             .append("as", "question")
                                             .append(
                                                     "in",
-                                                    new Document("id", "$$question.id")
+                                                    // Spring Data maps nested record ids to _id. Accept legacy id too.
+                                                    new Document(
+                                                                    "id",
+                                                                    new Document(
+                                                                            "$ifNull",
+                                                                            List.of("$$question._id", "$$question.id")))
                                                             .append("question", "$$question.question"))));
         }
         return fields;

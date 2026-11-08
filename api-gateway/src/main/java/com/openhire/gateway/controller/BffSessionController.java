@@ -104,7 +104,8 @@ public class BffSessionController {
     Mono<Map<String, Object>> publicTenant(org.springframework.web.server.ServerWebExchange exchange) {
         if (portals == null || !portals.enabled() || "admin".equals(portals.slug(exchange)))
             return Mono.error(new org.springframework.web.server.ResponseStatusException(HttpStatus.NOT_FOUND));
-        return portals.resolve(exchange, null).map(tenant -> Map.of("id", tenant.get("id"), "name", tenant.get("name")));
+        return portals.resolve(exchange, null)
+                .map(tenant -> Map.of("id", tenant.get("id"), "name", tenant.get("name")));
     }
 
     @DeleteMapping("/session")

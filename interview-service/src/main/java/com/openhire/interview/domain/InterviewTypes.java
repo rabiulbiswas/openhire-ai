@@ -50,6 +50,9 @@ public final class InterviewTypes {
                 throw new IllegalArgumentException("A panel member needs a name or an email");
             name = name == null || name.isBlank() ? email.trim() : name.trim();
             email = email == null || email.isBlank() ? null : email.trim().toLowerCase(Locale.ROOT);
+            if (name.length() > 200
+                    || (email != null && (email.length() > 254 || !email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"))))
+                throw new IllegalArgumentException("Provide a valid interviewer name and email");
             role = "SHADOW".equals(role) ? "SHADOW" : "LEAD";
         }
 
@@ -59,7 +62,7 @@ public final class InterviewTypes {
         }
 
         public boolean isViewer(Viewer viewer) {
-            if (email != null && viewer.email() != null) return email.equalsIgnoreCase(viewer.email());
+            if (email != null) return viewer.email() != null && email.equalsIgnoreCase(viewer.email());
             return viewer.name() != null && name.equalsIgnoreCase(viewer.name());
         }
     }

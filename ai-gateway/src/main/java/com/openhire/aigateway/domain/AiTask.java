@@ -11,7 +11,8 @@ public enum AiTask {
     JD_DRAFT("jd.draft", "jd.draft", false),
     MESSAGE_DRAFT("message.draft", "message.draft", false),
     NL_FILTER("nl.filter", "nl.filter", true),
-    FIT_EXPLAIN("fit.explain", "fit.explain", false);
+    FIT_EXPLAIN("fit.explain", "fit.explain", false),
+    INTERVIEW_ASSIST("interview.assist", "interview.assist", false);
 
     private final String key;
     private final String promptKey;

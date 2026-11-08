@@ -168,11 +168,17 @@ public class KeycloakIdentityProvider implements IdentityProvider {
     }
 
     @Override
-    public String registerVerifiedCandidate(String tenant, String email, String name, String password, String registration) {
+    public String registerVerifiedCandidate(
+            String tenant, String email, String name, String password, String registration) {
         // Never call provisionMember here: it may change roles on an existing staff identity.
-        var found = keycloak.get().uri(builder -> builder.path("/admin/realms/{realm}/users")
-                        .queryParam("username", email).queryParam("exact", true).build(realm))
-                .header("Authorization", "Bearer " + accessToken()).retrieve().body(List.class);
+        var found = keycloak.get()
+                .uri(builder -> builder.path("/admin/realms/{realm}/users")
+                        .queryParam("username", email)
+                        .queryParam("exact", true)
+                        .build(realm))
+                .header("Authorization", "Bearer " + accessToken())
+                .retrieve()
+                .body(List.class);
         String id;
         if (found != null && !found.isEmpty()) {
             var user = (Map<?, ?>) found.getFirst();
@@ -181,31 +187,60 @@ public class KeycloakIdentityProvider implements IdentityProvider {
                     || !List.of(registration).equals(attrs.get("candidate_registration_id")))
                 throw new IllegalArgumentException("Account already exists; sign in or use account recovery");
             id = user.get("id").toString();
-            var assigned = keycloak.get().uri("/admin/realms/{realm}/users/{id}/role-mappings/realm", realm, id)
-                    .header("Authorization", "Bearer " + accessToken()).retrieve().body(List.class);
-            if (assigned != null && assigned.stream().anyMatch(value -> {
-                var role = String.valueOf(((Map<?, ?>) value).get("name"));
-                return role.equals("SUPER_ADMIN") || (TENANT_ROLES.contains(role) && !role.equals("CANDIDATE"));
-            })) throw new IllegalArgumentException("This identity cannot be registered as a candidate");
+            var assigned = keycloak.get()
+                    .uri("/admin/realms/{realm}/users/{id}/role-mappings/realm", realm, id)
+                    .header("Authorization", "Bearer " + accessToken())
+                    .retrieve()
+                    .body(List.class);
+            if (assigned != null
+                    && assigned.stream().anyMatch(value -> {
+                        var role = String.valueOf(((Map<?, ?>) value).get("name"));
+                        return role.equals("SUPER_ADMIN") || (TENANT_ROLES.contains(role) && !role.equals("CANDIDATE"));
+                    })) throw new IllegalArgumentException("This identity cannot be registered as a candidate");
             // Retry of our own partial creation only. Do not reset any existing password.
         } else {
             int space = name.indexOf(' ');
-            var response = keycloak.post().uri("/admin/realms/{realm}/users", realm)
-                    .header("Authorization", "Bearer " + accessToken()).contentType(MediaType.APPLICATION_JSON)
-                    .body(Map.of("username", email, "email", email, "firstName", space < 0 ? name : name.substring(0, space),
-                            "lastName", space < 0 ? "" : name.substring(space + 1), "enabled", false,
-                            "emailVerified", true, "requiredActions", List.of(),
-                            "attributes", Map.of("organization_id", List.of(tenant), "candidate_registration_id", List.of(registration)),
-                            "credentials", List.of(Map.of("type", "password", "temporary", false, "value", password))))
-                    .retrieve().toBodilessEntity();
+            var response = keycloak.post()
+                    .uri("/admin/realms/{realm}/users", realm)
+                    .header("Authorization", "Bearer " + accessToken())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of(
+                            "username",
+                            email,
+                            "email",
+                            email,
+                            "firstName",
+                            space < 0 ? name : name.substring(0, space),
+                            "lastName",
+                            space < 0 ? "" : name.substring(space + 1),
+                            "enabled",
+                            false,
+                            "emailVerified",
+                            true,
+                            "requiredActions",
+                            List.of(),
+                            "attributes",
+                            Map.of(
+                                    "organization_id",
+                                    List.of(tenant),
+                                    "candidate_registration_id",
+                                    List.of(registration)),
+                            "credentials",
+                            List.of(Map.of("type", "password", "temporary", false, "value", password))))
+                    .retrieve()
+                    .toBodilessEntity();
             var location = response.getHeaders().getLocation();
             if (location == null) throw new IllegalStateException("Identity provider did not return an identifier");
             id = location.getPath().substring(location.getPath().lastIndexOf('/') + 1);
         }
         updateMemberRoles(id, Set.of("CANDIDATE"));
-        keycloak.put().uri("/admin/realms/{realm}/users/{id}", realm, id)
-                .header("Authorization", "Bearer " + accessToken()).contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("enabled", true, "emailVerified", true)).retrieve().toBodilessEntity();
+        keycloak.put()
+                .uri("/admin/realms/{realm}/users/{id}", realm, id)
+                .header("Authorization", "Bearer " + accessToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("enabled", true, "emailVerified", true))
+                .retrieve()
+                .toBodilessEntity();
         return id;
     }
 

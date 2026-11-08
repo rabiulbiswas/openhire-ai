@@ -136,8 +136,10 @@ public class InterviewLoop {
     /** Sets who will interview before a time is booked, so a scheduling link can find shared free time. */
     public void assignPanel(String roundId, List<PanelMember> panel, Instant now) {
         requireOpen();
-        round(roundId).assignPanel(panel);
-        updatedAt = now;
+        var round = round(roundId);
+        if (round.panel().equals(panel)) return;
+        round.assignPanel(panel);
+        record("interview.panel-assigned.v1", round, Map.of(), now);
     }
 
     public void reschedule(String roundId, Slot slot, int limit, Duration feedbackWindow, Instant now) {

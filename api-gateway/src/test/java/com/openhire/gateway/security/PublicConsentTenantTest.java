@@ -19,20 +19,34 @@ class PublicConsentTenantTest {
         for (var path : new String[] {"/api/v1/public/jobs?page=2", "/api/v1/public/jobs/job"}) {
             var exchange = MockServerWebExchange.from(MockServerHttpRequest.get("http://fixture.localhost" + path));
             var forwarded = new AtomicReference<ServerWebExchange>();
-            new TenantPortalFilters().portalHostBoundary(portals(HttpStatus.OK)).filter(exchange, request -> {
-                forwarded.set(request); return Mono.empty();
-            }).block();
-            assertThat(forwarded.get().getRequest().getQueryParams().getFirst("tenantId")).isEqualTo("dynamic-fixture-tenant");
-            if (path.contains("page=")) assertThat(forwarded.get().getRequest().getQueryParams().getFirst("page")).isEqualTo("2");
+            new TenantPortalFilters()
+                    .portalHostBoundary(portals(HttpStatus.OK))
+                    .filter(exchange, request -> {
+                        forwarded.set(request);
+                        return Mono.empty();
+                    })
+                    .block();
+            assertThat(forwarded.get().getRequest().getQueryParams().getFirst("tenantId"))
+                    .isEqualTo("dynamic-fixture-tenant");
+            if (path.contains("page="))
+                assertThat(forwarded.get().getRequest().getQueryParams().getFirst("page"))
+                        .isEqualTo("2");
         }
-        var exchange = MockServerWebExchange.from(MockServerHttpRequest.post("http://fixture.localhost/api/v1/public/applications")
-                .header("X-Public-Tenant-Id", "attacker"));
+        var exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.post("http://fixture.localhost/api/v1/public/applications")
+                        .header("X-Public-Tenant-Id", "attacker"));
         var forwarded = new AtomicReference<ServerWebExchange>();
-        new TenantPortalFilters().portalHostBoundary(portals(HttpStatus.OK)).filter(exchange, request -> {
-            forwarded.set(request); return Mono.empty();
-        }).block();
-        assertThat(forwarded.get().getRequest().getHeaders().getFirst("X-Public-Tenant-Id")).isEqualTo("dynamic-fixture-tenant");
+        new TenantPortalFilters()
+                .portalHostBoundary(portals(HttpStatus.OK))
+                .filter(exchange, request -> {
+                    forwarded.set(request);
+                    return Mono.empty();
+                })
+                .block();
+        assertThat(forwarded.get().getRequest().getHeaders().getFirst("X-Public-Tenant-Id"))
+                .isEqualTo("dynamic-fixture-tenant");
     }
+
     private TenantPortalAccess portals(HttpStatus status) {
         var portals = new TenantPortalAccess(true, "localhost", "oidc", "http://identity-service:8081", "fixture");
         ReflectionTestUtils.setField(

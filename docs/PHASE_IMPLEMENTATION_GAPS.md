@@ -67,7 +67,7 @@ Dependencies: these core approval changes do not need a live LLM or external cal
 ## Phase 3 — application intake, resume processing and Candidate 360
 
 - [ ] **VERIFY — planned intake load gate.** Run `scripts/testing/phase3-load.js` only against an authorized isolated test tenant/job. The notes record roughly 2,700 generated applications and no completed load run. Measure processing drain time and scanner backlog in addition to intake latency/errors.
-- [ ] **BUILD — multi-node resume storage for EKS.** The accepted local implementation uses a single-host volume. Select shared storage/object storage, then preserve quarantine, malware scanning, signed/authorized downloads and retention/legal-hold behavior across replicas. A PVC declaration alone does not prove multi-node access safety.
+- [ ] **BUILD — multi-node resume storage for EKS.** The accepted local implementation uses a single-host volume. Select shared storage/object storage, then preserve quarantined processing, signed/authorized downloads and retention/legal-hold behavior across replicas. A PVC declaration alone does not prove multi-node access safety.
 - [ ] **VERIFY/DECIDE — candidate receipt recovery and account linking.** Phase 3 explicitly lacked cross-device receipt recovery; reconcile later portal changes before deciding exactly what code remains. Test lost receipt, wrong account, expiry and tenant isolation.
 - [ ] **DECIDE — probabilistic identity matching.** Current accepted merging uses deterministic/reviewed suggestions. Decide whether calibrated probabilistic matching from the original scope is required; if so, add evaluation thresholds and false-merge tests before enabling it.
 
@@ -106,7 +106,7 @@ Dependencies: reporting-line defaults depend on Phase 2 ownership; HRIS/e-sign r
 
 ## Phase 7 — compliance, analytics and operations
 
-- [ ] **VERIFY — complete runtime acceptance.** The latest notes report the gate blocked by unhealthy ClamAV. After safe capacity correction and owner-run deployment of the changed services, execute the Phase 7 API/browser workflows with the scanner healthy.
+- [ ] **VERIFY — complete runtime acceptance.** Execute the Phase 7 API/browser workflows after deployment. Antivirus scanning has been removed and is not a runtime gate.
 - [ ] **VERIFY — distributed privacy and audit journey.** Demonstrate decision provenance, every required export/erase acknowledgement, legal holds, record retention, fairness, metric reconciliation, tenant isolation and DLQ replay. Preserve evidence and avoid real candidate deletion during testing.
 - [ ] **BUILD — external alert delivery.** Prometheus rules are implemented and tested; a notification receiver/escalation path is not configured. Connect and test a chosen receiver before production.
 - [ ] **BUILD/DECIDE — production SLO precision.** Current health-poll availability and sampled latency indicators are explicitly approximate. Define required SLOs and add request-based counters/histograms and validated alert windows if accurate percentiles/availability are required.
@@ -151,7 +151,7 @@ Latest detailed scope: [Phase 8](PHASE_8.md) and [enterprise/recovery checkpoint
 - [ ] Maintain one requirement → endpoint/UI → test mapping; close a gap with a source change plus evidence, or an explicit approved scope decision.
 - [ ] Keep core acceptance, optional extensions and production hardening separate. Existing phase labels saying “complete” do not remove their documented open items.
 - [ ] Record skipped live-LLM/provider tests explicitly. No live keys in Git, chat, generated reports or fixtures.
-- [ ] Never weaken authentication, tenant isolation, malware scanning, legal holds or approval controls to obtain a passing test.
+- [ ] Never weaken authentication, tenant isolation, file validation, legal holds or approval controls to obtain a passing test.
 
 ## Recommended execution order
 

@@ -54,7 +54,7 @@ spring:
               order: -40
               uri: ${INTERVIEW_SERVICE_URL:http://localhost:8087}
               predicates:
-                - Path=/api/v1/interviews/**,/api/v1/rounds/**,/api/v1/me/interviews,/api/v1/applications/*/interview-loop,/api/v1/applications/*/debrief
+                - Path=/api/v1/interviews/**,/api/v1/rounds/**,/api/v1/me/interviews,/api/v1/applications/*/interview-loop,/api/v1/applications/*/debrief,/api/v1/applications/*/ai-debrief
               filters:
                 - TokenRelay
                 - name: RequestRateLimiter

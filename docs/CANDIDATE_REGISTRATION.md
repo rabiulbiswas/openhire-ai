@@ -6,6 +6,7 @@ Public job browsing remains anonymous. Applying now requires a signed-in, email-
 
 - `/careers/register?returnTo=/careers/jobs/{id}/apply`: full name, email, current location, phone, password and confirmation. Step two accepts the emailed six-digit verification code. Registration completes only after verification; the candidate then signs in through the existing identity-provider login.
 - `/careers/profile`: authenticated own-profile editing. Name, location and phone can be updated; verified email/identity/tenant/role cannot be changed here.
+- The application form also lets candidates fill or correct phone and current location. Validated contact changes are saved through the existing own-profile endpoint before intake; a failed save stops submission and preserves the entered answers. Name and verified email remain read-only on the application form, and intake still derives identity and contacts from the server-side profile.
 - The top account dropdown provides the existing `/candidate/portal` dashboard, profile update, and provider-aware sign-out. The dashboard also links to the new profile editor.
 - Apply is disabled as **Applied** only for a CAREER application by that candidate to that job (including withdrawn applications). Browsing or signing in alone does not disable other jobs.
 

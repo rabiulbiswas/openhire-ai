@@ -1,4 +1,4 @@
-// Synthetic fixtures only. EICAR is the harmless standard antivirus test signature, not executable malware.
+// Synthetic file-validation and text-extraction fixtures; no antivirus scanner is used.
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
@@ -30,9 +30,7 @@ await upload('macros.docx',zip({...docx,'word/vbaProject.bin':'macro fixture'}),
 assert.equal((await finish(await upload('clean.pdf',resumePdf()))).status,'DONE');
 assert.equal((await finish(await upload('clean.docx',zip(docx)))).status,'DONE');
 assert.equal((await finish(await upload('corrupt.pdf','%PDF-1.4 corrupt fixture'))).status,'FAILED');
-const infected=await finish(await upload('antivirus-test.docx',zip({...docx,'eicar.txt':'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*'})));
-assert.equal(infected.status,'REJECTED'); assert.equal(infected.error,'MALWARE_DETECTED');
-console.log('PASS: real ClamAV clean/EICAR handling, PDF/DOCX extraction, corrupt content, traversal and macro rejection');
+console.log('PASS: PDF/DOCX extraction, corrupt content, traversal and macro rejection');
 const root=new URL('../../../node_modules/.pnpm/',import.meta.url);
 const installed=readdirSync(root).find(name=>name.startsWith('sharp@')); assert(installed,'Install workspace UI dependencies for the image-only PDF fixture');
 const sharpDir=new URL(`${installed}/node_modules/sharp/`,root);

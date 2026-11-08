@@ -9,7 +9,6 @@ Operational commands live in [`scripts/`](../scripts/README.md), not here.
 ```text
 infra/
 ├── README.md
-├── clamav/
 │   ├── README.md
 │   └── start-local.sh
 ├── keycloak/
@@ -35,7 +34,6 @@ infra/
 | Component | Purpose | When used |
 | --- | --- | --- |
 | Keycloak | Authenticates staff and candidates and issues OIDC tokens | Normal local OIDC sign-in and future deployed environments |
-| [ClamAV](clamav/README.md) | Resume malware scanning, foreground lifecycle and signature maintenance | Local Phase 3 uploads; scanner failure remains fail-closed |
 | Helm chart | Describes how backend application containers run in Kubernetes | Offline CI validation now; a reviewed Kubernetes/EKS deployment later |
 | Prometheus | Collects operational metrics and evaluates alert rules | Optional local monitoring; not needed for a normal Java build |
 
@@ -117,7 +115,7 @@ Important defaults and boundaries:
 - Containers run non-root with read-only root filesystems and writable temporary storage. Provider credential files
   can use explicitly configured read-only volumes; they are not embedded in images.
 
-**Not provisioned:** EKS, ECR repositories, IAM permissions, MongoDB, Redis, Kafka, Keycloak, Ollama, ClamAV,
+**Not provisioned:** EKS, ECR repositories, IAM permissions, MongoDB, Redis, Kafka, Keycloak, Ollama,
 SMTP infrastructure, ingress controllers, persistent volumes, TLS certificates or runtime secrets. Arrange these
 separately before deploying. A rendered chart does not prove connectivity, failover or application acceptance.
 
@@ -174,7 +172,7 @@ The absolute `/etc/prometheus/alerts.yml` reference in the test file is why the 
 ## Related configuration outside infra
 
 - [`docker-compose.yml`](../docker-compose.yml): local infrastructure images, ports, profiles, volumes and environment
-  wiring, including Redis, Kafka, ClamAV and Mailpit. Tika is embedded in resume-processor; its image
+  wiring, including Redis, Kafka and Mailpit. Tika is embedded in resume-processor; its image
   includes native Tesseract/English OCR data. MongoDB and the LLM are externally supplied.
 - [`run-backend.sh`](../run-backend.sh) and [`scripts/deployment/`](../scripts/deployment/): explicit local startup tools.
 - [`scripts/setup/`](../scripts/setup/): reviewed identity configuration tools.

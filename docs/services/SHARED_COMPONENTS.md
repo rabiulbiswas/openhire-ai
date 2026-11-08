@@ -11,8 +11,7 @@ Libraries and infrastructure below support multiple services; they are not extra
 | Redis | Sessions, selected caches, locks and throttles | Shared ephemeral coordination, not durable workflow truth |
 | Kafka | Commands, lifecycle/audit/delivery events | Asynchronous decoupling and replay with consumer deduplication |
 | Local LLM / compatible providers | AI tasks through ai-gateway | Central guardrails/model policy/provenance; results remain advisory |
-| ClamAV | Resume malware scan | Unknown/outage is not a clean result |
-| Embedded Tika / Tesseract | Inside resume-processor | Extract PDF/DOC/DOCX; native OCR fallback for sparse PDFs; not a malware scanner |
+| Embedded Tika / Tesseract | Inside resume-processor | Extract PDF/DOC/DOCX; native OCR fallback for sparse PDFs; antivirus scanning is not provided |
 | SMTP | Configured channel delivery | Transport acceptance is not recipient reading confirmation |
 | Actuator / optional Prometheus | Health and operations | Measurements are not end-to-end business acceptance |
 | Mounted secrets / AES-GCM | Provider credentials, grants and backups | Keep credentials out of source/API views/logs; recover keys separately |

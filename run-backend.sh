@@ -4,11 +4,12 @@ set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMPOSE_FILE="${SCRIPT_DIR}/docker-compose.yml"
+COMPOSE_OVERRIDES=()
 PROJECT_NAME="${OPENHIRE_DOCKER_PROJECT:-openhire}"
 WAIT_SECONDS="${OPENHIRE_STARTUP_TIMEOUT:-240}"
 
 compose() {
-  docker compose --project-name "${PROJECT_NAME}" --file "${COMPOSE_FILE}" "$@"
+  docker compose --project-name "${PROJECT_NAME}" --file "${COMPOSE_FILE}" "${COMPOSE_OVERRIDES[@]+${COMPOSE_OVERRIDES[@]}}" "$@"
 }
 
 usage() {
@@ -18,7 +19,7 @@ usage() {
     "Commands:" \
     "  deploy   Build/recreate all or named backend applications and follow live logs (deploy --help for options)" \
     "  up       Build and start infrastructure plus Phase 1 and Phase 2 services (uses host MongoDB) (default)" \
-    "  phase3   Build and start Phase 3 services, resume scanning/extraction and existing services" \
+    "  phase3   Build and start Phase 3 services, resume extraction and existing services" \
     "  phase4   Build and start Phase 4 interview, communication and delivery services (includes Phase 3)" \
     "  phase5   Build and start Phase 5 offer and employee services (includes Phases 3 and 4)" \
     "  phase6   Build and start Phase 6 AI gateway, AI workers and talent services (includes Phases 3 to 5; needs Ollama on the host)" \
@@ -120,6 +121,19 @@ if [[ "${command_name}" == "deploy" ]]; then
 fi
 
 require_docker
+
+# Keep an existing portal's /auth paths and tenant-aware JWT configuration on phase restarts.
+existing_proxy="$(docker ps --all --quiet \
+  --filter "label=com.docker.compose.project=$PROJECT_NAME" \
+  --filter 'label=com.docker.compose.service=tenant-proxy')"
+if [[ -n "$existing_proxy" ]]; then
+  COMPOSE_OVERRIDES=(--file "${SCRIPT_DIR}/docker-compose.tenant-portals.yml")
+  case "$command_name" in
+    up|phase3|phase4|phase5|phase6|phase7|phase8|restart)
+      OPENHIRE_DOCKER_PROJECT="$PROJECT_NAME" bash "${SCRIPT_DIR}/scripts/setup/check-portal-keycloak.sh"
+      ;;
+  esac
+fi
 
 case "${command_name}" in
   up)

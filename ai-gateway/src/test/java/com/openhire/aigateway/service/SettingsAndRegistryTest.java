@@ -45,7 +45,8 @@ class SettingsAndRegistryTest {
                         "jd.draft",
                         "message.draft",
                         "nl.filter",
-                        "fit.explain");
+                        "fit.explain",
+                        "interview.assist");
         assertThat(view.tasks().get("match.judge").model()).isEqualTo("qwen2.5:3b-instruct");
         assertThat(view.tasks().get("embeddings").model()).isEqualTo("nomic-embed-text");
         assertThat(view.providers()).extracting(p -> p.id()).containsExactly("ollama", "openai");
@@ -184,7 +185,8 @@ class SettingsAndRegistryTest {
                         "jd.draft@4",
                         "message.draft@1",
                         "nl.filter@1",
-                        "fit.explain@1");
+                        "fit.explain@1",
+                        "interview.assist@1");
         assertThat(rig.admin.get(T, "match.criterion.judge@2").status()).isEqualTo(PromptStatus.SHADOW);
         assertThat(rig.admin.get(T, "match.criterion.judge@1").status()).isEqualTo(PromptStatus.ACTIVE);
         assertThat(list).filteredOn(p -> p.status() == PromptStatus.ACTIVE).allMatch(p -> p.trafficPct() == 100);
@@ -207,7 +209,7 @@ class SettingsAndRegistryTest {
                 edited.updatedAt()));
         new PromptRegistry(rig.prompts, rig.clock).ensureSeeded(T);
         assertThat(rig.admin.get(T, "jd.draft@4").systemTemplate()).isEqualTo("EDITED {{title}}");
-        assertThat(rig.admin.list("other")).hasSize(7);
+        assertThat(rig.admin.list("other")).hasSize(8);
         assertThat(rig.prompts.list("other")).extracting(p -> p.tenantId()).containsOnly("other");
     }
 
@@ -239,7 +241,10 @@ class SettingsAndRegistryTest {
                 "summary",
                 "criteria",
                 "current",
-                "historical")) vars.put(key, "v-" + key);
+                "historical",
+                "mode",
+                "context",
+                "sources")) vars.put(key, "v-" + key);
         rig.registry.list(T).forEach(p -> {
             assertThat(p.renderSystem(vars)).isNotBlank();
             assertThat(p.renderUser(vars)).doesNotContain("{{");

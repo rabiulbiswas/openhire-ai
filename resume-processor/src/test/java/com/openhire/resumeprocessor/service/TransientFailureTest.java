@@ -14,8 +14,6 @@ class TransientFailureTest {
                 .isTrue();
         assertThat(ResumePipeline.transientFailure(new SocketTimeoutException("read timed out")))
                 .isTrue();
-        assertThat(ResumePipeline.transientFailure(new ResumePipeline.Unavailable("SCANNER_UNAVAILABLE")))
-                .isTrue();
         assertThat(ResumePipeline.transientFailure(new ResumePipeline.Unavailable("EXTRACTION_UNAVAILABLE")))
                 .isTrue();
 

@@ -16,11 +16,14 @@ class PublicCareerIntakeTest {
     void refusesMultipartTenantOverrideBeforeCreatingAnApplication() throws Exception {
         var submissions = mock(SubmissionService.class);
         var mvc = MockMvcBuilders.standaloneSetup(new SubmissionController(submissions, mock(Access.class)))
-                .setControllerAdvice(new GlobalExceptionHandler()).build();
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
         mvc.perform(multipart("/api/v1/public/applications")
-                .file(new MockMultipartFile("resume", "resume.pdf", "application/pdf", "%PDF-1.7 demo".getBytes()))
-                .param("tenantId", "other-tenant").header("Idempotency-Key", "key")
-                .header("X-Public-Tenant-Id", "host-tenant"))
+                        .file(new MockMultipartFile(
+                                "resume", "resume.pdf", "application/pdf", "%PDF-1.7 demo".getBytes()))
+                        .param("tenantId", "other-tenant")
+                        .header("Idempotency-Key", "key")
+                        .header("X-Public-Tenant-Id", "host-tenant"))
                 .andExpect(status().isUnauthorized());
         verifyNoInteractions(submissions);
     }

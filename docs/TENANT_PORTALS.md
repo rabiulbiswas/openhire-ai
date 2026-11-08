@@ -60,7 +60,7 @@ realm changes, clients and passwords. The portal override now mounts `<project>_
    ```bash
    ./run-backend.sh deploy --tenant-portals --follow
    # If retaining the existing local trusted-fixture scanning bypass, use instead:
-   ./run-backend.sh deploy --tenant-portals --no-scan --follow
+   ./run-backend.sh deploy --tenant-portals --follow
    ```
 
    This builds the current sources and recreates the proxy after the applications start, so Nginx loads the
@@ -261,9 +261,9 @@ role definitions are not automatically converted into Keycloak business roles. B
    ./scripts/deployment/deploy-local.sh --tenant-portals
    ```
 
-   The first issuer cutover must update all services. Add `--no-scan` only when intentionally using
-   the trusted synthetic-resume override. Reuse `--tenant-portals` on later deployments; omitting it restores
-   the base Compose configuration for selected services, which would mix issuers. This flag does not change
+   The first issuer cutover must update all services. Antivirus scanning is no longer part of deployment.
+   Do not use only the base Compose configuration for selected services, which would mix issuers.
+   The `--tenant-portals` flag does not change
    Keycloak clients or automatically migrate existing Keycloak storage.
 9. Open `http://admin.localhost/login`, onboard Codlogicx and open the activation email in Mailpit. Then use
    `http://codlogicx.localhost/login`. Do not use an ORG_ADMIN account to sign in to the platform portal.

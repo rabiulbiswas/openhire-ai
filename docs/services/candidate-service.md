@@ -74,10 +74,10 @@ Deploy the updated candidate-service (including service-support's tenant/ID inde
 refresh the updated console. For the local tenant portal stack:
 
 ```sh
-./run-backend.sh deploy --tenant-portals --no-scan candidate-service --follow
+./run-backend.sh deploy --tenant-portals candidate-service --follow
 ```
 
-`--no-scan` is only for trusted local test uploads. No Keycloak role or mapper change is
+No Keycloak role or mapper change is
 required for this navigation fix. The backend still enforces its existing staff access
 and tenant boundary; other-tenant or nonexistent profile IDs continue to return 404.
 

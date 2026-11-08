@@ -80,10 +80,15 @@ operator-managed Keycloak clients, exact callback URLs and email/theme setup. Lo
 Branded login, OTP and recovery now stay on each portal's hostname under `/auth/...`; `auth.localhost` is retired.
 Existing installations must follow the [safe same-host authentication cutover](docs/SAME_HOST_AUTH.md) before
 recreating Keycloak: preserve its existing accounts/client settings first, then deploy **all services** with
-`./scripts/deployment/deploy-local.sh --tenant-portals` (add `--no-scan` to retain that local mode).
+`./scripts/deployment/deploy-local.sh --tenant-portals`.
 The cutover changes token issuers and the internal authentication path; rebuild/update all 18 applications.
 No client callbacks move to the auth host; they stay on each portal. Deployment does not configure clients
 or establish runtime acceptance.
+
+After the initial portal setup, the deployment helper and `run-backend.sh` preserve the tenant override
+automatically when this project's tenant-proxy container exists (including when stopped). This prevents
+ordinary rebuilds from disabling public tenant metadata or reverting JWT issuers. The proxy refreshes gateway and Keycloak DNS addresses
+automatically, so recreating an application does not require a manual proxy restart to clear stale IPs.
 
 The earlier domain modules use ports/adapters. Phase 3 also includes controller/use-case workflow components
 that coordinate Mongo-backed processing records and internal service clients:
@@ -101,7 +106,6 @@ use MongoTemplate directly for conditional claims and embedded-outbox updates; t
 ### 1. Prerequisites
 
 - Docker Desktop/Engine running, with Docker Compose v2 supporting `up --wait` and `--wait-timeout`.
-  Local `--no-scan` mode requires Compose 2.24.4+ for the override syntax.
 - MongoDB server running on your host or at a configured reachable URI. Compass is only the GUI client.
 - Internet access for the initial Docker images and Gradle dependency downloads.
 - Available CPU/memory for the selected services. The full stack includes 18 Java applications plus infrastructure;
@@ -116,11 +120,11 @@ JVM builds/runs; Node and pnpm are needed when running the frontend separately.
 Resume extraction now runs **inside `resume-processor`** using embedded Tika and native Tesseract;
 there is no separate Tika container or `TIKA_URL`. The resume image installs English OCR data automatically.
 For direct Java runs on macOS, install `brew install tesseract` and check `tesseract --list-langs` first.
-ClamAV remains separate unless you explicitly select the existing local-only no-scan mode.
+Antivirus scanning is removed in every deployment; upload validation and text/OCR extraction remain enabled.
 See [resume extraction settings and limits](docs/services/resume-processor.md).
 
 After pulling this change, rebuild the resume image using `./run-backend.sh deploy --follow resume-processor`
-(or add `--no-scan` to preserve that local mode). An old `openhire-tika-1` container may remain as an orphan;
+An old `openhire-tika-1` container may remain as an orphan;
 it is no longer used. Stop it manually after confirming its ownership; do not remove shared infrastructure
 or volumes. No running container is stopped automatically by this source change.
 
@@ -160,12 +164,6 @@ From the `openhire-ai` repository root:
 # Build all 18 backend applications, start dependencies, verify startup and follow logs
 ./run-backend.sh deploy --follow
 
-# Local trusted-fixture testing: deploy all services without ClamAV and follow combined logs
-./run-backend.sh deploy --no-scan --follow
-
-# Apply no-scan mode only to the resume processor
-./run-backend.sh deploy --no-scan --follow resume-processor
-
 # Rebuild only selected applications; other business dependencies must already be running
 ./run-backend.sh deploy identity-service api-gateway
 
@@ -196,33 +194,22 @@ logs and exit nonzero. Successful health checks are not a substitute for workflo
 The script preserves infrastructure containers and named volumes; it does not remove images, prune Docker,
 run `down`, add a MongoDB container, start an LLM, change Docker memory, or deploy the frontend/Prometheus.
 MongoDB must already be running at the configured URI. Required Keycloak/Redis/Kafka and, when selected,
-scanner/parser/mail infrastructure are started if needed. Existing infrastructure is not recreated, so configuration
+mail infrastructure are started if needed. Existing infrastructure is not recreated, so configuration
 changes to it need a separate reviewed action. Selected application containers are recreated even if their image tag
 is unchanged. Live model-dependent features still need an external configured model; this script does not implement
 a no-LLM feature mode. Running all applications requires sufficient machine resources.
 
-#### Local resume testing without ClamAV
+#### Resume processing without antivirus scanning
 
-`--no-scan` loads `docker-compose.local-no-scan.yml`, sets `RESUME_SCAN_ENABLED=false` and activates
-the resume processor's `local-no-scan` profile. It skips ClamAV startup and stops the existing ClamAV
-container only after a selected resume-processor deployment passes startup checks. Signature data is retained.
-If resume-processor is not selected, its running configuration and ClamAV are not changed.
+Antivirus scanning is removed from all deployment environments. File-size/type validation, DOCX archive and macro
+checks, Tika extraction, OCR fallback, tenant authorization and bounded retries remain enabled. New processing results
+record `virusScan: NOT_PERFORMED`; this is never a claim that a document is malware-free. Downloads remain blocked
+until extraction succeeds. Historical results and previously rejected documents are not automatically changed.
 
-Use **trusted synthetic resumes only**. File validation and extraction remain enabled, but malware scanning
-is bypassed and recorded as `SKIPPED_LOCAL_DEV`, never `PASSED`. This mode cannot validate antivirus
-protection and must not be used in shared/production deployments. It does not disable OIDC authentication.
-Existing failed uploads are not automatically retried by this configuration change.
-
-Pass `--no-scan` on every deployment that should retain this mode. To restore normal scanning:
-
-```bash
-./run-backend.sh deploy --follow resume-processor
-```
-
-That starts the scanner dependency and recreates the resume processor with scanning enabled by default
-(remove any separate `RESUME_SCAN_ENABLED=false` environment override). Previously skipped uploads
-are not retroactively scanned. See the [ClamAV guide](infra/clamav/README.md) for direct Compose commands
-and signature maintenance. No extra manual `stop clamav` command is needed when using `--no-scan`.
+Rebuild the resume processor with `./run-backend.sh deploy --follow resume-processor`. No special profile or flag is
+needed. The old `--no-scan` flag and override filename remain inert compatibility shims for existing operator commands.
+Existing scanner containers are no longer managed by Compose; stop/remove only this project's obsolete scanner
+container after verifying ownership. Retain its old volume unless separately choosing to delete that data.
 
 ### 4. Check startup and open the application
 
@@ -286,17 +273,36 @@ is not a substitute for named volumes or backups; infrastructure recreation must
 | Build fails | Read the first Gradle/compiler error in the build output. No startup is attempted after a failed build. |
 | Mongo connection refused | Confirm the host Mongo server, container-reachable address, authentication and each service URI. Boot 4 uses `spring.mongodb.uri`. |
 | Port already allocated | Identify the existing listener or other Compose project; change the appropriate port and dependent public URLs, or intentionally stop only the conflicting process. |
-| ClamAV unhealthy / exit 137 | Inspect scanner logs and memory pressure; initial signature downloads may delay startup. Reduce simultaneous workloads. Only for trusted synthetic local fixtures, use the explicit `--no-scan` mode above; never bypass scanning for real uploads or production. |
 | Startup timeout | Inspect the printed service status and recent logs. Increase timeout only for genuinely slow startup, not persistent failures. |
 | Missing service after selective deployment | Named-service deployment does not start other business services. Start the required phase or full stack first. |
 | Old behavior after source edits | Use `deploy <service>` to rebuild/recreate. `--no-build` intentionally uses the existing image. |
-| Kafka coordinator unavailable / disconnects | Check current consumer lag and broker health before changing timeouts. Rebalances followed by stable groups can be normal recovery. Local Kafka probes use a separate 16–64 MB heap every 30 seconds to avoid inheriting the broker heap within the 768 MB limit. Earlier restart counts do not identify their cause. |
+| Kafka coordinator unavailable / disconnects | Check current consumer lag, broker logs and Docker CPU/memory pressure before changing timeouts. Simultaneous Kafka heartbeats and Redis timeouts can indicate host contention. Rebalances followed by stable groups can be normal recovery. Local Kafka has a 512 MB heap with a 1 GB container limit, higher relative CPU priority, and separate 16–64 MB CLI probes. Earlier restart counts do not identify their cause. |
+| Deferred delivery release paused | The dispatcher could not access Redis or delivery storage. It keeps pending deliveries and retries on the next scheduled run (30 seconds by default), without sending if it cannot acquire the shared lock. A recovery message appears when storage becomes accessible again. Check Redis health and host resource pressure; do not clear Redis or reset Kafka offsets. |
 | Gateway `creationTime key must not be null` | Rebuild/recreate `api-gateway` to load the incomplete-session recovery customizer, then sign in again. Sessions missing required Redis metadata are treated as absent, without restoring their authentication or clearing unrelated Redis data. Do not use `FLUSHALL`/`FLUSHDB`. Redis outages and other corruption still require investigation. |
 | Sign-in/redirect failure | Start the auth UI, check configured UI/issuer URLs and Keycloak client settings, and inspect gateway/identity logs. |
 | AI unavailable | No model is started by this launcher. Manual workflows and fallback behavior need separate validation; do not expect AI drafts without a model. |
 
 On failed startup the launcher exits nonzero, prints diagnostics and retains containers for inspection; it does not
 roll back a partial deployment automatically. Logs may contain sensitive application information: redact before sharing.
+
+Local Compose application JVMs use two effective processors and two Netty event-loop threads each to avoid multiplying
+background pools across all 18 services. This sizes thread pools; it is not a two-core CPU quota. Set
+`OPENHIRE_LOCAL_JAVA_TOOL_OPTIONS` to override these local defaults, then recreate the affected application containers.
+Kafka and Redis have higher relative CPU shares under contention; shares do not reserve physical CPU time or overcome
+host swapping. If sustained contention continues, run a smaller service phase or free host resources. Increasing the
+Docker VM allocation is only useful when the host has spare memory. No data volumes or consumer offsets need resetting.
+
+On macOS, sleep pauses the local Docker VM. On wake, Kafka can report missed heartbeats, lost coordinators and
+rebalances, and in-flight Redis commands may time out. Keep the Mac awake while testing or presenting the local stack.
+For a two-hour demo, run this in a separate terminal (Ctrl+C ends the assertion early):
+
+```bash
+caffeinate -i -t 7200
+```
+
+This temporarily prevents idle system sleep; it does not change saved power settings or prevent lid-close/forced sleep.
+After waking, allow consumers to rejoin and check service health before retrying a request. Do not erase queues or data
+to recover from a sleep-related disconnect.
 
 ## Optional phase-based startup
 
@@ -359,8 +365,7 @@ Mongo-gated acceptance tests are skipped; a successful default test run does not
 
 ### 3. Run resume recovery acceptance with MongoDB
 
-Start your local MongoDB server first; Compass is a client, not a database server. The fixture starts its own
-scanner socket and injects extraction faults, so ClamAV, Tika Server, Redis, Kafka and the deployed resume service are not required
+Start your local MongoDB server first; Compass is a client, not a database server. The fixture injects extraction faults, so Tika Server, Redis, Kafka and the deployed resume service are not required
 for this specific test class. Keep the trailing slash on the base Mongo URI for compatibility with other tests.
 
 ```bash
@@ -376,16 +381,20 @@ OPENHIRE_TEST_MONGO_URI=mongodb://localhost:27017/ \
 bash gradlew :resume-processor:test --rerun-tasks --no-daemon
 ```
 
-`--rerun-tasks` prevents a previous test result from being reused after changing environment flags. Allow time
-for the intentional scanner timeout (30 seconds). The tests verify quarantine, automatic retry backoff,
-recovery, OCR fallback, malware rejection and retry exhaustion. Do not change retries to fail immediately
+`--rerun-tasks` prevents a previous test result from being reused after changing environment flags. The tests verify quarantine, automatic retry backoff,
+recovery, OCR fallback, explicit NOT_PERFORMED scan reporting and retry exhaustion. Do not change retries to fail immediately
 or disable tests to make CI pass. The JVM class-data-sharing warning is not itself a test failure.
 
 ### 4. Check the full backend workspace
 
 ```bash
-# Formatting, default tests and executable JARs for all applicable modules
-bash gradlew spotlessCheck test bootJar --no-daemon --max-workers=2
+# Full build: formatting, checks, default tests, shared libraries and executable JARs
+# Force test execution rather than reusing a previous up-to-date result.
+bash gradlew spotlessCheck build bootJar --rerun-tasks --no-daemon --max-workers=2 --continue
+
+# Code cleanup: apply Java formatting, then verify again (modifies source files).
+bash gradlew spotlessApply --no-daemon --max-workers=2
+bash gradlew spotlessCheck build bootJar --rerun-tasks --no-daemon --max-workers=2 --continue
 
 # Shared-library tests (Docker must be running for infrastructure smoke coverage)
 docker info
@@ -397,10 +406,30 @@ provide the same `OPENHIRE_RUN_MONGO_TESTS=true` and `OPENHIRE_TEST_MONGO_URI` v
 `--rerun-tasks`, and supply each test suite's required dependencies. Live LLM, external-provider and disaster
 recovery acceptance require additional setup; the default build is not a substitute for those checks.
 
+To run the Mongo integration suites, including candidate registration, against a **local test database server**:
+
+```bash
+OPENHIRE_RUN_MONGO_TESTS=true \
+OPENHIRE_TEST_MONGO_URI=mongodb://localhost:27017/ \
+OPENHIRE_TEST_MONGO=mongodb://localhost:27017 \
+bash gradlew test --rerun-tasks --no-daemon --max-workers=2
+```
+
+The two Mongo URI variables support different test fixtures; keep the trailing slash on
+`OPENHIRE_TEST_MONGO_URI`. These suites create and clean up fixture databases. Docker must be running
+for Testcontainers tests. Live model/provider checks and recovery rehearsals remain opt-in;
+review their dependencies and isolation before enabling them. Do not run tenant seed scripts or
+live workflow verification scripts as part of a routine build.
+
+`spotlessApply` means source formatting, not deleting application data. Gradle `clean` is optional:
+it removes generated build outputs and test reports, not databases. For a fresh rebuild, insert
+`clean` before `spotlessCheck` in the full-build command. Run backend and frontend builds sequentially
+on smaller development machines.
+
 ### 5. Validate CI helpers without building Java
 
 ```bash
-node --test .github/scripts/*.test.mjs scripts/testing/deploy-local.test.mjs scripts/testing/mongo-recovery.test.mjs
+node --test .github/scripts/*.test.mjs scripts/testing/*.test.mjs scripts/setup/*.test.mjs
 bash -n run-backend.sh scripts/deployment/deploy-local.sh
 helm lint infra/helm/openhire --set image.tag=local-validation
 helm template openhire infra/helm/openhire --set image.tag=local-validation > /dev/null

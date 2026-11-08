@@ -1,5 +1,7 @@
 # Phase 7 — low-memory monitoring and record retention
 
+> Scanner removal update: résumé antivirus scanning has been removed in all environments. Scanner requirements and acceptance results below are historical; see [current resume processing](services/resume-processor.md).
+
 These additions do not require increasing Docker Desktop's memory allocation. They do not fix the separate
 ClamAV/full-stack memory problem, and a container cap is not a guarantee that a saturated host has spare memory.
 

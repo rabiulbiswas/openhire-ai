@@ -49,16 +49,20 @@ public class TenantPortalFilters {
                     return exchange.getResponse().setComplete();
                 }
                 var routed = clean;
-                if (path.equals("/api/v1/public/applications") || path.startsWith("/api/v1/public/candidate-registrations")) {
+                if (path.equals("/api/v1/public/applications")
+                        || path.startsWith("/api/v1/public/candidate-registrations")) {
                     if ("admin".equals(portals.slug(clean))) {
                         exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
                         return exchange.getResponse().setComplete();
                     }
-                    routed = clean.mutate().request(request -> request.headers(headers ->
-                            headers.set("X-Public-Tenant-Id", tenant.get("id").toString()))).build();
+                    routed = clean.mutate()
+                            .request(request -> request.headers(headers -> headers.set(
+                                    "X-Public-Tenant-Id", tenant.get("id").toString())))
+                            .build();
                 }
-                if ((path.equals("/api/v1/public/consent") || path.equals("/api/v1/public/jobs")
-                        || path.startsWith("/api/v1/public/jobs/"))
+                if ((path.equals("/api/v1/public/consent")
+                                || path.equals("/api/v1/public/jobs")
+                                || path.startsWith("/api/v1/public/jobs/"))
                         && org.springframework.http.HttpMethod.GET.equals(
                                 clean.getRequest().getMethod())) {
                     if ("admin".equals(portals.slug(clean))) {

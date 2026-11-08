@@ -51,6 +51,20 @@ public class InterviewRound {
     }
 
     void schedule(Slot next, List<PanelMember> members, String meeting, Duration feedbackWindow) {
+        validatePanel(members);
+        if (meeting != null && !meeting.isBlank()) {
+            java.net.URI url;
+            try {
+                url = java.net.URI.create(meeting);
+            } catch (IllegalArgumentException invalid) {
+                throw new IllegalArgumentException("Provide a valid meeting URL");
+            }
+            if (meeting.length() > 2048
+                    || url.getHost() == null
+                    || url.getUserInfo() != null
+                    || !Set.of("http", "https").contains(url.getScheme()))
+                throw new IllegalArgumentException("Meeting URL must use http or https");
+        }
         if (!Set.of(RoundStatus.UNSCHEDULED, RoundStatus.CANCELLED, RoundStatus.NO_SHOW)
                 .contains(status)) throw new IllegalStateException("Round " + name + " is already " + status);
         if (members.isEmpty()) throw new IllegalArgumentException("Assign at least one interviewer");
@@ -66,11 +80,20 @@ public class InterviewRound {
     }
 
     void assignPanel(List<PanelMember> members) {
+        validatePanel(members);
         if (!Set.of(RoundStatus.UNSCHEDULED, RoundStatus.CANCELLED, RoundStatus.NO_SHOW)
                 .contains(status))
             throw new IllegalStateException("Change the panel of a booked round by rescheduling it");
         if (members.isEmpty()) throw new IllegalArgumentException("Assign at least one interviewer");
         panel = new ArrayList<>(members);
+    }
+
+    private static void validatePanel(List<PanelMember> members) {
+        if (members == null || members.isEmpty() || members.size() > 10)
+            throw new IllegalArgumentException("Assign 1 to 10 interviewers");
+        if (members.stream().anyMatch(java.util.Objects::isNull)
+                || members.stream().map(PanelMember::key).distinct().count() != members.size())
+            throw new IllegalArgumentException("Duplicate or invalid interviewer");
     }
 
     void reschedule(Slot next, Instant now, int limit, Duration feedbackWindow) {
@@ -122,10 +145,12 @@ public class InterviewRound {
             if (competencies.stream().noneMatch(value -> value.id().equals(entry.competencyId())))
                 throw new IllegalArgumentException("Unknown competency " + entry.competencyId());
             if (entry.rating() == null) throw new IllegalArgumentException("Rate every competency");
-            rated.add(entry.competencyId());
+            if (!rated.add(entry.competencyId()))
+                throw new IllegalArgumentException("A competency can be rated only once");
         }
         if (rated.size() != competencies.size()) throw new IllegalArgumentException("Rate every competency");
         if (evidence == null || evidence.isBlank()) throw new IllegalArgumentException("Evidence notes are required");
+        if (evidence.length() > 12500) throw new IllegalArgumentException("Evidence is too long");
         scorecards.add(new Scorecard(
                 member.key(),
                 viewer.subject(),

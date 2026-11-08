@@ -10,7 +10,6 @@ LOG_TAIL="${OPENHIRE_LOG_TAIL:-200}"
 FOLLOW_LOGS="${OPENHIRE_FOLLOW_LOGS:-1}"
 BUILD_IMAGES=1
 LOGS_ONLY=0
-NO_SCAN=0
 TENANT_PORTALS=0
 ALL_SERVICES=(identity-service job-service approval-service application-service candidate-service
   resume-processor interview-service communication-service notification-dispatcher offer-service
@@ -29,8 +28,9 @@ Required shared infrastructure is started if needed, never forcibly recreated or
 
 Options:
   --no-build    Use existing images; fail if a required application image is missing
-  --no-scan     Local trusted-fixture mode: disable resume scanning via Compose override
+  --no-scan     Deprecated compatibility option; resume antivirus scanning has been removed
   --tenant-portals Enable the tenant proxy after operator-managed Keycloak setup
+                   Existing portal installations are detected and preserved automatically
   --follow      Force continuous combined logs (overrides OPENHIRE_FOLLOW_LOGS=0)
   --logs-only   Watch existing services without building or restarting anything
   --no-follow   Return after startup checks instead of following logs
@@ -65,7 +65,7 @@ for argument in "$@"; do
   case "$argument" in
     --help|-h) usage; exit 0 ;;
     --no-build) BUILD_IMAGES=0 ;;
-    --no-scan) NO_SCAN=1 ;;
+    --no-scan) printf 'Resume antivirus scanning has been removed; --no-scan is no longer needed.\n' ;;
     --tenant-portals) TENANT_PORTALS=1 ;;
     --no-follow) FOLLOW_LOGS=0 ;;
     --follow|--combined-logs) FOLLOW_LOGS=1 ;;
@@ -85,9 +85,6 @@ if (( ${#SERVICES[@]} == 0 )); then SERVICES=("${ALL_SERVICES[@]}"); fi
 # Resolve .env and relative Compose paths from backend regardless of the caller's cwd.
 cd "$BACKEND_DIR"
 COMPOSE_FILES=(--file "$BACKEND_DIR/docker-compose.yml")
-if (( NO_SCAN )); then
-  COMPOSE_FILES+=(--file "$BACKEND_DIR/docker-compose.local-no-scan.yml")
-fi
 if (( TENANT_PORTALS )); then
   COMPOSE_FILES+=(--file "$BACKEND_DIR/docker-compose.tenant-portals.yml")
 fi
@@ -100,6 +97,18 @@ compose() {
 command -v docker >/dev/null 2>&1 || fail 'Docker is not available on PATH'
 docker compose version >/dev/null 2>&1 || fail 'Docker Compose v2 is required'
 docker info >/dev/null 2>&1 || fail 'Docker daemon is not running'
+# An ordinary rebuild must not silently remove portal flags and change JWT issuers.
+# Include stopped proxy containers: restarting a prepared installation must retain its mode.
+if (( ! TENANT_PORTALS )); then
+  existing_proxy="$(docker ps --all --quiet \
+    --filter "label=com.docker.compose.project=$PROJECT_NAME" \
+    --filter 'label=com.docker.compose.service=tenant-proxy')"
+  if [[ -n "$existing_proxy" ]]; then
+    TENANT_PORTALS=1
+    COMPOSE_FILES+=(--file "$BACKEND_DIR/docker-compose.tenant-portals.yml")
+    printf 'Existing tenant portal installation detected; preserving portal authentication settings.\n'
+  fi
+fi
 compose config --quiet
 
 follow_logs() {
@@ -127,12 +136,6 @@ fi
 printf 'OpenHire local deployment\nProject: %s\nApplications: %s\n' "$PROJECT_NAME" "${SERVICES[*]}"
 printf 'Host MongoDB is required. Existing infrastructure, images and data volumes are retained.\n'
 printf 'Building/running all services still requires sufficient memory; this script does not change Docker limits.\n'
-if (( NO_SCAN )); then
-  printf 'WARNING: local no-scan mode selected. Use trusted synthetic resumes only.\n'
-  if ! contains resume-processor "${SERVICES[@]}"; then
-    printf 'Resume processor is not selected: its running configuration and ClamAV will not be changed.\n'
-  fi
-fi
 
 if (( BUILD_IMAGES )); then
   printf '\nBuilding application images (one build at a time)...\n'
@@ -141,9 +144,6 @@ fi
 
 INFRA=(keycloak redis kafka)
 if (( TENANT_PORTALS )) && ! contains notification-dispatcher "${SERVICES[@]}"; then INFRA+=(mailpit); fi
-if contains resume-processor "${SERVICES[@]}"; then
-  if (( ! NO_SCAN )); then INFRA+=(clamav); fi
-fi
 if contains notification-dispatcher "${SERVICES[@]}"; then INFRA+=(mailpit); fi
 
 diagnostics() {
@@ -171,10 +171,6 @@ if ! compose up --detach --no-deps --no-build --pull never --force-recreate \
 fi
 
 printf '\nSelected applications passed Compose startup checks (not end-to-end acceptance).\n'
-if (( NO_SCAN )) && contains resume-processor "${SERVICES[@]}"; then
-  printf 'Stopping ClamAV after successful no-scan deployment; signature volume is preserved.\n'
-  compose stop clamav
-fi
 compose ps "${SERVICES[@]}"
 if (( TENANT_PORTALS )); then
   printf '\nStarting tenant proxy; Keycloak clients and exact URLs must be configured by an operator.\n'
